@@ -3831,6 +3831,7 @@ __metadata:
     next: "npm:16.1.7"
     next-auth: "npm:^5.0.0-beta.30"
     next-intl: "npm:^4.8.3"
+    next-themes: "npm:^0.4.6"
     prettier: "npm:^3.8.1"
     react: "npm:19.2.3"
     react-dom: "npm:19.2.3"
@@ -5413,6 +5414,16 @@ __metadata:
     typescript:
       optional: true
   checksum: 10c0/05dd7c589b644f1948eaf474c26d35e4e0637aee127a955ca0353c3ce0d57fc642ed166cfb0c3a2eeec89a8524846bc354a00a0d24a67d5621649a6d11e63c6e
+  languageName: node
+  linkType: hard
+
+"next-themes@npm:^0.4.6":
+  version: 0.4.6
+  resolution: "next-themes@npm:0.4.6"
+  peerDependencies:
+    react: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17 || ^18 || ^19 || ^19.0.0-rc
+  checksum: 10c0/83590c11d359ce7e4ced14f6ea9dd7a691d5ce6843fe2dc520fc27e29ae1c535118478d03e7f172609c41b1ef1b8da6b8dd2d2acd6cd79cac1abbdbd5b99f2c4
   languageName: node
   linkType: hard
 

@@ -8,7 +8,8 @@ import { useRouter, usePathname } from "@/i18n/routing";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
-import { Globe, LogOut, Menu, User, X } from "lucide-react";
+import { Globe, LogOut, Menu, Moon, Sun, User, X } from "lucide-react";
+import { useTheme } from "next-themes";
 import { NAV_ITEMS } from "./const";
 
 export function Header() {
@@ -23,6 +24,13 @@ export function Header() {
   const pathname = usePathname();
 
   const nextLocale = locale === "ko" ? "en" : "ko";
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+    setProfileOpen(false);
+    setMobileOpen(false);
+  };
 
   const switchLocale = () => {
     router.replace(pathname, { locale: nextLocale });
@@ -42,7 +50,7 @@ export function Header() {
   }, []);
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
+    <header className="fixed top-0 z-50 w-full border-b border-border/60 bg-background/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
@@ -89,7 +97,7 @@ export function Header() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border/60 bg-background p-2 shadow-lg">
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border/80 bg-popover p-2 shadow-lg">
                   {/* 유저 정보 */}
                   <div className="px-3 py-2">
                     <p className="text-sm font-medium">{session.user?.name}</p>
@@ -98,6 +106,18 @@ export function Header() {
                     </p>
                   </div>
                   <Separator className="my-1" />
+                  {/* 테마 변경 */}
+                  <button
+                    onClick={toggleTheme}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  >
+                    {theme === "dark" ? (
+                      <Sun className="h-4 w-4" />
+                    ) : (
+                      <Moon className="h-4 w-4" />
+                    )}
+                    {theme === "dark" ? t("lightMode") : t("darkMode")}
+                  </button>
                   {/* 언어 변경 */}
                   <button
                     onClick={switchLocale}
@@ -145,7 +165,7 @@ export function Header() {
 
       {/* 모바일 메뉴 */}
       {mobileOpen && (
-        <div className="border-t border-border/40 bg-background px-6 pb-4 md:hidden">
+        <div className="border-t border-border/60 bg-background px-6 pb-4 md:hidden">
           <nav className="flex flex-col gap-1 pt-2">
             {NAV_ITEMS.map((item) => (
               <Link
@@ -184,6 +204,17 @@ export function Header() {
                   </div>
                 </div>
                 <button
+                  onClick={toggleTheme}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                  {theme === "dark" ? t("lightMode") : t("darkMode")}
+                </button>
+                <button
                   onClick={switchLocale}
                   className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
@@ -203,6 +234,17 @@ export function Header() {
               </>
             ) : (
               <>
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                  {theme === "dark" ? t("lightMode") : t("darkMode")}
+                </button>
                 <button
                   onClick={switchLocale}
                   className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"

@@ -7,7 +7,7 @@ export function Footer() {
   const t = useTranslations("Footer");
 
   return (
-    <footer className="border-t border-border/40 bg-background">
+    <footer className="border-t border-border/60 bg-background">
       <div className="mx-auto max-w-7xl px-6 py-16">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
@@ -45,7 +45,7 @@ export function Footer() {
           ))}
         </div>
 
-        <Separator className="my-8 bg-border/40" />
+        <Separator className="my-8 bg-border/60" />
 
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <p className="text-sm text-muted-foreground">

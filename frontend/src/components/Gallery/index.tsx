@@ -8,7 +8,7 @@ export function Gallery() {
   const t = useTranslations("Gallery");
 
   return (
-    <section id="gallery" className="border-t border-border/40 py-24">
+    <section id="gallery" className="border-t border-border/60 py-24">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -35,13 +35,13 @@ export function Gallery() {
           {GALLERY_ITEMS.map((item) => (
             <Card
               key={item.titleKey}
-              className="group cursor-pointer overflow-hidden border-border/40 bg-card/50 transition-all duration-300 hover:border-primary/30"
+              className="group cursor-pointer overflow-hidden border-border/60 bg-card/80 transition-all duration-300 hover:border-primary/40"
             >
               <div
                 className={`relative aspect-[4/3] bg-gradient-to-br ${item.gradient}`}
               >
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-16 w-16 rounded-full bg-white/5 backdrop-blur-sm" />
+                  <div className="h-16 w-16 rounded-full bg-white/10 backdrop-blur-sm" />
                 </div>
                 <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between opacity-0 transition-opacity group-hover:opacity-100">
                   <div className="flex gap-3">

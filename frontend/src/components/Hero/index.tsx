@@ -11,12 +11,12 @@ export function Hero() {
   return (
     <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden pt-16">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-primary/8 blur-[120px]" />
-        <div className="absolute bottom-0 left-1/4 h-[400px] w-[600px] rounded-full bg-primary/5 blur-[100px]" />
+        <div className="absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]" />
+        <div className="absolute bottom-0 left-1/4 h-[400px] w-[600px] rounded-full bg-primary/10 blur-[100px]" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-secondary/50 px-4 py-1.5 text-sm text-muted-foreground">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/80 bg-secondary/80 px-4 py-1.5 text-sm text-muted-foreground">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
           <span>{t("poweredByAI")}</span>
         </div>
@@ -51,7 +51,7 @@ export function Hero() {
           </Link>
         </div>
 
-        <div className="mt-20 grid grid-cols-3 gap-8 border-t border-border/40 pt-10">
+        <div className="mt-20 grid grid-cols-3 gap-8 border-t border-border/60 pt-10">
           {STAT_KEYS.map((key) => (
             <div key={key}>
               <div className="text-2xl font-bold sm:text-3xl">

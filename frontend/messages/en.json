@@ -8,7 +8,9 @@
     "video": "Video",
     "gallery": "Gallery",
     "signOut": "Sign out",
-    "signInWithGoogle": "Sign in with Google"
+    "signInWithGoogle": "Sign in with Google",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode"
   },
   "Hero": {
     "poweredByAI": "Powered by AI",

@@ -8,7 +8,9 @@
     "video": "Video",
     "gallery": "Gallery",
     "signOut": "로그아웃",
-    "signInWithGoogle": "Google로 로그인"
+    "signInWithGoogle": "Google로 로그인",
+    "darkMode": "다크 모드",
+    "lightMode": "라이트 모드"
   },
   "Hero": {
     "poweredByAI": "Powered by AI",
