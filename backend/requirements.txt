@@ -9,3 +9,5 @@ python-jose[cryptography]
 google-auth
 httpx
 python-multipart
+sqladmin
+fastapi-profiler-lite
