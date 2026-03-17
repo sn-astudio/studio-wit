@@ -2,7 +2,7 @@ name: Deploy Frontend
 
 on:
   push:
-    branches: [main, actions/workflow]
+    branches: [main]
     paths:
       - "frontend/**"
       - "docker-compose.yml"
