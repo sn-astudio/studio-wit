@@ -18,6 +18,7 @@ env:
   AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
   GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
   GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+  AUTH_URL: ${{ secrets.AUTH_URL }}
 
 jobs:
   build-and-push:
@@ -70,7 +71,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: IMAGE_NAME,DOCKER_USERNAME,NEXT_PUBLIC_APP_NAME,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_API_URL,AUTH_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET
+          envs: IMAGE_NAME,DOCKER_USERNAME,NEXT_PUBLIC_APP_NAME,NEXT_PUBLIC_APP_URL,NEXT_PUBLIC_API_URL,AUTH_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,AUTH_URL
           script: |
             cd ~/studio-wit
             cat > .env << EOF
@@ -81,6 +82,7 @@ jobs:
             AUTH_SECRET=${AUTH_SECRET}
             GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
             GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+            AUTH_URL=${AUTH_URL}
             EOF
             docker compose --profile with-frontend down frontend nginx
             docker pull $IMAGE_NAME:latest
