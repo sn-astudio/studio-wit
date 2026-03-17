@@ -18,3 +18,21 @@ Thumbs.db
 # 공통 빌드
 build/
 dist/
+
+# IDE
+.idea/
+
+# Claude
+.claude/
+
+# Node.js / Frontend
+node_modules/
+.next/
+out/
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
