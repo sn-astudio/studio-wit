@@ -1,7 +1,7 @@
 import { Link } from "@/i18n/routing";
 import { Separator } from "@/components/ui/Separator";
 import { useTranslations } from "next-intl";
-import { LINK_GROUPS, SOCIAL_LINKS } from "./const";
+import { LINK_GROUPS } from "./const";
 
 export function Footer() {
   const t = useTranslations("Footer");
@@ -51,17 +51,6 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} {t("allRightsReserved")}
           </p>
-          <div className="flex items-center gap-4">
-            {SOCIAL_LINKS.map((social) => (
-              <Link
-                key={social}
-                href="#"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {social}
-              </Link>
-            ))}
-          </div>
         </div>
       </div>
     </footer>

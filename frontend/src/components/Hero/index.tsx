@@ -1,12 +1,35 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
+import { RotatingText } from "@/components/RotatingText";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronDown,
+  ImageIcon,
+  Sparkles,
+  Video,
+} from "lucide-react";
+import { ROTATING_WORDS } from "./const";
 
 const STAT_KEYS = ["stat1", "stat2", "stat3"] as const;
 
 export function Hero() {
   const t = useTranslations("Hero");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden pt-16">
@@ -24,9 +47,11 @@ export function Hero() {
         <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
           {t("whatWillYou")}
           <br />
-          <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-            {t("createToday")}
-          </span>
+          <RotatingText
+            words={ROTATING_WORDS}
+            className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent"
+            interval={3000}
+          />
         </h1>
 
         <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
@@ -34,12 +59,43 @@ export function Hero() {
         </p>
 
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link href="/image">
-            <Button size="lg" className="gap-2 px-8 text-base">
+          {/* 도구 살펴보기 드롭다운 */}
+          <div className="relative" ref={menuRef}>
+            <Button
+              size="lg"
+              className="gap-2 px-8 text-base"
+              onClick={() => setMenuOpen((prev) => !prev)}
+            >
               {t("exploreAllTools")}
-              <ArrowRight className="h-4 w-4" />
+              <ChevronDown
+                className={`h-4 w-4 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
+              />
             </Button>
-          </Link>
+
+            {menuOpen && (
+              <div className="absolute left-1/2 top-full z-20 mt-2 w-52 -translate-x-1/2 rounded-xl border border-border/80 bg-popover p-1.5 shadow-xl">
+                <Link
+                  href="/image"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-colors hover:bg-secondary"
+                >
+                  <ImageIcon className="h-4 w-4 text-primary" />
+                  {t("imageGeneration")}
+                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                </Link>
+                <Link
+                  href="/video"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-colors hover:bg-secondary"
+                >
+                  <Video className="h-4 w-4 text-primary" />
+                  {t("videoGeneration")}
+                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                </Link>
+              </div>
+            )}
+          </div>
+
           <Link href="/gallery">
             <Button
               variant="outline"

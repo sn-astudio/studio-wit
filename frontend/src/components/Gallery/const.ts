@@ -7,6 +7,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "12.4K",
     likes: "2.1K",
     gradient: "from-violet-600/30 to-blue-600/30",
+    size: "tall",
   },
   {
     titleKey: "abstractDreams",
@@ -14,6 +15,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "8.7K",
     likes: "1.5K",
     gradient: "from-pink-600/30 to-orange-600/30",
+    size: "standard",
   },
   {
     titleKey: "oceanDepths",
@@ -21,6 +23,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "15.2K",
     likes: "3.8K",
     gradient: "from-cyan-600/30 to-teal-600/30",
+    size: "standard",
   },
   {
     titleKey: "cosmicVoyage",
@@ -28,6 +31,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "20.1K",
     likes: "5.2K",
     gradient: "from-purple-600/30 to-indigo-600/30",
+    size: "wide",
   },
   {
     titleKey: "goldenHour",
@@ -35,6 +39,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "9.3K",
     likes: "1.9K",
     gradient: "from-amber-600/30 to-yellow-600/30",
+    size: "standard",
   },
   {
     titleKey: "digitalGarden",
@@ -42,6 +47,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "11.8K",
     likes: "2.7K",
     gradient: "from-emerald-600/30 to-green-600/30",
+    size: "tall",
   },
 ];
 
