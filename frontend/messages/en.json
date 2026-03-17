@@ -1,0 +1,91 @@
+{
+  "Metadata": {
+    "title": "Wit",
+    "description": "AI-powered image and video generation"
+  },
+  "Header": {
+    "image": "Image",
+    "video": "Video",
+    "gallery": "Gallery",
+    "signOut": "Sign out",
+    "signInWithGoogle": "Sign in with Google"
+  },
+  "Hero": {
+    "poweredByAI": "Powered by AI",
+    "whatWillYou": "What will you",
+    "createToday": "create today?",
+    "description": "Generate stunning images and videos with AI. Transform your creative vision into reality.",
+    "exploreAllTools": "Explore all tools",
+    "viewGallery": "View Gallery",
+    "stat1Value": "10M+",
+    "stat1Label": "Images Created",
+    "stat2Value": "500K+",
+    "stat2Label": "Videos Generated",
+    "stat3Value": "100K+",
+    "stat3Label": "Creators"
+  },
+  "Features": {
+    "title": "Powerful AI Creative Tools",
+    "description": "Expand the boundaries of creativity with AI-powered image generation and video production tools.",
+    "textToImageTitle": "Text to Image",
+    "textToImageDesc": "Create photorealistic images from text prompts",
+    "styleTransferTitle": "Style Transfer",
+    "styleTransferDesc": "Apply artistic styles to any image",
+    "imageEnhancementTitle": "Image Enhancement",
+    "imageEnhancementDesc": "Upscale, restore, and enhance photos",
+    "textToVideoTitle": "Text to Video",
+    "textToVideoDesc": "Generate cinematic videos from text",
+    "imageToVideoTitle": "Image to Video",
+    "imageToVideoDesc": "Animate still images into video clips",
+    "videoEditTitle": "Video Edit",
+    "videoEditDesc": "AI-powered video editing and effects",
+    "badgeNew": "NEW"
+  },
+  "Gallery": {
+    "title": "Community Gallery",
+    "description": "Trending creations from our community",
+    "neonCityscape": "Neon Cityscape",
+    "abstractDreams": "Abstract Dreams",
+    "oceanDepths": "Ocean Depths",
+    "cosmicVoyage": "Cosmic Voyage",
+    "goldenHour": "Golden Hour",
+    "digitalGarden": "Digital Garden",
+    "photorealistic": "Photorealistic",
+    "anime": "Anime",
+    "oilPainting": "Oil Painting",
+    "sketch": "Sketch",
+    "threeDRender": "3D Render",
+    "watercolor": "Watercolor",
+    "comic": "Comic",
+    "pixelArt": "Pixel Art",
+    "cinematic": "Cinematic",
+    "fantasy": "Fantasy"
+  },
+  "Footer": {
+    "description": "AI-powered image and video generation tools.",
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "imageGeneration": "Image Generation",
+    "videoGeneration": "Video Generation",
+    "gallery": "Gallery",
+    "about": "About",
+    "blog": "Blog",
+    "contact": "Contact",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "allRightsReserved": "Wit. All rights reserved."
+  },
+  "ImagePage": {
+    "title": "Image Generation",
+    "description": "Generate images with AI."
+  },
+  "VideoPage": {
+    "title": "Video Generation",
+    "description": "Generate videos with AI."
+  },
+  "LanguageSwitcher": {
+    "ko": "한국어",
+    "en": "English"
+  }
+}
