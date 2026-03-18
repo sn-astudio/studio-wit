@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { QueryProvider } from "@/components/QueryProvider";
+import { AuthSync } from "@/components/AuthSync";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -60,6 +61,7 @@ export default async function LocaleLayout({
           <NextIntlClientProvider messages={messages}>
             <SessionProvider>
               <QueryProvider>
+                <AuthSync />
                 {children}
                 <Toaster richColors position="bottom-right" />
               </QueryProvider>
