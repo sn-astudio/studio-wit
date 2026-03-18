@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { PromptInput } from "@/components/PromptInput";
 import { useTranslations } from "next-intl";
 
 export default function ImagePage() {
@@ -15,6 +16,9 @@ export default function ImagePage() {
           <p className="mt-4 text-lg text-muted-foreground">
             {t("description")}
           </p>
+          <div className="mx-auto mt-8 max-w-3xl text-left">
+            <PromptInput mode="image" />
+          </div>
         </div>
       </main>
     </div>

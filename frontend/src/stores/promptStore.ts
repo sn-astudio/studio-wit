@@ -1,0 +1,80 @@
+import { create } from "zustand";
+
+import {
+  IMAGE_MODELS,
+  VIDEO_MODELS,
+  getDefaultParams,
+} from "@/components/PromptInput/const";
+import type { PromptMode } from "@/components/PromptInput/types";
+
+interface PromptStore {
+  mode: PromptMode;
+  prompt: string;
+  attachedImages: File[];
+  selectedModel: string;
+  params: Record<string, string | number>;
+
+  setMode: (mode: PromptMode) => void;
+  setPrompt: (prompt: string) => void;
+  setSelectedModel: (modelId: string) => void;
+  setParam: (key: string, value: string | number) => void;
+  addImage: (file: File) => void;
+  removeImage: (index: number) => void;
+  reset: () => void;
+}
+
+export const usePromptStore = create<PromptStore>((set, get) => ({
+  mode: "image",
+  prompt: "",
+  attachedImages: [],
+  selectedModel: IMAGE_MODELS[0]?.id ?? "",
+  params: getDefaultParams(IMAGE_MODELS[0]?.id ?? "", IMAGE_MODELS),
+
+  setMode: (mode) => {
+    const models = mode === "image" ? IMAGE_MODELS : VIDEO_MODELS;
+    const defaultModel = models[0]?.id ?? "";
+    set({
+      mode,
+      selectedModel: defaultModel,
+      params: getDefaultParams(defaultModel, models),
+    });
+  },
+
+  setPrompt: (prompt) => set({ prompt }),
+
+  setSelectedModel: (modelId) => {
+    const { mode } = get();
+    const models = mode === "image" ? IMAGE_MODELS : VIDEO_MODELS;
+    set({
+      selectedModel: modelId,
+      params: getDefaultParams(modelId, models),
+    });
+  },
+
+  setParam: (key, value) =>
+    set((state) => ({
+      params: { ...state.params, [key]: value },
+    })),
+
+  addImage: (file) =>
+    set((state) => ({
+      attachedImages: [...state.attachedImages, file],
+    })),
+
+  removeImage: (index) =>
+    set((state) => ({
+      attachedImages: state.attachedImages.filter((_, i) => i !== index),
+    })),
+
+  reset: () => {
+    const { mode } = get();
+    const models = mode === "image" ? IMAGE_MODELS : VIDEO_MODELS;
+    const defaultModel = models[0]?.id ?? "";
+    set({
+      prompt: "",
+      attachedImages: [],
+      selectedModel: defaultModel,
+      params: getDefaultParams(defaultModel, models),
+    });
+  },
+}));

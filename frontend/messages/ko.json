@@ -84,6 +84,94 @@
     "title": "영상 생성",
     "description": "AI로 영상을 생성하세요."
   },
+  "PromptInput": {
+    "placeholder": "생성하고 싶은 이미지를 설명해주세요...",
+    "placeholderVideo": "생성하고 싶은 영상을 설명해주세요...",
+    "submit": "생성",
+    "attachImage": "이미지 첨부",
+    "removeImage": "이미지 제거",
+    "modelLabel": "모델",
+    "models": {
+      "nano-banana-pro": "Nano Banana Pro",
+      "nano-banana-2": "Nano Banana 2",
+      "gpt-image": "GPT Image",
+      "flux": "Flux",
+      "veo-3_1": "Veo 3.1",
+      "veo-3_1-fast": "Veo 3.1 Fast",
+      "sora-2": "Sora 2",
+      "sora-2-pro": "Sora 2 Pro",
+      "kling-3_0-pro": "Kling 3.0 Pro"
+    },
+    "params": {
+      "aspectRatio": "비율",
+      "numImages": "이미지 수",
+      "quality": "품질",
+      "negativePrompt": "네거티브 프롬프트",
+      "guidanceScale": "가이던스 스케일",
+      "steps": "스텝",
+      "seed": "시드",
+      "style": "스타일",
+      "duration": "길이",
+      "resolution": "해상도",
+      "cfgScale": "CFG 스케일"
+    },
+    "aspectRatios": {
+      "1:1": "1:1 (정사각형)",
+      "16:9": "16:9 (가로)",
+      "9:16": "9:16 (세로)",
+      "4:3": "4:3",
+      "3:4": "3:4",
+      "3:2": "3:2",
+      "2:3": "2:3",
+      "4:5": "4:5",
+      "5:4": "5:4",
+      "1:4": "1:4 (세로 길게)",
+      "4:1": "4:1 (가로 길게)",
+      "1:8": "1:8 (세로 배너)",
+      "8:1": "8:1 (가로 배너)",
+      "21:9": "21:9 (울트라와이드)"
+    },
+    "numImages": {
+      "1": "1장",
+      "2": "2장",
+      "3": "3장",
+      "4": "4장"
+    },
+    "qualities": {
+      "standard": "표준",
+      "hd": "HD"
+    },
+    "styles": {
+      "natural": "자연",
+      "vivid": "비비드",
+      "anime": "애니메이션",
+      "photographic": "포토그래픽"
+    },
+    "durations": {
+      "3": "3초",
+      "4": "4초",
+      "5": "5초",
+      "6": "6초",
+      "7": "7초",
+      "8": "8초",
+      "9": "9초",
+      "10": "10초",
+      "11": "11초",
+      "12": "12초",
+      "13": "13초",
+      "14": "14초",
+      "15": "15초",
+      "16": "16초",
+      "20": "20초"
+    },
+    "resolutions": {
+      "720p": "720p",
+      "1080p": "1080p",
+      "4k": "4K"
+    },
+    "draw": "Draw",
+    "extraFreeGens": "Extra free gens"
+  },
   "LanguageSwitcher": {
     "ko": "한국어",
     "en": "English"

@@ -1,0 +1,44 @@
+"use client";
+
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+function Textarea({
+  className,
+  onChange,
+  ...props
+}: React.ComponentProps<"textarea">) {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const adjustHeight = React.useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, []);
+
+  const handleChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      adjustHeight();
+      onChange?.(e);
+    },
+    [adjustHeight, onChange],
+  );
+
+  return (
+    <textarea
+      ref={textareaRef}
+      data-slot="textarea"
+      className={cn(
+        "w-full min-w-0 resize-none rounded-lg border border-input bg-transparent px-2.5 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm dark:bg-input/30",
+        className,
+      )}
+      onChange={handleChange}
+      {...props}
+    />
+  );
+}
+
+export { Textarea };
