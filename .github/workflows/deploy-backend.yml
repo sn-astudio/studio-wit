@@ -11,6 +11,13 @@ on:
 
 env:
   IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/studio-wit-backend
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+  AWS_S3_REGION: ${{ secrets.AWS_S3_REGION }}
+  CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
 jobs:
   build-and-push:
@@ -63,9 +70,18 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: IMAGE_NAME
+          envs: IMAGE_NAME,DOCKER_USERNAME,DATABASE_URL,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_S3_BUCKET,AWS_S3_REGION,CLOUDFRONT_DOMAIN
           script: |
             cd ~/studio-wit
+            cat > .env << EOF
+            DOCKER_USERNAME=${DOCKER_USERNAME}
+            DATABASE_URL=${DATABASE_URL}
+            AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+            AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+            AWS_S3_BUCKET=${AWS_S3_BUCKET}
+            AWS_S3_REGION=${AWS_S3_REGION}
+            CLOUDFRONT_DOMAIN=${CLOUDFRONT_DOMAIN}
+            EOF
             docker compose down backend nginx
             docker pull $IMAGE_NAME:latest
             docker compose up -d backend nginx
