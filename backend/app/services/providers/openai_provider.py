@@ -1,5 +1,6 @@
 """OpenAI Provider (GPT Image, Sora 2)"""
 
+import base64
 from typing import Optional
 
 import httpx
@@ -41,7 +42,8 @@ class OpenAIProvider(BaseProvider):
             "prompt": prompt,
             "n": 1,
             "size": size,
-            "quality": params.get("quality", "standard"),
+            "quality": {"standard": "auto", "high": "high"}.get(params.get("quality", "standard"), "auto"),
+            "output_format": "png",
         }
 
         async with httpx.AsyncClient(timeout=120) as client:
@@ -67,9 +69,15 @@ class OpenAIProvider(BaseProvider):
                 error_message="이미지 생성 결과가 없습니다.",
             )
 
+        image = images[0]
+        # gpt-image-1은 기본적으로 b64_json으로 응답
+        result_url = image.get("url", "")
+        if not result_url and image.get("b64_json"):
+            result_url = f"data:image/png;base64,{image['b64_json']}"
+
         return GenerationResult(
             status="completed",
-            result_url=images[0].get("url", ""),
+            result_url=result_url,
             progress=100,
         )
 
