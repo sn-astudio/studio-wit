@@ -1,3 +1,13 @@
 fastapi
 uvicorn[standard]
 pydantic
+pydantic-settings
+sqlalchemy[asyncio]
+aiosqlite
+alembic
+python-jose[cryptography]
+google-auth
+httpx
+python-multipart
+sqladmin
+fastapi-profiler-lite

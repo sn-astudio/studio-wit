@@ -28,11 +28,11 @@ export function Features() {
           {TOOLS.map((tool) => (
             <Card
               key={tool.titleKey}
-              className="group cursor-pointer border-border/40 bg-card/50 transition-all duration-300 hover:border-primary/30 hover:bg-card"
+              className="group cursor-pointer border-border/60 bg-card/80 transition-all duration-300 hover:border-primary/40 hover:bg-card"
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary transition-colors group-hover:bg-primary/25">
                     <tool.icon className="h-5 w-5" />
                   </div>
                   {tool.badgeKey && (

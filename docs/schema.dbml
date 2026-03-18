@@ -1,0 +1,60 @@
+// Studio Wit — Database Schema
+// https://dbdiagram.io 에 붙여넣기하면 ER 다이어그램 자동 생성
+
+Project studio_wit {
+  database_type: 'SQLite / MySQL'
+  Note: 'AI 미디어 생성 애그리게이터'
+}
+
+Table users {
+  id varchar(32) [pk, note: 'UUID hex']
+  google_id varchar(255) [unique, not null, note: 'Google OAuth ID']
+  email varchar(255) [not null]
+  name varchar(255) [not null]
+  profile_image varchar(1024) [null]
+  created_at datetime [not null, default: `now()`, note: 'UTC']
+  updated_at datetime [not null, default: `now()`, note: 'UTC, auto-update']
+}
+
+Table generations {
+  id varchar(32) [pk, note: 'UUID hex']
+  user_id varchar(32) [not null, ref: > users.id]
+  model_id varchar(50) [not null, note: 'e.g. imagen-4, sora-2']
+  type generation_type [not null, note: 'image | video']
+  status generation_status [not null, default: 'pending']
+  prompt text [not null]
+  negative_prompt text [null]
+  params_json text [null, note: 'JSON string']
+  progress int [null, note: '0-100']
+  result_url varchar(2048) [null]
+  thumbnail_url varchar(2048) [null]
+  error_code varchar(50) [null]
+  error_message text [null]
+  is_public boolean [not null, default: true]
+  provider_job_id varchar(255) [null]
+  created_at datetime [not null, default: `now()`, note: 'UTC']
+  completed_at datetime [null, note: 'UTC']
+}
+
+Table likes {
+  id int [pk, increment]
+  user_id varchar(32) [not null, ref: > users.id]
+  generation_id varchar(32) [not null, ref: > generations.id]
+  created_at datetime [not null, default: `now()`, note: 'UTC']
+
+  indexes {
+    (user_id, generation_id) [unique, name: 'uq_user_generation']
+  }
+}
+
+Enum generation_type {
+  image
+  video
+}
+
+Enum generation_status {
+  pending
+  processing
+  completed
+  failed
+}

@@ -14,5 +14,3 @@ export const LINK_GROUPS: FooterLinkGroup[] = [
     linkKeys: ["privacy", "terms"],
   },
 ];
-
-export const SOCIAL_LINKS = ["X", "YouTube", "Instagram"];

@@ -19,3 +19,4 @@ htmlcov/
 # 패키징
 *.egg-info/
 *.egg
+wit.db
