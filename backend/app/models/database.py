@@ -78,7 +78,7 @@ class Generation(Base):
     negative_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     params_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON string
     progress: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    result_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
+    result_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     thumbnail_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
     error_code: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

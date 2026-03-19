@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     FAL_API_KEY: str = ""
 
+    # AWS S3 / CloudFront
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_S3_BUCKET: str = ""
+    AWS_S3_REGION: str = "ap-northeast-2"
+    CLOUDFRONT_DOMAIN: str = ""
+
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
 

@@ -61,9 +61,17 @@ async def _run_generation(generation_id: str, model_id: str, request: GenerateRe
                     **params,
                 )
 
-            # 결과 반영
+            # 결과 반영 — gpt-image-1은 S3 업로드 후 CloudFront URL 저장
             gen.status = gen_result.status
-            gen.result_url = gen_result.result_url
+            if (
+                gen_result.status == "completed"
+                and gen_result.result_url
+                and model_id in ("gpt-image-1", "gpt-image")
+            ):
+                from app.services.storage import download_and_upload
+                gen.result_url = await download_and_upload(gen.id, gen_result.result_url)
+            else:
+                gen.result_url = gen_result.result_url
             gen.thumbnail_url = gen_result.thumbnail_url
             gen.progress = gen_result.progress
             gen.provider_job_id = gen_result.provider_job_id
