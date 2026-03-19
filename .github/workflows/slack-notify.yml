@@ -1,0 +1,62 @@
+name: Slack PR Notification
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🔔 새 PR이 올라왔습니다"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*제목:*\n${{ github.event.pull_request.title }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*작성자:*\n${{ github.event.pull_request.user.login }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*브랜치:*\n`${{ github.head_ref }}` → `${{ github.base_ref }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*변경:*\n+${{ github.event.pull_request.additions }} / -${{ github.event.pull_request.deletions }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "PR 보기"
+                      },
+                      "url": "${{ github.event.pull_request.html_url }}"
+                    }
+                  ]
+                }
+              ]
+            }
