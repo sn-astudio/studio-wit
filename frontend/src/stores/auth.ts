@@ -21,7 +21,11 @@ interface AuthState {
   verifyToken: (idToken: string) => Promise<void>;
   /** 로그아웃 (JWT 초기화) */
   clearAuth: () => void;
+  /** localStorage에서 토큰 복원 */
+  restoreToken: () => void;
 }
+
+const STORAGE_KEY = "wit_auth";
 
 export const useAuthStore = create<AuthState>((set) => ({
   token: null,
@@ -33,6 +37,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const res = await authApi.verify({ id_token: idToken });
       setAccessToken(res.access_token);
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ token: res.access_token, user: res.user }),
+      );
       set({
         token: res.access_token,
         user: res.user,
@@ -45,6 +53,21 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   clearAuth: () => {
     setAccessToken(null);
+    localStorage.removeItem(STORAGE_KEY);
     set({ token: null, user: null });
+  },
+
+  restoreToken: () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const { token, user } = JSON.parse(raw);
+      if (token) {
+        setAccessToken(token);
+        set({ token, user });
+      }
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   },
 }));

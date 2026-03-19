@@ -18,6 +18,7 @@ env:
   AWS_S3_REGION: ${{ secrets.AWS_S3_REGION }}
   CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
 
 jobs:
   build-and-push:
@@ -70,12 +71,13 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: IMAGE_NAME,DOCKER_USERNAME,DATABASE_URL,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_S3_BUCKET,AWS_S3_REGION,CLOUDFRONT_DOMAIN
+          envs: IMAGE_NAME,DOCKER_USERNAME,DATABASE_URL,GOOGLE_CLIENT_ID,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_S3_BUCKET,AWS_S3_REGION,CLOUDFRONT_DOMAIN
           script: |
             cd ~/studio-wit
             cat > .env << EOF
             DOCKER_USERNAME=${DOCKER_USERNAME}
             DATABASE_URL=${DATABASE_URL}
+            GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
             AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
             AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
             AWS_S3_BUCKET=${AWS_S3_BUCKET}
