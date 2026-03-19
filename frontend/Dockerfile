@@ -10,6 +10,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# 빌드 시점에 번들에 포함되는 NEXT_PUBLIC_* 변수
+ARG NEXT_PUBLIC_APP_NAME
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_CDN_URL
+
 RUN corepack enable && yarn build
 
 # 3단계: 실행
