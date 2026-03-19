@@ -13,3 +13,4 @@ python-multipart
 sqladmin
 fastapi-profiler-lite
 aioboto3
+aiomysql
