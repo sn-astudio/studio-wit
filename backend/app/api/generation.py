@@ -199,7 +199,12 @@ async def get_generation(
 
         gen.status = gen_result.status
         gen.progress = gen_result.progress
-        gen.result_url = gen_result.result_url or gen.result_url
+        if gen_result.result_url:
+            if gen_result.status == "completed" and gen.type == "image":
+                from app.services.storage import download_and_upload
+                gen.result_url = await download_and_upload(gen.id, gen_result.result_url)
+            else:
+                gen.result_url = gen_result.result_url
         gen.thumbnail_url = gen_result.thumbnail_url or gen.thumbnail_url
         gen.error_code = gen_result.error_code
         gen.error_message = gen_result.error_message

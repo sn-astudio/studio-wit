@@ -30,16 +30,13 @@ class FalProvider(BaseProvider):
         body = {
             "prompt": prompt,
             "image_size": self._aspect_to_size(params.get("aspect_ratio", "1:1")),
-            "num_inference_steps": params.get("num_steps", 28),
-            "guidance_scale": params.get("guidance_scale", 3.5),
-            "num_images": 1,
         }
-        if negative_prompt:
-            body["negative_prompt"] = negative_prompt
+        if params.get("seed") is not None:
+            body["seed"] = params["seed"]
 
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
-                f"{self.BASE_URL}/fal-ai/flux-pro/v2",
+                f"{self.BASE_URL}/fal-ai/flux-2-pro",
                 headers=self.headers,
                 json=body,
             )
@@ -52,10 +49,9 @@ class FalProvider(BaseProvider):
             )
 
         data = resp.json()
-        request_id = data.get("request_id", "")
         return GenerationResult(
             status="processing",
-            provider_job_id=f"flux-pro/v2:{request_id}",
+            provider_job_id=data.get("response_url", ""),
             progress=0,
         )
 
@@ -89,33 +85,32 @@ class FalProvider(BaseProvider):
             )
 
         data = resp.json()
-        request_id = data.get("request_id", "")
         return GenerationResult(
             status="processing",
-            provider_job_id=f"kling-video/v2/master:{request_id}",
+            provider_job_id=data.get("response_url", ""),
             progress=0,
         )
 
     async def check_status(self, provider_job_id: str) -> GenerationResult:
-        """fal.ai queue 상태 확인"""
-        # provider_job_id 형식: "model_path:request_id"
-        parts = provider_job_id.rsplit(":", 1)
-        if len(parts) != 2:
+        """fal.ai queue 상태 확인. provider_job_id는 response_url."""
+        response_url = provider_job_id
+        if not response_url:
             return GenerationResult(
                 status="failed",
                 error_code="PROVIDER_ERROR",
                 error_message="잘못된 작업 ID 형식",
             )
 
-        model_path, request_id = parts
+        # response_url에서 status_url 도출: /response → /status
+        if response_url.endswith("/response"):
+            status_url = response_url[: -len("/response")] + "/status"
+        else:
+            status_url = response_url + "/status"
 
         async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.get(
-                f"{self.BASE_URL}/fal-ai/{model_path}/requests/{request_id}/status",
-                headers=self.headers,
-            )
+            resp = await client.get(status_url, headers=self.headers)
 
-        if resp.status_code != 200:
+        if resp.status_code not in (200, 202):
             return GenerationResult(
                 status="failed",
                 error_code="PROVIDER_ERROR",
@@ -126,9 +121,7 @@ class FalProvider(BaseProvider):
         queue_status = data.get("status", "")
 
         if queue_status == "COMPLETED":
-            # 결과 가져오기
-            result_resp = await self._fetch_result(model_path, request_id)
-            return result_resp
+            return await self._fetch_result(response_url)
         elif queue_status in ("IN_QUEUE", "IN_PROGRESS"):
             return GenerationResult(
                 status="processing",
@@ -142,19 +135,16 @@ class FalProvider(BaseProvider):
             error_message=f"알 수 없는 상태: {queue_status}",
         )
 
-    async def _fetch_result(self, model_path: str, request_id: str) -> GenerationResult:
+    async def _fetch_result(self, response_url: str) -> GenerationResult:
         """완료된 작업의 결과물을 가져온다."""
         async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.get(
-                f"{self.BASE_URL}/fal-ai/{model_path}/requests/{request_id}",
-                headers=self.headers,
-            )
+            resp = await client.get(response_url, headers=self.headers)
 
         if resp.status_code != 200:
             return GenerationResult(
                 status="failed",
                 error_code="PROVIDER_ERROR",
-                error_message="결과 조회 실패",
+                error_message=f"결과 조회 실패: {resp.status_code}",
             )
 
         data = resp.json()
