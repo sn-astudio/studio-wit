@@ -88,6 +88,94 @@
     "title": "Video Generation",
     "description": "Generate videos with AI."
   },
+  "PromptInput": {
+    "placeholder": "Describe the image you want to create...",
+    "placeholderVideo": "Describe the video you want to create...",
+    "submit": "Generate",
+    "attachImage": "Attach image",
+    "removeImage": "Remove image",
+    "modelLabel": "Model",
+    "models": {
+      "nano-banana-pro": "Nano Banana Pro",
+      "nano-banana-2": "Nano Banana 2",
+      "gpt-image": "GPT Image",
+      "flux": "Flux",
+      "veo-3_1": "Veo 3.1",
+      "veo-3_1-fast": "Veo 3.1 Fast",
+      "sora-2": "Sora 2",
+      "sora-2-pro": "Sora 2 Pro",
+      "kling-3_0-pro": "Kling 3.0 Pro"
+    },
+    "params": {
+      "aspectRatio": "Aspect Ratio",
+      "numImages": "Number of Images",
+      "quality": "Quality",
+      "negativePrompt": "Negative Prompt",
+      "guidanceScale": "Guidance Scale",
+      "steps": "Steps",
+      "seed": "Seed",
+      "style": "Style",
+      "duration": "Duration",
+      "resolution": "Resolution",
+      "cfgScale": "CFG Scale"
+    },
+    "aspectRatios": {
+      "1:1": "1:1 (Square)",
+      "16:9": "16:9 (Landscape)",
+      "9:16": "9:16 (Portrait)",
+      "4:3": "4:3",
+      "3:4": "3:4",
+      "3:2": "3:2",
+      "2:3": "2:3",
+      "4:5": "4:5",
+      "5:4": "5:4",
+      "1:4": "1:4 (Tall)",
+      "4:1": "4:1 (Wide)",
+      "1:8": "1:8 (Tall Banner)",
+      "8:1": "8:1 (Wide Banner)",
+      "21:9": "21:9 (Ultrawide)"
+    },
+    "numImages": {
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4"
+    },
+    "qualities": {
+      "standard": "Standard",
+      "hd": "HD"
+    },
+    "styles": {
+      "natural": "Natural",
+      "vivid": "Vivid",
+      "anime": "Anime",
+      "photographic": "Photographic"
+    },
+    "durations": {
+      "3": "3s",
+      "4": "4s",
+      "5": "5s",
+      "6": "6s",
+      "7": "7s",
+      "8": "8s",
+      "9": "9s",
+      "10": "10s",
+      "11": "11s",
+      "12": "12s",
+      "13": "13s",
+      "14": "14s",
+      "15": "15s",
+      "16": "16s",
+      "20": "20s"
+    },
+    "resolutions": {
+      "720p": "720p",
+      "1080p": "1080p",
+      "4k": "4K"
+    },
+    "draw": "Draw",
+    "extraFreeGens": "Extra free gens"
+  },
   "LanguageSwitcher": {
     "ko": "한국어",
     "en": "English"
