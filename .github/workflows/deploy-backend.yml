@@ -88,3 +88,14 @@ jobs:
             docker pull $IMAGE_NAME:latest
             docker compose up -d backend nginx
             docker image prune -f
+
+      - name: Notify Slack
+        if: success()
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "✅ *Backend 배포 완료*\n커밋: `${{ github.sha }}` by ${{ github.actor }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|배포 로그 보기>"
+            }
