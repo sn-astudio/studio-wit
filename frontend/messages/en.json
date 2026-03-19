@@ -8,7 +8,9 @@
     "video": "Video",
     "gallery": "Gallery",
     "signOut": "Sign out",
-    "signInWithGoogle": "Sign in with Google"
+    "signInWithGoogle": "Sign in with Google",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode"
   },
   "Hero": {
     "poweredByAI": "Powered by AI",
@@ -16,6 +18,8 @@
     "createToday": "create today?",
     "description": "Generate stunning images and videos with AI. Transform your creative vision into reality.",
     "exploreAllTools": "Explore all tools",
+    "imageGeneration": "Image Generation",
+    "videoGeneration": "Video Generation",
     "viewGallery": "View Gallery",
     "stat1Value": "10M+",
     "stat1Label": "Images Created",
