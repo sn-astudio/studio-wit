@@ -5,6 +5,7 @@ from typing import Dict
 from app.core.exceptions import ModelNotFoundException
 from app.services.providers.base import BaseProvider
 from app.services.providers.fal import FalProvider
+from app.services.providers.gemini import GeminiProvider
 from app.services.providers.google import GoogleProvider
 from app.services.providers.openai_provider import OpenAIProvider
 
@@ -12,6 +13,7 @@ from app.services.providers.openai_provider import OpenAIProvider
 MODEL_INFO: Dict[str, dict] = {
     "imagen-4": {"provider": "google", "type": "image", "name": "Imagen 4", "is_async": False},
     "veo-3": {"provider": "google", "type": "video", "name": "Veo 3", "is_async": True},
+    "nano-banana-pro": {"provider": "gemini", "type": "image", "name": "Nano Banana Pro", "is_async": False},
     "gpt-image-1": {"provider": "openai", "type": "image", "name": "GPT Image 1", "is_async": False},
     "sora-2": {"provider": "openai", "type": "video", "name": "Sora 2", "is_async": True},
     "flux-2-pro": {"provider": "fal", "type": "image", "name": "Flux 2 Pro", "is_async": True},
@@ -26,6 +28,8 @@ def _get_provider(provider_name: str) -> BaseProvider:
     if provider_name not in _providers:
         if provider_name == "google":
             _providers[provider_name] = GoogleProvider()
+        elif provider_name == "gemini":
+            _providers[provider_name] = GeminiProvider()
         elif provider_name == "openai":
             _providers[provider_name] = OpenAIProvider()
         elif provider_name == "fal":
