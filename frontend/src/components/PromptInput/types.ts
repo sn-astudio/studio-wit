@@ -50,6 +50,7 @@ export interface PromptInputState {
 
 export interface PromptInputProps {
   mode: PromptMode;
+  disabled?: boolean;
   onSubmit?: (state: PromptInputState) => void;
 }
 

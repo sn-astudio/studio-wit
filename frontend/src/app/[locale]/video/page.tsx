@@ -1,25 +1,12 @@
 import { Header } from "@/components/Header";
-import { PromptInput } from "@/components/PromptInput";
-import { useTranslations } from "next-intl";
+import { VideoCreateWorkspace } from "@/components/VideoCreate";
 
 export default function VideoPage() {
-  const t = useTranslations("VideoPage");
-
   return (
-    <div className="min-h-screen">
+    <div className="h-screen overflow-hidden">
       <Header />
       <main className="pt-16">
-        <div className="mx-auto max-w-7xl px-6 py-24 text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            {t("title")}
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            {t("description")}
-          </p>
-          <div className="mx-auto mt-8 max-w-3xl text-left">
-            <PromptInput mode="video" />
-          </div>
-        </div>
+        <VideoCreateWorkspace />
       </main>
     </div>
   );

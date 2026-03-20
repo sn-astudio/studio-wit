@@ -176,6 +176,25 @@
     "draw": "Draw",
     "extraFreeGens": "Extra free gens"
   },
+  "VideoCreate": {
+    "settings": "Settings",
+    "modelLabel": "Model",
+    "generate": "Generate",
+    "toGenerate": "to generate",
+    "generating": "Generating video...",
+    "generatingDesc": "AI is creating your video. Please wait a moment.",
+    "emptyPreview": "Video Preview",
+    "emptyPreviewDesc": "Enter a prompt and click Generate",
+    "recentGenerations": "Recent Generations",
+    "viewAll": "View All",
+    "showLess": "Show Less",
+    "noHistory": "No videos generated yet",
+    "startCreating": "Start Creating",
+    "createDesc": "Enter a prompt and AI will create a video for you",
+    "loginRequired": "Please sign in to generate videos",
+    "generateSuccess": "Video generation complete!",
+    "generateFailed": "Video generation failed"
+  },
   "LanguageSwitcher": {
     "ko": "한국어",
     "en": "English"

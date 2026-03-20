@@ -37,6 +37,32 @@ async def upload_generation_image(
     return f"{domain}/{key}"
 
 
+async def upload_generation_video(
+    generation_id: str, video_data: bytes, ext: str = "mp4"
+) -> str:
+    """비디오 바이트를 S3에 업로드하고 CloudFront URL을 반환한다."""
+    if not settings.AWS_S3_BUCKET or not settings.CLOUDFRONT_DOMAIN:
+        return ""
+
+    try:
+        key = f"generations/{generation_id}.{ext}"
+        content_type = f"video/{ext}"
+
+        async with _session.client("s3") as s3:
+            await s3.put_object(
+                Bucket=settings.AWS_S3_BUCKET,
+                Key=key,
+                Body=video_data,
+                ContentType=content_type,
+            )
+
+        domain = settings.CLOUDFRONT_DOMAIN.rstrip("/")
+        return f"{domain}/{key}"
+    except Exception:
+        logger.exception("S3 비디오 업로드 실패 (generation_id=%s)", generation_id)
+        return ""
+
+
 async def download_and_upload(generation_id: str, result_url: str) -> str:
     """result_url(base64 data URI 또는 HTTP URL)을 S3에 업로드하고 CloudFront URL을 반환한다.
 

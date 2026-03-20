@@ -14,6 +14,7 @@ MODEL_INFO: Dict[str, dict] = {
     "veo-3": {"provider": "google", "type": "video", "name": "Veo 3", "is_async": True},
     "gpt-image-1": {"provider": "openai", "type": "image", "name": "GPT Image 1", "is_async": False},
     "sora-2": {"provider": "openai", "type": "video", "name": "Sora 2", "is_async": True},
+    "sora-2-pro": {"provider": "openai", "type": "video", "name": "Sora 2 Pro", "is_async": True},
     "flux-2-pro": {"provider": "fal", "type": "image", "name": "Flux 2 Pro", "is_async": True},
     "kling": {"provider": "fal", "type": "video", "name": "Kling", "is_async": True},
 }
