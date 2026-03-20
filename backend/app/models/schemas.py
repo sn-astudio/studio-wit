@@ -60,6 +60,7 @@ class ModelType(str, Enum):
 
 class ProviderName(str, Enum):
     google = "google"
+    gemini = "gemini"
     openai = "openai"
     fal = "fal"
 

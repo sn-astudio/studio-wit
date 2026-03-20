@@ -29,6 +29,15 @@ AVAILABLE_MODELS: List[AIModel] = [
         is_async=True,
     ),
     AIModel(
+        id="nano-banana-pro",
+        name="Nano Banana Pro",
+        provider=ProviderName.gemini,
+        type=ModelType.image,
+        description="Google Gemini 기반 이미지 생성 모델",
+        supported_params=["aspect_ratio"],
+        is_async=False,
+    ),
+    AIModel(
         id="gpt-image",
         name="GPT Image",
         provider=ProviderName.openai,

@@ -66,7 +66,7 @@ async def _run_generation(generation_id: str, model_id: str, request: GenerateRe
             if (
                 gen_result.status == "completed"
                 and gen_result.result_url
-                and model_id in ("gpt-image-1", "gpt-image", "imagen-4")
+                and model_id in ("gpt-image-1", "gpt-image", "imagen-4", "nano-banana-pro")
             ):
                 from app.services.storage import download_and_upload
                 gen.result_url = await download_and_upload(gen.id, gen_result.result_url)
