@@ -6,9 +6,9 @@ import { Minus, Plus } from "lucide-react";
 import { Separator } from "@/components/ui/Separator";
 import { usePromptStore } from "@/stores/promptStore";
 
-import { getModelsForMode, getOptionsForParam } from "./const";
-import { ModelSelector } from "./ModelSelector";
-import { OptionButton } from "./OptionButton";
+import { getModelsForMode, getOptionsForParam } from "../const";
+import { ModelSelector } from "../ModelSelector";
+import { OptionButton } from "../OptionButton";
 import type { OptionsBarProps } from "./types";
 
 function NumImagesCounter() {

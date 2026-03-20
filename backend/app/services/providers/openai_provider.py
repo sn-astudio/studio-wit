@@ -1,11 +1,14 @@
 """OpenAI Provider (GPT Image, Sora 2)"""
 
 import base64
+import logging
 from typing import Optional
 
 import httpx
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 from app.services.providers.base import BaseProvider, GenerationResult
 
 
@@ -88,27 +91,41 @@ class OpenAIProvider(BaseProvider):
         **params,
     ) -> GenerationResult:
         """Sora 2로 비디오 생성 (비동기)"""
-        body = {
-            "model": "sora-2",
-            "prompt": prompt,
-            "duration": params.get("duration", 5),
-            "aspect_ratio": params.get("aspect_ratio", "16:9"),
+        # aspect_ratio → size 변환
+        size_map = {
+            "16:9": "1280x720",
+            "9:16": "720x1280",
         }
-        if input_image_url:
-            body["image_url"] = input_image_url
+        aspect = params.get("aspect_ratio", "16:9")
+        size = size_map.get(aspect, "1280x720")
 
-        async with httpx.AsyncClient(timeout=30) as client:
+        # multipart/form-data 형식으로 전송 (OpenAI /v1/videos 요구사항)
+        # httpx에서 multipart/form-data를 보내려면 files 파라미터 사용
+        model_id = params.get("model_id", "sora-2")
+        seconds = str(int(params.get("duration", 5)))
+
+        files = [
+            ("model", (None, model_id)),
+            ("prompt", (None, prompt)),
+            ("seconds", (None, seconds)),
+            ("size", (None, size)),
+        ]
+
+        headers_no_ct = {"Authorization": f"Bearer {self.api_key}"}
+
+        async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
-                f"{self.BASE_URL}/videos/generations",
-                headers=self.headers,
-                json=body,
+                f"{self.BASE_URL}/videos",
+                headers=headers_no_ct,
+                files=files,
             )
 
         if resp.status_code not in (200, 201, 202):
+            error_body = resp.text[:500] if resp.text else ""
             return GenerationResult(
                 status="failed",
                 error_code="PROVIDER_ERROR",
-                error_message=f"OpenAI API 오류: {resp.status_code}",
+                error_message=f"OpenAI API 오류: {resp.status_code} - {error_body}",
             )
 
         data = resp.json()
@@ -123,7 +140,7 @@ class OpenAIProvider(BaseProvider):
         """Sora 작업 상태 확인"""
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.get(
-                f"{self.BASE_URL}/videos/generations/{provider_job_id}",
+                f"{self.BASE_URL}/videos/{provider_job_id}",
                 headers=self.headers,
             )
 
@@ -136,11 +153,14 @@ class OpenAIProvider(BaseProvider):
 
         data = resp.json()
         status = data.get("status", "")
+        logger.info("Sora check_status response: %s", data)
 
         if status == "completed":
+            # Sora는 별도의 /content 엔드포인트에서 비디오를 가져와야 함
+            video_url = await self._fetch_video_content_url(provider_job_id)
             return GenerationResult(
                 status="completed",
-                result_url=data.get("video_url", ""),
+                result_url=video_url,
                 progress=100,
             )
         elif status == "failed":
@@ -150,8 +170,38 @@ class OpenAIProvider(BaseProvider):
                 error_message=data.get("error", {}).get("message", "비디오 생성 실패"),
             )
 
+        # queued 또는 in_progress
         return GenerationResult(
             status="processing",
             provider_job_id=provider_job_id,
             progress=data.get("progress", 0),
         )
+
+    async def _fetch_video_content_url(self, video_id: str) -> str:
+        """완료된 비디오의 다운로드 URL을 가져온다.
+
+        GET /v1/videos/{id}/content 는 보통 CDN으로 302 리다이렉트한다.
+        리다이렉트 URL을 그대로 반환하고, 바이너리 응답이면 S3에 업로드한다.
+        """
+        headers_auth = {"Authorization": f"Bearer {self.api_key}"}
+
+        # 리다이렉트를 따라가지 않고 Location 헤더 확인
+        async with httpx.AsyncClient(timeout=120, follow_redirects=False) as client:
+            resp = await client.get(
+                f"{self.BASE_URL}/videos/{video_id}/content",
+                headers=headers_auth,
+            )
+
+        # 302 리다이렉트 → 임시 CDN URL
+        if resp.status_code in (301, 302, 303, 307, 308):
+            return resp.headers.get("location", "")
+
+        # 200 바이너리 응답 → S3 업로드
+        if resp.status_code == 200:
+            ct = resp.headers.get("content-type", "")
+            if "video" in ct or "octet-stream" in ct:
+                from app.services.storage import upload_generation_video
+
+                return await upload_generation_video(video_id, resp.content)
+
+        return ""
