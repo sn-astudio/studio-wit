@@ -6,6 +6,8 @@ export const STATS: Stat[] = [
   { value: "100K+", label: "Creators" },
 ];
 
+export const STAT_KEYS = ["stat1", "stat2", "stat3"] as const;
+
 export const ROTATING_WORDS = [
   "create today?",
   "imagine next?",

@@ -6,11 +6,8 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/Button";
 
-interface VideoPreviewProps {
-  videoUrl?: string;
-  isGenerating?: boolean;
-  progress?: number | null;
-}
+import type { VideoPreviewProps } from "./types";
+import { downloadVideo } from "./utils";
 
 export function VideoPreview({
   videoUrl,
@@ -21,18 +18,7 @@ export function VideoPreview({
 
   const handleDownload = useCallback(async () => {
     if (!videoUrl) return;
-    try {
-      const resp = await fetch(videoUrl);
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `video-${Date.now()}.mp4`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      window.open(videoUrl, "_blank");
-    }
+    await downloadVideo(videoUrl);
   }, [videoUrl]);
 
   return (

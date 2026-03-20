@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 import { PromptInput } from "@/components/PromptInput";
 import type { PromptInputState } from "@/components/PromptInput/types";
-import type { GenerateParams } from "@/types/api";
 import { useAuthStore } from "@/stores/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,19 +15,9 @@ import {
 } from "@/hooks/queries/useGeneration";
 import { queryKeys } from "@/hooks/queries/keys";
 
-import { VideoPreview } from "./VideoPreview";
-import { GenerationHistory } from "./GenerationHistory";
-
-/** frontend camelCase params → backend snake_case GenerateParams */
-function toGenerateParams(
-  params: Record<string, string | number>,
-): GenerateParams {
-  const result: GenerateParams = {};
-  if (params.aspectRatio) result.aspect_ratio = params.aspectRatio as string;
-  if (params.duration) result.duration = Number(params.duration);
-  if (params.cfgScale) result.guidance_scale = Number(params.cfgScale);
-  return result;
-}
+import { VideoPreview } from "../VideoPreview";
+import { GenerationHistory } from "../GenerationHistory";
+import { toGenerateParams } from "./utils";
 
 export function VideoCreateWorkspace() {
   const t = useTranslations("VideoCreate");

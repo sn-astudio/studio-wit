@@ -7,11 +7,9 @@ import {
   Monitor,
   Gauge,
   Ban,
-  ChevronDown,
   Settings2,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
 import {
   Select,
   SelectTrigger,
@@ -21,9 +19,13 @@ import {
 import { usePromptStore } from "@/stores/promptStore";
 import {
   VIDEO_MODELS,
-  PARAM_CONFIGS,
-  getOptionsForParam,
 } from "@/components/PromptInput/const";
+
+import { SettingGroup } from "./SettingGroup";
+import { AspectRatioGrid } from "./AspectRatioGrid";
+import { DurationSelector } from "./DurationSelector";
+import { ResolutionSelector } from "./ResolutionSelector";
+import { CfgScaleSlider } from "./CfgScaleSlider";
 
 export function SettingsPanel() {
   const t = useTranslations("PromptInput");
@@ -148,154 +150,6 @@ export function SettingsPanel() {
           </SettingGroup>
         )}
       </div>
-    </div>
-  );
-}
-
-/* --- Sub-components --- */
-
-function SettingGroup({
-  label,
-  icon,
-  children,
-}: {
-  label: string;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2 rounded-xl bg-zinc-900/50 p-3">
-      <div className="flex items-center gap-1.5">
-        {icon && <span className="text-zinc-500">{icon}</span>}
-        <span className="text-xs font-medium text-zinc-400">{label}</span>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function AspectRatioGrid({
-  modelId,
-  value,
-  onChange,
-}: {
-  modelId: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const t = useTranslations("PromptInput");
-  const options = getOptionsForParam(modelId, "aspectRatio");
-
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map((option) => (
-        <button
-          key={option.value}
-          onClick={() => onChange(option.value)}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-            value === option.value
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300"
-          }`}
-        >
-          {option.value}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function DurationSelector({
-  modelId,
-  value,
-  onChange,
-}: {
-  modelId: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const t = useTranslations("PromptInput");
-  const options = getOptionsForParam(modelId, "duration");
-
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map((option) => (
-        <button
-          key={option.value}
-          onClick={() => onChange(option.value)}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-            value === option.value
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300"
-          }`}
-        >
-          {t(option.labelKey)}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function ResolutionSelector({
-  modelId,
-  value,
-  onChange,
-}: {
-  modelId: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const t = useTranslations("PromptInput");
-  const options = getOptionsForParam(modelId, "resolution");
-
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map((option) => (
-        <button
-          key={option.value}
-          onClick={() => onChange(option.value)}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-            value === option.value
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300"
-          }`}
-        >
-          {t(option.labelKey)}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function CfgScaleSlider({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-}) {
-  const config = PARAM_CONFIGS.cfgScale;
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-zinc-500">
-          {config.min}
-        </span>
-        <span className="text-xs font-medium text-zinc-300">{value}</span>
-        <span className="text-xs text-zinc-500">
-          {config.max}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={config.min}
-        max={config.max}
-        step={config.step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-zinc-800 accent-primary"
-      />
     </div>
   );
 }

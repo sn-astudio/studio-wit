@@ -54,14 +54,3 @@ export interface PromptInputProps {
   onSubmit?: (state: PromptInputState) => void;
 }
 
-export interface OptionsBarProps {
-  mode: PromptMode;
-}
-
-export interface ModelSelectorProps {
-  models: ModelDefinition[];
-}
-
-export interface OptionButtonProps {
-  paramType: ParamType;
-}
