@@ -16,7 +16,7 @@ AVAILABLE_MODELS: List[AIModel] = [
         provider=ProviderName.google,
         type=ModelType.image,
         description="Google의 최신 이미지 생성 모델",
-        supported_params=["aspect_ratio", "negative_prompt", "style"],
+        supported_params=["aspect_ratio", "style"],
         is_async=False,
     ),
     AIModel(

@@ -29,36 +29,48 @@ class GoogleProvider(BaseProvider):
             "parameters": {
                 "sampleCount": 1,
                 "aspectRatio": aspect_ratio,
+                "personGeneration": "allow_all",
             },
         }
-        if negative_prompt:
-            body["parameters"]["negativePrompt"] = negative_prompt
+        # Imagen 4는 negativePrompt 미지원 (Imagen 3.0 이하만 지원)
 
         async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.post(
-                f"{self.BASE_URL}/models/imagen-4:predict",
+                f"{self.BASE_URL}/models/imagen-4.0-generate-001:predict",
                 params={"key": self.api_key},
                 json=body,
             )
 
         if resp.status_code != 200:
+            error_code = "PROVIDER_ERROR"
+            error_message = f"Google API 오류: {resp.status_code}"
+            try:
+                err_data = resp.json()
+                err_detail = err_data.get("error", {})
+                error_message = err_detail.get("message", error_message)
+                if err_detail.get("code") == 400 and "safety" in error_message.lower():
+                    error_code = "CONTENT_POLICY"
+            except Exception:
+                pass
             return GenerationResult(
                 status="failed",
-                error_code="PROVIDER_ERROR",
-                error_message=f"Google API 오류: {resp.status_code}",
+                error_code=error_code,
+                error_message=error_message,
             )
 
         data = resp.json()
-        # Imagen 4는 base64 이미지를 반환하거나 GCS URL을 반환
         predictions = data.get("predictions", [])
         if not predictions:
             return GenerationResult(
                 status="failed",
-                error_code="PROVIDER_ERROR",
-                error_message="이미지 생성 결과가 없습니다.",
+                error_code="CONTENT_POLICY",
+                error_message="이미지 생성 결과가 없습니다. 안전 필터에 의해 차단되었을 수 있습니다.",
             )
 
-        result_url = predictions[0].get("uri") or predictions[0].get("bytesBase64Encoded", "")
+        prediction = predictions[0]
+        b64 = prediction.get("bytesBase64Encoded", "")
+        mime = prediction.get("mimeType", "image/png")
+        result_url = f"data:{mime};base64,{b64}"
         return GenerationResult(status="completed", result_url=result_url, progress=100)
 
     async def generate_video(
