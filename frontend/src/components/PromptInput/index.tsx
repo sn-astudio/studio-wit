@@ -12,7 +12,7 @@ import { usePromptStore } from "@/stores/promptStore";
 import { OptionsBar } from "./OptionsBar";
 import type { PromptInputProps } from "./types";
 
-export function PromptInput({ mode, onSubmit }: PromptInputProps) {
+export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
   const t = useTranslations("PromptInput");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -129,7 +129,7 @@ export function PromptInput({ mode, onSubmit }: PromptInputProps) {
             <button
               className="m-2 shrink-0 cursor-pointer rounded-xl bg-primary px-6 text-base font-semibold text-primary-foreground transition-opacity hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
               onClick={handleSubmit}
-              disabled={!prompt.trim()}
+              disabled={!prompt.trim() || disabled}
             >
               {t("submit")}
               {mode === "image" && <> ✦ {numImages ?? 1}</>}

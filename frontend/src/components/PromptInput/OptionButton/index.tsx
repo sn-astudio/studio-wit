@@ -24,7 +24,7 @@ import {
 import { Input } from "@/components/ui/Input";
 import { usePromptStore } from "@/stores/promptStore";
 
-import { PARAM_CONFIGS, getOptionsForParam } from "./const";
+import { PARAM_CONFIGS, getOptionsForParam } from "../const";
 import type { OptionButtonProps } from "./types";
 
 export function OptionButton({ paramType }: OptionButtonProps) {

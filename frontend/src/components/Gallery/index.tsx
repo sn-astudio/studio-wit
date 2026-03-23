@@ -1,14 +1,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { useTranslations } from "next-intl";
 import { Eye, Heart } from "lucide-react";
-import { GALLERY_ITEMS, STYLE_TAG_KEYS } from "./const";
-import type { CardSize } from "./types";
-
-const sizeClasses: Record<CardSize, string> = {
-  standard: "",
-  tall: "row-span-2",
-  wide: "col-span-2",
-};
+import { GALLERY_ITEMS, SIZE_CLASSES, STYLE_TAG_KEYS } from "./const";
 
 export function Gallery() {
   const t = useTranslations("Gallery");
@@ -41,7 +34,7 @@ export function Gallery() {
           {GALLERY_ITEMS.map((item) => (
             <div
               key={item.titleKey}
-              className={`group relative cursor-pointer overflow-hidden rounded-xl bg-gradient-to-br ${item.gradient} transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 ${sizeClasses[item.size]}`}
+              className={`group relative cursor-pointer overflow-hidden rounded-xl bg-gradient-to-br ${item.gradient} transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 ${SIZE_CLASSES[item.size]}`}
             >
               {/* 장식 원 */}
               <div className="absolute inset-0 flex items-center justify-center">

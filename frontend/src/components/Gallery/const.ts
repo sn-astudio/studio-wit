@@ -1,4 +1,10 @@
-import type { GalleryItem } from "./types";
+import type { CardSize, GalleryItem } from "./types";
+
+export const SIZE_CLASSES: Record<CardSize, string> = {
+  standard: "",
+  tall: "row-span-2",
+  wide: "col-span-2",
+};
 
 export const GALLERY_ITEMS: GalleryItem[] = [
   {

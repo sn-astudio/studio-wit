@@ -91,6 +91,7 @@ export interface Generation {
   completed_at: string | null;
   result_url: string | null;
   thumbnail_url: string | null;
+  aspect_ratio: string | null;
   error: GenerationError | null;
 }
 

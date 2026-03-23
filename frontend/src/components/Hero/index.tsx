@@ -12,9 +12,7 @@ import {
   Sparkles,
   Video,
 } from "lucide-react";
-import { ROTATING_WORDS } from "./const";
-
-const STAT_KEYS = ["stat1", "stat2", "stat3"] as const;
+import { ROTATING_WORDS, STAT_KEYS } from "./const";
 
 export function Hero() {
   const t = useTranslations("Hero");

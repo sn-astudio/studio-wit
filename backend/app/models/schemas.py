@@ -144,6 +144,7 @@ class Generation(BaseModel):
     completed_at: Optional[datetime] = Field(None, description="완료/실패 시각")
     result_url: Optional[str] = Field(None, description="생성된 이미지/비디오 URL (completed일 때만)")
     thumbnail_url: Optional[str] = Field(None, description="썸네일 URL")
+    aspect_ratio: Optional[str] = Field(None, description="가로세로 비율 (예: 16:9, 9:16, 1:1)")
     error: Optional[GenerationError] = Field(None, description="실패 시 에러 정보")
 
 

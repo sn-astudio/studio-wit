@@ -33,6 +33,7 @@ async def _run_generation(generation_id: str, model_id: str, request: GenerateRe
     provider = get_provider_for_model(model_id)
     model_type = get_model_type(model_id)
     params = request.params.model_dump(exclude_none=True) if request.params else {}
+    params["model_id"] = model_id
 
     async with async_session() as db:
         # status → processing
@@ -97,6 +98,15 @@ def _to_schema(gen: Generation) -> GenerationSchema:
     if gen.error_code:
         error = GenerationError(code=gen.error_code, message=gen.error_message or "")
 
+    # params_json에서 aspect_ratio 추출
+    aspect_ratio = None
+    if gen.params_json:
+        try:
+            params = json.loads(gen.params_json)
+            aspect_ratio = params.get("aspect_ratio")
+        except (json.JSONDecodeError, TypeError):
+            pass
+
     return GenerationSchema(
         id=gen.id,
         model_id=gen.model_id,
@@ -108,6 +118,7 @@ def _to_schema(gen: Generation) -> GenerationSchema:
         completed_at=gen.completed_at,
         result_url=gen.result_url,
         thumbnail_url=gen.thumbnail_url,
+        aspect_ratio=aspect_ratio,
         error=error,
     )
 

@@ -3,22 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 
-interface RotatingTextProps {
-  words: string[];
-  interval?: number;
-  className?: string;
-}
-
-const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-const FRAME_MS = 150;
-
-function randomChar() {
-  return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-}
-
-function ease(t: number) {
-  return 1 - Math.pow(1 - t, 2);
-}
+import type { RotatingTextProps } from "./types";
+import { FRAME_MS } from "./const";
+import { randomChar, ease } from "./utils";
 
 export function RotatingText({
   words,
