@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { PromptInput } from "@/components/PromptInput";
 import type { PromptInputState } from "@/components/PromptInput/types";
 import { useAuthStore } from "@/stores/auth";
+import { usePromptStore } from "@/stores/promptStore";
+import type { Generation } from "@/types/api";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCreateGeneration,
@@ -119,10 +121,16 @@ export function VideoCreateWorkspace() {
     [token, createMutation, isGenerating, t],
   );
 
-  const handleSelectGeneration = useCallback((url: string) => {
-    setCurrentGenId(null);
-    setSelectedVideoUrl(url);
-  }, []);
+  const restoreFromGeneration = usePromptStore((s) => s.restoreFromGeneration);
+
+  const handleSelectGeneration = useCallback(
+    (gen: Generation) => {
+      setCurrentGenId(null);
+      setSelectedVideoUrl(gen.result_url ?? null);
+      restoreFromGeneration(gen);
+    },
+    [restoreFromGeneration],
+  );
 
   const handleToggleHistory = useCallback(() => {
     setHistoryExpanded((prev) => !prev);

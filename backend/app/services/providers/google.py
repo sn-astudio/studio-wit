@@ -1,11 +1,14 @@
-"""Google AI Provider (Imagen 4, Veo 3)"""
+"""Google AI Provider (Imagen 4, Veo 3 / 3.1)"""
 
+import logging
 from typing import Optional
 
 import httpx
 
 from app.config import settings
 from app.services.providers.base import BaseProvider, GenerationResult
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleProvider(BaseProvider):
@@ -79,7 +82,15 @@ class GoogleProvider(BaseProvider):
         input_image_url: Optional[str] = None,
         **params,
     ) -> GenerationResult:
-        """Veo 3로 비디오 생성 (비동기 — polling 필요)"""
+        """Veo 모델로 비디오 생성 (비동기 — polling 필요)"""
+        # model_id에 따라 API 모델명 결정
+        model_id = params.get("model_id", "veo-3")
+        api_model = {
+            "veo-3": "veo-3.0-generate-001",
+            "veo-3.1": "veo-3.1-generate-preview",
+            "veo-3.1-fast": "veo-3.1-fast-generate-preview",
+        }.get(model_id, "veo-3.0-generate-001")
+
         body = {
             "instances": [{"prompt": prompt}],
             "parameters": {
@@ -92,7 +103,7 @@ class GoogleProvider(BaseProvider):
 
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
-                f"{self.BASE_URL}/models/veo-3:predict",
+                f"{self.BASE_URL}/models/{api_model}:predictLongRunning",
                 params={"key": self.api_key},
                 json=body,
             )
@@ -116,7 +127,7 @@ class GoogleProvider(BaseProvider):
         """Long-running operation 상태 확인"""
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.get(
-                f"{self.BASE_URL}/operations/{provider_job_id}",
+                f"{self.BASE_URL}/{provider_job_id}",
                 params={"key": self.api_key},
             )
 
@@ -130,8 +141,27 @@ class GoogleProvider(BaseProvider):
         data = resp.json()
         if data.get("done"):
             result = data.get("response", {})
-            predictions = result.get("predictions", [])
-            video_url = predictions[0].get("uri", "") if predictions else ""
+            video_url = ""
+
+            # Veo 3.1 응답: generateVideoResponse.generatedSamples[].video.uri
+            samples = (
+                result.get("generateVideoResponse", {})
+                .get("generatedSamples", [])
+            )
+            if samples:
+                video_url = samples[0].get("video", {}).get("uri", "")
+
+            # Veo 3 레거시 응답: predictions[].uri
+            if not video_url:
+                predictions = result.get("predictions", [])
+                if predictions:
+                    video_url = predictions[0].get("uri", "")
+
+            # Google API URL은 API 키가 필요하므로 키를 붙여 다운로드 가능하게 처리
+            if video_url and "generativelanguage.googleapis.com" in video_url:
+                separator = "&" if "?" in video_url else "?"
+                video_url = f"{video_url}{separator}key={self.api_key}"
+
             return GenerationResult(
                 status="completed",
                 result_url=video_url,

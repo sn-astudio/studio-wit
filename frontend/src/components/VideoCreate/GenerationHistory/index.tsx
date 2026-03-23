@@ -52,18 +52,27 @@ export function GenerationHistory({
             <p className="mt-1.5 text-xs text-zinc-600">{t("noHistory")}</p>
           </div>
         </div>
-      ) : (
-        <div className={expanded ? "min-h-0 flex-1 overflow-y-auto" : ""}>
-          <div
-            className={`grid gap-2.5 px-4 pb-3 [grid-auto-flow:dense] ${
-              expanded
-                ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
-                : "grid-cols-2 sm:grid-cols-3"
-            }`}
-          >
+      ) : expanded ? (
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
+          <div className="columns-3 gap-1.5 sm:columns-4 lg:columns-6">
             {generations.map((gen) => (
-              <HistoryCard key={gen.id} gen={gen} onSelect={onSelect} />
+              <div key={gen.id} className="mb-1.5 break-inside-avoid">
+                <HistoryCard gen={gen} onSelect={onSelect} />
+              </div>
             ))}
+          </div>
+        </div>
+      ) : (
+        <div className="overflow-x-auto px-4 pb-3">
+          <div className="grid auto-cols-[8rem] grid-rows-[4.5rem_4.5rem] gap-1.5 [grid-auto-flow:column_dense] sm:auto-cols-[10rem] sm:grid-rows-[5.625rem_5.625rem]">
+            {generations.map((gen) => {
+              const isVertical = gen.aspect_ratio === "9:16";
+              return (
+                <div key={gen.id} className={isVertical ? "row-span-2" : ""}>
+                  <HistoryCard gen={gen} onSelect={onSelect} />
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
