@@ -57,9 +57,10 @@ async def _run_generation(generation_id: str, model_id: str, request: GenerateRe
                     **params,
                 )
             else:
+                input_image_url = params.pop("input_image_url", None)
                 gen_result = await provider.generate_video(
                     prompt=request.prompt,
-                    input_image_url=params.get("input_image_url"),
+                    input_image_url=input_image_url,
                     **params,
                 )
 

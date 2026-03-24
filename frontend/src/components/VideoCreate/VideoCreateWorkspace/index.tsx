@@ -157,7 +157,7 @@ export function VideoCreateWorkspace() {
       )}
 
       {/* Generation history — 전체 보기 모드에서 전체 화면 차지 */}
-      <div className={historyExpanded ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "min-h-0 shrink-0 overflow-y-auto sm:max-h-[40vh]"}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <GenerationHistory
           onSelect={handleSelectGeneration}
           expanded={historyExpanded}

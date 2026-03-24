@@ -137,3 +137,87 @@ export interface LikeToggleResponse {
   is_liked: boolean;
   like_count: number;
 }
+
+// ── Video Edit ──
+
+export interface TrimRequest {
+  source_url: string;
+  start_time: number;
+  end_time: number;
+}
+
+export interface TrimResponse {
+  result_url: string;
+  duration: number;
+}
+
+export interface VideoUploadResponse {
+  url: string;
+  duration: number;
+  width: number;
+  height: number;
+}
+
+export interface VideoInfoResponse {
+  duration: number;
+  width: number;
+  height: number;
+  fps: number;
+}
+
+export interface CaptureFrameRequest {
+  source_url: string;
+  timestamp: number;
+}
+
+export interface CaptureFrameResponse {
+  image_url: string;
+}
+
+export interface MergeRequest {
+  video_urls: string[];
+}
+
+export interface MergeResponse {
+  result_url: string;
+  duration: number;
+}
+
+export interface SpeedRequest {
+  source_url: string;
+  speed: number;
+}
+
+export interface SpeedResponse {
+  result_url: string;
+}
+
+export interface ReverseRequest {
+  source_url: string;
+}
+
+export interface ReverseResponse {
+  result_url: string;
+}
+
+export interface FilterRequest {
+  source_url: string;
+  filter_name: string;
+  params?: Record<string, number>;
+}
+
+export interface FilterResponse {
+  result_url: string;
+}
+
+export interface SaveEditRequest {
+  result_url: string;
+  edit_type: string;
+  prompt?: string;
+  params_json?: string;
+}
+
+export interface SaveEditResponse {
+  id: string;
+  result_url: string;
+}

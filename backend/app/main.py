@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, gallery, generation, models
+from app.api import auth, gallery, generation, models, video_edit
 from app.config import settings
 from app.core.exceptions import AppException
 from app.core.middleware import app_exception_handler
@@ -59,6 +59,7 @@ app.include_router(auth.router)
 app.include_router(models.router)
 app.include_router(generation.router)
 app.include_router(gallery.router)
+app.include_router(video_edit.router)
 
 
 @app.get("/api/hello", tags=["Health"], summary="서버 인사")

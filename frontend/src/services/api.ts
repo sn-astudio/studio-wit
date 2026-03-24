@@ -17,6 +17,22 @@ import type {
   LikeToggleResponse,
   ModelListResponse,
   ModelType,
+  TrimRequest,
+  TrimResponse,
+  VideoInfoResponse,
+  VideoUploadResponse,
+  CaptureFrameRequest,
+  CaptureFrameResponse,
+  MergeRequest,
+  MergeResponse,
+  SpeedRequest,
+  SpeedResponse,
+  ReverseRequest,
+  ReverseResponse,
+  FilterRequest,
+  FilterResponse,
+  SaveEditRequest,
+  SaveEditResponse,
 } from "@/types/api";
 
 // ── 설정 ──
@@ -166,6 +182,103 @@ export const galleryApi = {
       `/api/gallery/${generationId}/like`,
       { method: "POST" },
     );
+  },
+};
+
+// ── Video Edit API ──
+
+const BASE_URL_RAW = BASE_URL;
+
+export const videoEditApi = {
+  /** 비디오 트리밍 */
+  trim(body: TrimRequest) {
+    return request<TrimResponse>("/api/video/trim", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 비디오 파일 업로드 (multipart) */
+  async upload(file: File): Promise<VideoUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const headers: Record<string, string> = {};
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    const res = await fetch(`${BASE_URL_RAW}/api/video/upload`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as ErrorResponse | null;
+      throw new ApiError(
+        res.status,
+        body?.error ?? { code: "UNKNOWN", message: res.statusText },
+      );
+    }
+
+    return res.json() as Promise<VideoUploadResponse>;
+  },
+
+  /** 비디오 메타데이터 조회 */
+  info(url: string) {
+    return request<VideoInfoResponse>("/api/video/info", {
+      method: "POST",
+      body: JSON.stringify({ url }),
+    });
+  },
+
+  /** 비디오 프레임 캡처 */
+  captureFrame(body: CaptureFrameRequest) {
+    return request<CaptureFrameResponse>("/api/video/capture-frame", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 비디오 합치기 */
+  merge(body: MergeRequest) {
+    return request<MergeResponse>("/api/video/merge", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 비디오 속도 변경 */
+  speed(body: SpeedRequest) {
+    return request<SpeedResponse>("/api/video/speed", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 비디오 역재생 */
+  reverse(body: ReverseRequest) {
+    return request<ReverseResponse>("/api/video/reverse", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 비디오 필터 적용 */
+  filter(body: FilterRequest) {
+    return request<FilterResponse>("/api/video/filter", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 편집 결과 저장 (merge 등 자동 저장되지 않은 결과를 히스토리에 저장) */
+  saveEdit(body: SaveEditRequest) {
+    return request<SaveEditResponse>("/api/video/save-edit", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
   },
 };
 

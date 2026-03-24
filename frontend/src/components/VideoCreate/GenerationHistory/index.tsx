@@ -1,7 +1,8 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Clock, Film } from "lucide-react";
+import { Clock, Film, Loader2 } from "lucide-react";
 
 import { useAuthStore } from "@/stores/auth";
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
@@ -17,17 +18,60 @@ export function GenerationHistory({
   const t = useTranslations("VideoCreate");
   const token = useAuthStore((s) => s.token);
 
-  const { data } = useGenerationHistory(
-    token ? { type: "video", limit: 12 } : undefined,
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGenerationHistory(
+    token ? { type: "video", limit: 20 } : undefined,
   );
 
-  const generations =
-    data?.pages.flatMap((page) => page.generations) ?? [];
+  const observerRef = useRef<HTMLDivElement>(null);
 
-  const hasItems = token && generations.length > 0;
+  useEffect(() => {
+    const el = observerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const [modelFilter, setModelFilter] = useState<string>("all");
+
+  const handleSelect = useCallback(
+    (gen: import("@/types/api").Generation) => {
+      onSelect?.(gen);
+      if (expanded && onToggleExpand) {
+        onToggleExpand();
+      }
+    },
+    [onSelect, expanded, onToggleExpand],
+  );
+
+  const allGenerations =
+    data?.pages
+      .flatMap((page) => page.generations)
+      .filter((g) => g.status !== "failed") ?? [];
+
+  const availableModels = [...new Set(allGenerations.map((g) => g.model_id))];
+
+  const generations =
+    modelFilter === "all"
+      ? allGenerations
+      : allGenerations.filter((g) => g.model_id === modelFilter);
+
+  const hasItems = token && allGenerations.length > 0;
 
   return (
-    <div className={`border-t border-zinc-800/80 ${expanded ? "flex flex-1 flex-col overflow-hidden" : ""}`}>
+    <div className="flex flex-1 flex-col overflow-hidden border-t border-zinc-800/80">
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-1.5">
           <Clock className="size-3 text-zinc-600" />
@@ -45,6 +89,37 @@ export function GenerationHistory({
         )}
       </div>
 
+      {/* 모델 필터 */}
+      {hasItems && availableModels.length > 1 && (
+        <div className="flex items-center gap-0.5 px-4 pb-2">
+          <div className="flex items-center gap-0.5 rounded-lg bg-zinc-800/60 p-0.5">
+            <button
+              onClick={() => setModelFilter("all")}
+              className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
+                modelFilter === "all"
+                  ? "bg-zinc-700 text-zinc-100"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              {t("filterAll")}
+            </button>
+            {availableModels.map((model) => (
+              <button
+                key={model}
+                onClick={() => setModelFilter(model)}
+                className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
+                  modelFilter === model
+                    ? "bg-zinc-700 text-zinc-100"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                {model}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!hasItems ? (
         <div className="flex w-full items-center justify-center py-6">
           <div className="text-center">
@@ -52,28 +127,21 @@ export function GenerationHistory({
             <p className="mt-1.5 text-xs text-zinc-600">{t("noHistory")}</p>
           </div>
         </div>
-      ) : expanded ? (
+      ) : (
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
-          <div className="columns-3 gap-1.5 sm:columns-4 lg:columns-6">
+          <div className="columns-2 gap-2 sm:columns-3 lg:columns-4">
             {generations.map((gen) => (
-              <div key={gen.id} className="mb-1.5 break-inside-avoid">
-                <HistoryCard gen={gen} onSelect={onSelect} />
+              <div key={gen.id} className="mb-2 break-inside-avoid">
+                <HistoryCard gen={gen} onSelect={handleSelect} />
               </div>
             ))}
           </div>
-        </div>
-      ) : (
-        <div className="overflow-x-auto px-4 pb-3">
-          <div className="grid auto-cols-[8rem] grid-rows-[4.5rem_4.5rem] gap-1.5 [grid-auto-flow:column_dense] sm:auto-cols-[10rem] sm:grid-rows-[5.625rem_5.625rem]">
-            {generations.map((gen) => {
-              const isVertical = gen.aspect_ratio === "9:16";
-              return (
-                <div key={gen.id} className={isVertical ? "row-span-2" : ""}>
-                  <HistoryCard gen={gen} onSelect={onSelect} />
-                </div>
-              );
-            })}
-          </div>
+          <div ref={observerRef} className="h-1" />
+          {isFetchingNextPage && (
+            <div className="flex justify-center py-2">
+              <Loader2 className="size-4 animate-spin text-zinc-500" />
+            </div>
+          )}
         </div>
       )}
     </div>

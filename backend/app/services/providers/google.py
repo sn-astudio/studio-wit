@@ -1,5 +1,6 @@
 """Google AI Provider (Imagen 4, Veo 3 / 3.1)"""
 
+import base64
 import logging
 from typing import Optional
 
@@ -91,15 +92,42 @@ class GoogleProvider(BaseProvider):
             "veo-3.1-fast": "veo-3.1-fast-generate-preview",
         }.get(model_id, "veo-3.0-generate-001")
 
+        # duration 값을 숫자로 변환하고 Veo 범위(4-8) 내로 클램핑
+        raw_duration = params.get("duration", 5)
+        try:
+            duration_sec = int(raw_duration)
+        except (ValueError, TypeError):
+            duration_sec = 5
+        duration_sec = max(4, min(8, duration_sec))
+
+        parameters = {
+            "aspectRatio": params.get("aspect_ratio", "16:9"),
+        }
+        # image-to-video 모드에서는 durationSeconds 미지원일 수 있음
+        if not input_image_url:
+            parameters["durationSeconds"] = duration_sec
+
+        logger.info("Veo request: model=%s, duration=%s, has_image=%s", api_model, duration_sec, bool(input_image_url))
+
         body = {
             "instances": [{"prompt": prompt}],
-            "parameters": {
-                "aspectRatio": params.get("aspect_ratio", "16:9"),
-                "durationSeconds": params.get("duration", 5),
-            },
+            "parameters": parameters,
         }
         if input_image_url:
-            body["instances"][0]["image"] = {"uri": input_image_url}
+            # Veo 3.1은 uri를 지원하지 않으므로 base64로 변환
+            try:
+                async with httpx.AsyncClient(timeout=60, follow_redirects=True) as dl:
+                    img_resp = await dl.get(input_image_url)
+                    img_resp.raise_for_status()
+                img_b64 = base64.b64encode(img_resp.content).decode()
+                mime_type = img_resp.headers.get("content-type", "image/png")
+                body["instances"][0]["image"] = {
+                    "bytesBase64Encoded": img_b64,
+                    "mimeType": mime_type,
+                }
+            except Exception as e:
+                logger.error("이미지 다운로드 실패: %s", e)
+                body["instances"][0]["image"] = {"uri": input_image_url}
 
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
@@ -109,10 +137,17 @@ class GoogleProvider(BaseProvider):
             )
 
         if resp.status_code != 200:
+            detail = ""
+            try:
+                err_body = resp.json()
+                detail = err_body.get("error", {}).get("message", resp.text[:200])
+            except Exception:
+                detail = resp.text[:200]
+            logger.error("Google Veo API error %s: %s", resp.status_code, detail)
             return GenerationResult(
                 status="failed",
                 error_code="PROVIDER_ERROR",
-                error_message=f"Google API 오류: {resp.status_code}",
+                error_message=f"Google API 오류: {resp.status_code} - {detail}",
             )
 
         data = resp.json()

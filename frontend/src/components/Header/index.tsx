@@ -8,14 +8,16 @@ import { useRouter, usePathname } from "@/i18n/routing";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
-import { Globe, LogOut, Menu, Moon, Sun, User, X } from "lucide-react";
+import { ChevronDown, Globe, LogOut, Menu, Moon, Sun, User, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { NAV_ITEMS } from "./const";
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [navDropdown, setNavDropdown] = useState<string | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const navDropdownRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const t = useTranslations("Header");
   const tLang = useTranslations("LanguageSwitcher");
@@ -44,6 +46,9 @@ export function Header() {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false);
       }
+      if (navDropdownRef.current && !navDropdownRef.current.contains(e.target as Node)) {
+        setNavDropdown(null);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -62,15 +67,47 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.labelKey}
-              href={item.href}
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t(item.labelKey)}
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) =>
+            item.children ? (
+              <div key={item.labelKey} className="relative" ref={navDropdownRef}>
+                <button
+                  onClick={() =>
+                    setNavDropdown((prev) =>
+                      prev === item.labelKey ? null : item.labelKey,
+                    )
+                  }
+                  className="flex cursor-pointer items-center gap-1 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t(item.labelKey)}
+                  <ChevronDown
+                    className={`size-3.5 transition-transform ${navDropdown === item.labelKey ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {navDropdown === item.labelKey && (
+                  <div className="absolute left-0 top-full mt-1 min-w-[140px] rounded-lg border border-border/80 bg-popover p-1 shadow-lg">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.labelKey}
+                        href={child.href}
+                        onClick={() => setNavDropdown(null)}
+                        className="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                      >
+                        {t(child.labelKey)}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                key={item.labelKey}
+                href={item.href}
+                className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {t(item.labelKey)}
+              </Link>
+            ),
+          )}
         </nav>
 
         {/* 데스크탑: 프로필 드롭다운 */}
@@ -167,16 +204,34 @@ export function Header() {
       {mobileOpen && (
         <div className="border-t border-border/60 bg-background px-6 pb-4 md:hidden">
           <nav className="flex flex-col gap-1 pt-2">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.labelKey}
-                href={item.href}
-                className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                onClick={() => setMobileOpen(false)}
-              >
-                {t(item.labelKey)}
-              </Link>
-            ))}
+            {NAV_ITEMS.map((item) =>
+              item.children ? (
+                <div key={item.labelKey}>
+                  <span className="block px-3 py-2 text-sm font-medium text-foreground">
+                    {t(item.labelKey)}
+                  </span>
+                  {item.children.map((child) => (
+                    <Link
+                      key={child.labelKey}
+                      href={child.href}
+                      className="block rounded-md px-6 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {t(child.labelKey)}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <Link
+                  key={item.labelKey}
+                  href={item.href}
+                  className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {t(item.labelKey)}
+                </Link>
+              ),
+            )}
           </nav>
           <Separator className="my-3" />
           <div className="flex flex-col gap-1">

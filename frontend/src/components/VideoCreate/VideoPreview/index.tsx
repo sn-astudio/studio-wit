@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback } from "react";
-import { Video, Loader2, Download } from "lucide-react";
+import { Video, Loader2, Download, Film } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/routing";
 
 import { Button } from "@/components/ui/Button";
 
@@ -15,6 +16,7 @@ export function VideoPreview({
   progress,
 }: VideoPreviewProps) {
   const t = useTranslations("VideoCreate");
+  const router = useRouter();
 
   const handleDownload = useCallback(async () => {
     if (!videoUrl) return;
@@ -63,7 +65,15 @@ export function VideoPreview({
             loop
             muted
           />
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 flex gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push(`/video-edit?url=${encodeURIComponent(videoUrl!)}`)}
+              className="size-8 cursor-pointer rounded-lg bg-black/50 p-0 backdrop-blur-sm hover:bg-primary/70"
+            >
+              <Film className="size-4" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"

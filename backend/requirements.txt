@@ -14,3 +14,4 @@ sqladmin
 fastapi-profiler-lite
 aioboto3
 aiomysql
+ffmpeg-python
