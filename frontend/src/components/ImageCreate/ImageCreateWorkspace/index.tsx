@@ -18,7 +18,6 @@ import {
 import { queryKeys } from "@/hooks/queries/keys";
 
 import { ImagePreview } from "../ImagePreview";
-import { ImageEditor } from "../ImageEditor";
 import { GenerationHistory } from "../GenerationHistory";
 import { toImageGenerateParams } from "./utils";
 
@@ -35,7 +34,6 @@ export function ImageCreateWorkspace() {
     null,
   );
   const [historyExpanded, setHistoryExpanded] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
 
   const createMutation = useCreateGeneration();
 
@@ -150,38 +148,16 @@ export function ImageCreateWorkspace() {
     setHistoryExpanded((prev) => !prev);
   }, []);
 
-  const handleEditImage = useCallback(() => {
-    if (imageUrl) setIsEditing(true);
-  }, [imageUrl]);
-
-  const handleEditorSave = useCallback((dataUrl: string) => {
-    setSelectedImageUrl(dataUrl);
-    setIsEditing(false);
-  }, []);
-
-  const handleEditorCancel = useCallback(() => {
-    setIsEditing(false);
-  }, []);
-
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden">
       {/* Image preview / editor — 전체 보기 모드에서 숨김 */}
       {!historyExpanded && (
         <div className="min-h-[30vh] shrink-0 p-3 sm:min-h-[200px] sm:flex-1 sm:p-4">
-          {isEditing && imageUrl ? (
-            <ImageEditor
-              imageUrl={imageUrl}
-              onSave={handleEditorSave}
-              onCancel={handleEditorCancel}
-            />
-          ) : (
-            <ImagePreview
-              imageUrl={imageUrl ?? undefined}
-              isGenerating={isGenerating || createMutation.isPending}
-              progress={progress}
-              onEdit={imageUrl ? handleEditImage : undefined}
-            />
-          )}
+          <ImagePreview
+            imageUrl={imageUrl ?? undefined}
+            isGenerating={isGenerating || createMutation.isPending}
+            progress={progress}
+          />
         </div>
       )}
 

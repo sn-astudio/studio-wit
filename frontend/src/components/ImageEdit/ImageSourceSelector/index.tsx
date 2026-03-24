@@ -73,7 +73,7 @@ export function ImageSourceSelector({
 
   return (
     <div className="border-t border-zinc-800/80">
-      {/* 업로드 + 모델 필터 */}
+      {/* 업로드 */}
       <div className="flex items-center gap-2 px-4 py-2">
         <Button
           variant="ghost"
@@ -97,34 +97,35 @@ export function ImageSourceSelector({
         <span className="text-[11px] text-zinc-500">
           {t("orSelectFromHistory")}
         </span>
+      </div>
 
-        <div className="ml-auto flex items-center gap-1">
+      {/* 모델 필터 */}
+      <div className="flex items-center gap-1 px-4 pb-2">
+        <button
+          onClick={() => setModelFilter(null)}
+          className={cn(
+            "cursor-pointer rounded-md px-2 py-0.5 text-[10px] transition-colors",
+            !modelFilter
+              ? "bg-primary/20 text-primary"
+              : "text-zinc-500 hover:text-zinc-300",
+          )}
+        >
+          {t("filterAll")}
+        </button>
+        {models.map((m) => (
           <button
-            onClick={() => setModelFilter(null)}
+            key={m.id}
+            onClick={() => setModelFilter(m.id)}
             className={cn(
               "cursor-pointer rounded-md px-2 py-0.5 text-[10px] transition-colors",
-              !modelFilter
+              modelFilter === m.id
                 ? "bg-primary/20 text-primary"
                 : "text-zinc-500 hover:text-zinc-300",
             )}
           >
-            {t("filterAll")}
+            {m.name}
           </button>
-          {models.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => setModelFilter(m.id)}
-              className={cn(
-                "cursor-pointer rounded-md px-2 py-0.5 text-[10px] transition-colors",
-                modelFilter === m.id
-                  ? "bg-primary/20 text-primary"
-                  : "text-zinc-500 hover:text-zinc-300",
-              )}
-            >
-              {m.name}
-            </button>
-          ))}
-        </div>
+        ))}
       </div>
 
       {/* 히스토리 그리드 */}

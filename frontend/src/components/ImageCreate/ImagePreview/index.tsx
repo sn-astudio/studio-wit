@@ -5,6 +5,7 @@ import { ImageIcon, Loader2, Download, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/Button";
+import { useRouter } from "@/i18n/routing";
 
 import type { ImagePreviewProps } from "./types";
 import { downloadImage } from "./utils";
@@ -13,9 +14,9 @@ export function ImagePreview({
   imageUrl,
   isGenerating = false,
   progress,
-  onEdit,
 }: ImagePreviewProps) {
   const t = useTranslations("ImageCreate");
+  const router = useRouter();
 
   const handleDownload = useCallback(async () => {
     if (!imageUrl) return;
@@ -63,16 +64,18 @@ export function ImagePreview({
             className="size-full object-contain"
           />
           <div className="absolute top-3 right-3 flex items-center gap-1.5">
-            {onEdit && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onEdit}
-                className="size-8 cursor-pointer rounded-lg bg-black/50 p-0 backdrop-blur-sm hover:bg-black/70"
-              >
-                <Pencil className="size-4" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                router.push(
+                  `/image-edit?img=${encodeURIComponent(imageUrl!)}`,
+                )
+              }
+              className="size-8 cursor-pointer rounded-lg bg-black/50 p-0 backdrop-blur-sm hover:bg-black/70"
+            >
+              <Pencil className="size-4" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"

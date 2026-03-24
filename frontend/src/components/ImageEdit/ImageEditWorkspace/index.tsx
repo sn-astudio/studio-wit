@@ -20,7 +20,7 @@ import { ImageSourceSelector } from "../ImageSourceSelector";
 import { EditPanel } from "../EditPanel";
 import { ImageFilterPanel } from "../ImageFilterPanel";
 import { AIEditPanel } from "../AIEditPanel";
-import type { EditTab, ImageSource } from "./types";
+import type { EditTab, ImageSource, ImageEditWorkspaceProps } from "./types";
 
 const TABS: { id: EditTab; labelKey: string; icon: typeof Scissors }[] = [
   { id: "edit", labelKey: "tabEdit", icon: Scissors },
@@ -28,10 +28,12 @@ const TABS: { id: EditTab; labelKey: string; icon: typeof Scissors }[] = [
   { id: "ai", labelKey: "tabAI", icon: Sparkles },
 ];
 
-export function ImageEditWorkspace() {
+export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps) {
   const t = useTranslations("ImageEdit");
 
-  const [source, setSource] = useState<ImageSource | null>(null);
+  const [source, setSource] = useState<ImageSource | null>(
+    initialImageUrl ? { url: initialImageUrl } : null,
+  );
   const [activeTab, setActiveTab] = useState<EditTab>("edit");
   const canvasRef = useRef<EditorCanvasHandle>(null);
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
