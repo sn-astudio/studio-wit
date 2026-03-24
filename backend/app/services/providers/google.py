@@ -197,6 +197,15 @@ class GoogleProvider(BaseProvider):
                 separator = "&" if "?" in video_url else "?"
                 video_url = f"{video_url}{separator}key={self.api_key}"
 
+            if not video_url:
+                error = data.get("error", {})
+                error_msg = error.get("message", "") if isinstance(error, dict) else ""
+                return GenerationResult(
+                    status="failed",
+                    error_code="CONTENT_POLICY",
+                    error_message=error_msg or "콘텐츠 정책에 의해 비디오가 차단되었습니다.",
+                )
+
             return GenerationResult(
                 status="completed",
                 result_url=video_url,
