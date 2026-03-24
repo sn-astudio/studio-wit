@@ -1,11 +1,15 @@
-"""Google AI Provider (Imagen 4, Veo 3)"""
+"""Google AI Provider (Imagen 4, Veo 3 / 3.1)"""
 
+import base64
+import logging
 from typing import Optional
 
 import httpx
 
 from app.config import settings
 from app.services.providers.base import BaseProvider, GenerationResult
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleProvider(BaseProvider):
@@ -79,29 +83,71 @@ class GoogleProvider(BaseProvider):
         input_image_url: Optional[str] = None,
         **params,
     ) -> GenerationResult:
-        """Veo 3로 비디오 생성 (비동기 — polling 필요)"""
+        """Veo 모델로 비디오 생성 (비동기 — polling 필요)"""
+        # model_id에 따라 API 모델명 결정
+        model_id = params.get("model_id", "veo-3")
+        api_model = {
+            "veo-3": "veo-3.0-generate-001",
+            "veo-3.1": "veo-3.1-generate-preview",
+            "veo-3.1-fast": "veo-3.1-fast-generate-preview",
+        }.get(model_id, "veo-3.0-generate-001")
+
+        # duration 값을 숫자로 변환하고 Veo 범위(4-8) 내로 클램핑
+        raw_duration = params.get("duration", 5)
+        try:
+            duration_sec = int(raw_duration)
+        except (ValueError, TypeError):
+            duration_sec = 5
+        duration_sec = max(4, min(8, duration_sec))
+
+        parameters = {
+            "aspectRatio": params.get("aspect_ratio", "16:9"),
+        }
+        # image-to-video 모드에서는 durationSeconds 미지원일 수 있음
+        if not input_image_url:
+            parameters["durationSeconds"] = duration_sec
+
+        logger.info("Veo request: model=%s, duration=%s, has_image=%s", api_model, duration_sec, bool(input_image_url))
+
         body = {
             "instances": [{"prompt": prompt}],
-            "parameters": {
-                "aspectRatio": params.get("aspect_ratio", "16:9"),
-                "durationSeconds": params.get("duration", 5),
-            },
+            "parameters": parameters,
         }
         if input_image_url:
-            body["instances"][0]["image"] = {"uri": input_image_url}
+            # Veo 3.1은 uri를 지원하지 않으므로 base64로 변환
+            try:
+                async with httpx.AsyncClient(timeout=60, follow_redirects=True) as dl:
+                    img_resp = await dl.get(input_image_url)
+                    img_resp.raise_for_status()
+                img_b64 = base64.b64encode(img_resp.content).decode()
+                mime_type = img_resp.headers.get("content-type", "image/png")
+                body["instances"][0]["image"] = {
+                    "bytesBase64Encoded": img_b64,
+                    "mimeType": mime_type,
+                }
+            except Exception as e:
+                logger.error("이미지 다운로드 실패: %s", e)
+                body["instances"][0]["image"] = {"uri": input_image_url}
 
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
-                f"{self.BASE_URL}/models/veo-3:predict",
+                f"{self.BASE_URL}/models/{api_model}:predictLongRunning",
                 params={"key": self.api_key},
                 json=body,
             )
 
         if resp.status_code != 200:
+            detail = ""
+            try:
+                err_body = resp.json()
+                detail = err_body.get("error", {}).get("message", resp.text[:200])
+            except Exception:
+                detail = resp.text[:200]
+            logger.error("Google Veo API error %s: %s", resp.status_code, detail)
             return GenerationResult(
                 status="failed",
                 error_code="PROVIDER_ERROR",
-                error_message=f"Google API 오류: {resp.status_code}",
+                error_message=f"Google API 오류: {resp.status_code} - {detail}",
             )
 
         data = resp.json()
@@ -116,7 +162,7 @@ class GoogleProvider(BaseProvider):
         """Long-running operation 상태 확인"""
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.get(
-                f"{self.BASE_URL}/operations/{provider_job_id}",
+                f"{self.BASE_URL}/{provider_job_id}",
                 params={"key": self.api_key},
             )
 
@@ -130,8 +176,36 @@ class GoogleProvider(BaseProvider):
         data = resp.json()
         if data.get("done"):
             result = data.get("response", {})
-            predictions = result.get("predictions", [])
-            video_url = predictions[0].get("uri", "") if predictions else ""
+            video_url = ""
+
+            # Veo 3.1 응답: generateVideoResponse.generatedSamples[].video.uri
+            samples = (
+                result.get("generateVideoResponse", {})
+                .get("generatedSamples", [])
+            )
+            if samples:
+                video_url = samples[0].get("video", {}).get("uri", "")
+
+            # Veo 3 레거시 응답: predictions[].uri
+            if not video_url:
+                predictions = result.get("predictions", [])
+                if predictions:
+                    video_url = predictions[0].get("uri", "")
+
+            # Google API URL은 API 키가 필요하므로 키를 붙여 다운로드 가능하게 처리
+            if video_url and "generativelanguage.googleapis.com" in video_url:
+                separator = "&" if "?" in video_url else "?"
+                video_url = f"{video_url}{separator}key={self.api_key}"
+
+            if not video_url:
+                error = data.get("error", {})
+                error_msg = error.get("message", "") if isinstance(error, dict) else ""
+                return GenerationResult(
+                    status="failed",
+                    error_code="CONTENT_POLICY",
+                    error_message=error_msg or "콘텐츠 정책에 의해 비디오가 차단되었습니다.",
+                )
+
             return GenerationResult(
                 status="completed",
                 result_url=video_url,

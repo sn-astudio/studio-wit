@@ -6,6 +6,7 @@ import {
   getDefaultParams,
 } from "@/components/PromptInput/const";
 import type { PromptMode } from "@/components/PromptInput/types";
+import type { Generation } from "@/types/api";
 
 interface PromptStore {
   mode: PromptMode;
@@ -21,6 +22,7 @@ interface PromptStore {
   addImage: (file: File) => void;
   removeImage: (index: number) => void;
   reset: () => void;
+  restoreFromGeneration: (gen: Generation) => void;
 }
 
 export const usePromptStore = create<PromptStore>((set, get) => ({
@@ -75,6 +77,26 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
       attachedImages: [],
       selectedModel: defaultModel,
       params: getDefaultParams(defaultModel, models),
+    });
+  },
+
+  restoreFromGeneration: (gen) => {
+    const models = gen.type === "image" ? IMAGE_MODELS : VIDEO_MODELS;
+    const defaultParams = getDefaultParams(gen.model_id, models);
+
+    // 생성 당시의 파라미터로 덮어쓰기
+    const restoredParams: Record<string, string | number> = {
+      ...defaultParams,
+    };
+    if (gen.aspect_ratio) {
+      restoredParams.aspectRatio = gen.aspect_ratio;
+    }
+
+    set({
+      prompt: gen.prompt,
+      selectedModel: gen.model_id,
+      params: restoredParams,
+      attachedImages: [],
     });
   },
 }));

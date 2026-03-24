@@ -1,5 +1,7 @@
+import type { Generation } from "@/types/api";
+
 export interface GenerationHistoryProps {
-  onSelect?: (url: string) => void;
+  onSelect?: (gen: Generation) => void;
   expanded?: boolean;
   onToggleExpand?: () => void;
 }

@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { PromptInput } from "@/components/PromptInput";
 import type { PromptInputState } from "@/components/PromptInput/types";
 import { useAuthStore } from "@/stores/auth";
+import { usePromptStore } from "@/stores/promptStore";
+import type { Generation } from "@/types/api";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCreateGeneration,
@@ -119,10 +121,16 @@ export function VideoCreateWorkspace() {
     [token, createMutation, isGenerating, t],
   );
 
-  const handleSelectGeneration = useCallback((url: string) => {
-    setCurrentGenId(null);
-    setSelectedVideoUrl(url);
-  }, []);
+  const restoreFromGeneration = usePromptStore((s) => s.restoreFromGeneration);
+
+  const handleSelectGeneration = useCallback(
+    (gen: Generation) => {
+      setCurrentGenId(null);
+      setSelectedVideoUrl(gen.result_url ?? null);
+      restoreFromGeneration(gen);
+    },
+    [restoreFromGeneration],
+  );
 
   const handleToggleHistory = useCallback(() => {
     setHistoryExpanded((prev) => !prev);
@@ -149,7 +157,7 @@ export function VideoCreateWorkspace() {
       )}
 
       {/* Generation history — 전체 보기 모드에서 전체 화면 차지 */}
-      <div className={historyExpanded ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "min-h-0 shrink-0 overflow-y-auto sm:max-h-[40vh]"}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <GenerationHistory
           onSelect={handleSelectGeneration}
           expanded={historyExpanded}
