@@ -208,6 +208,25 @@
     "generateSuccess": "Image generation complete!",
     "generateFailed": "Image generation failed"
   },
+  "ImageEditor": {
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "undo": "Undo",
+    "redo": "Redo",
+    "crop": "Crop",
+    "rotate": "Rotate",
+    "flipH": "Flip H",
+    "flipV": "Flip V",
+    "filter": "Filter",
+    "brightness": "Brightness",
+    "contrast": "Contrast",
+    "saturate": "Saturation",
+    "applyCrop": "Apply Crop",
+    "applyFilter": "Apply Filter",
+    "reset": "Reset",
+    "cropHint": "Drag to select an area"
+  },
   "LanguageSwitcher": {
     "ko": "한국어",
     "en": "English"
