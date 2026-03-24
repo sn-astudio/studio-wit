@@ -33,20 +33,20 @@ export const IMAGE_MODELS: ModelDefinition[] = [
     supportedParams: ["aspectRatio", "numImages"],
   },
   {
-    id: "nano-banana-2",
-    nameKey: "models.nano-banana-2",
+    id: "imagen-4",
+    nameKey: "models.imagen-4",
     icon: GoogleIcon,
     supportedParams: ["aspectRatio", "numImages"],
   },
   {
-    id: "gpt-image",
-    nameKey: "models.gpt-image",
+    id: "gpt-image-1",
+    nameKey: "models.gpt-image-1",
     icon: OpenAIIcon,
     supportedParams: ["aspectRatio", "numImages", "quality"],
   },
   {
-    id: "flux",
-    nameKey: "models.flux",
+    id: "flux-2-pro",
+    nameKey: "models.flux-2-pro",
     icon: FluxIcon,
     supportedParams: [
       "aspectRatio",
@@ -245,7 +245,7 @@ export const MODEL_PARAM_OPTIONS: Record<
       { value: "4", labelKey: "numImages.4" },
     ],
   },
-  "nano-banana-2": {
+  "imagen-4": {
     aspectRatio: [
       { value: "1:1", labelKey: "aspectRatios.1:1" },
       { value: "16:9", labelKey: "aspectRatios.16:9" },
@@ -256,10 +256,6 @@ export const MODEL_PARAM_OPTIONS: Record<
       { value: "2:3", labelKey: "aspectRatios.2:3" },
       { value: "4:5", labelKey: "aspectRatios.4:5" },
       { value: "5:4", labelKey: "aspectRatios.5:4" },
-      { value: "1:4", labelKey: "aspectRatios.1:4" },
-      { value: "4:1", labelKey: "aspectRatios.4:1" },
-      { value: "1:8", labelKey: "aspectRatios.1:8" },
-      { value: "8:1", labelKey: "aspectRatios.8:1" },
       { value: "21:9", labelKey: "aspectRatios.21:9" },
     ],
     numImages: [
@@ -269,7 +265,7 @@ export const MODEL_PARAM_OPTIONS: Record<
       { value: "4", labelKey: "numImages.4" },
     ],
   },
-  "gpt-image": {
+  "gpt-image-1": {
     aspectRatio: [
       { value: "1:1", labelKey: "aspectRatios.1:1" },
       { value: "16:9", labelKey: "aspectRatios.16:9" },
@@ -277,7 +273,7 @@ export const MODEL_PARAM_OPTIONS: Record<
     ],
     numImages: [{ value: "1", labelKey: "numImages.1" }],
   },
-  flux: {
+  "flux-2-pro": {
     aspectRatio: [
       { value: "1:1", labelKey: "aspectRatios.1:1" },
       { value: "16:9", labelKey: "aspectRatios.16:9" },
