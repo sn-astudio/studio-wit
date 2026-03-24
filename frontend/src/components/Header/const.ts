@@ -9,6 +9,13 @@ export const NAV_ITEMS: NavItem[] = [
       { labelKey: "imageEdit", href: "/image-edit" },
     ],
   },
-  { labelKey: "video", href: "/video" },
+  {
+    labelKey: "video",
+    href: "/video",
+    children: [
+      { labelKey: "videoGenerate", href: "/video" },
+      { labelKey: "videoEdit", href: "/video-edit" },
+    ],
+  },
   { labelKey: "gallery", href: "/gallery" },
 ];

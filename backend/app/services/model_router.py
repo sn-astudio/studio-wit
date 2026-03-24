@@ -13,6 +13,8 @@ from app.services.providers.openai_provider import OpenAIProvider
 MODEL_INFO: Dict[str, dict] = {
     "imagen-4": {"provider": "google", "type": "image", "name": "Imagen 4", "is_async": False},
     "veo-3": {"provider": "google", "type": "video", "name": "Veo 3", "is_async": True},
+    "veo-3.1": {"provider": "google", "type": "video", "name": "Veo 3.1", "is_async": True},
+    "veo-3.1-fast": {"provider": "google", "type": "video", "name": "Veo 3.1 Fast", "is_async": True},
     "nano-banana-pro": {"provider": "gemini", "type": "image", "name": "Nano Banana Pro", "is_async": False},
     "gpt-image-1": {"provider": "openai", "type": "image", "name": "GPT Image 1", "is_async": False},
     "sora-2": {"provider": "openai", "type": "video", "name": "Sora 2", "is_async": True},

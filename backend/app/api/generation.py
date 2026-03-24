@@ -3,6 +3,7 @@
 import json
 from typing import Optional
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy import func, select
 
@@ -56,21 +57,31 @@ async def _run_generation(generation_id: str, model_id: str, request: GenerateRe
                     **params,
                 )
             else:
+                input_image_url = params.pop("input_image_url", None)
                 gen_result = await provider.generate_video(
                     prompt=request.prompt,
-                    input_image_url=params.get("input_image_url"),
+                    input_image_url=input_image_url,
                     **params,
                 )
 
-            # 결과 반영 — gpt-image-1은 S3 업로드 후 CloudFront URL 저장
+            # 결과 반영 — 완료된 이미지/비디오는 S3 업로드 후 CloudFront URL 저장
             gen.status = gen_result.status
-            if (
-                gen_result.status == "completed"
-                and gen_result.result_url
-                and model_id in ("gpt-image-1", "gpt-image", "imagen-4", "nano-banana-pro")
-            ):
-                from app.services.storage import download_and_upload
-                gen.result_url = await download_and_upload(gen.id, gen_result.result_url)
+            if gen_result.status == "completed" and gen_result.result_url:
+                if model_type == "image":
+                    from app.services.storage import download_and_upload
+                    gen.result_url = await download_and_upload(gen.id, gen_result.result_url)
+                elif model_type == "video":
+                    from app.services.storage import upload_generation_video
+                    try:
+                        async with httpx.AsyncClient(timeout=120, follow_redirects=True) as client:
+                            resp = await client.get(gen_result.result_url)
+                            resp.raise_for_status()
+                        cdn_url = await upload_generation_video(gen.id, resp.content, "mp4")
+                        gen.result_url = cdn_url if cdn_url else gen_result.result_url
+                    except Exception:
+                        gen.result_url = gen_result.result_url
+                else:
+                    gen.result_url = gen_result.result_url
             else:
                 gen.result_url = gen_result.result_url
             gen.thumbnail_url = gen_result.thumbnail_url
@@ -214,6 +225,16 @@ async def get_generation(
             if gen_result.status == "completed" and gen.type == "image":
                 from app.services.storage import download_and_upload
                 gen.result_url = await download_and_upload(gen.id, gen_result.result_url)
+            elif gen_result.status == "completed" and gen.type == "video":
+                from app.services.storage import upload_generation_video
+                try:
+                    async with httpx.AsyncClient(timeout=120, follow_redirects=True) as client:
+                        resp = await client.get(gen_result.result_url)
+                        resp.raise_for_status()
+                    cdn_url = await upload_generation_video(gen.id, resp.content, "mp4")
+                    gen.result_url = cdn_url if cdn_url else gen_result.result_url
+                except Exception:
+                    gen.result_url = gen_result.result_url
             else:
                 gen.result_url = gen_result.result_url
         gen.thumbnail_url = gen_result.thumbnail_url or gen.thumbnail_url

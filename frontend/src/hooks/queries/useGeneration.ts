@@ -18,7 +18,13 @@ export function useGeneration(id: string | null, polling = false) {
     queryKey: queryKeys.generation.detail(id!),
     queryFn: () => generationApi.get(id!),
     enabled: !!id,
-    refetchInterval: polling ? 2000 : false,
+    refetchInterval: (query) => {
+      if (!polling) return false;
+      const status = query.state.data?.generation?.status;
+      // 완료/실패 시 폴링 자동 중단
+      if (status === "completed" || status === "failed") return false;
+      return 2000;
+    },
   });
 }
 

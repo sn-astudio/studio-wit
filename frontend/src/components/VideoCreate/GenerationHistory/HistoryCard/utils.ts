@@ -23,6 +23,17 @@ export function getAspectStyle(aspectRatio: string | null): string {
   }
 }
 
+/** 비디오 다운로드 */
+export function downloadVideo(url: string, filename: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.target = "_blank";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 /** 날짜 문자열 → 상대 시간 표시 */
 export function formatTimeAgo(dateStr: string): string {
   const date = new Date(dateStr);

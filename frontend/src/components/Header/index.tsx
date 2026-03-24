@@ -98,11 +98,13 @@ export function Header() {
                   className="flex cursor-pointer items-center gap-1 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {t(item.labelKey)}
-                  <ChevronDown className="h-3.5 w-3.5" />
+                  <ChevronDown
+                    className={`size-3.5 transition-transform ${navDropdown === item.labelKey ? "rotate-180" : ""}`}
+                  />
                 </button>
 
                 {navDropdown === item.labelKey && (
-                  <div className="absolute left-0 top-full mt-1 w-40 rounded-lg border border-border/80 bg-popover p-1 shadow-lg">
+                  <div className="absolute left-0 top-full mt-1 min-w-[140px] rounded-lg border border-border/80 bg-popover p-1 shadow-lg">
                     {item.children.map((child) => (
                       <Link
                         key={child.labelKey}
