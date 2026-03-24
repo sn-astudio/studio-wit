@@ -6,7 +6,9 @@ import { toast } from "sonner";
 
 import { PromptInput } from "@/components/PromptInput";
 import type { PromptInputState } from "@/components/PromptInput/types";
+import type { Generation } from "@/types/api";
 import { useAuthStore } from "@/stores/auth";
+import { usePromptStore } from "@/stores/promptStore";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCreateGeneration,
@@ -23,6 +25,9 @@ import { toImageGenerateParams } from "./utils";
 export function ImageCreateWorkspace() {
   const t = useTranslations("ImageCreate");
   const token = useAuthStore((s) => s.token);
+  const setPrompt = usePromptStore((s) => s.setPrompt);
+  const setSelectedModel = usePromptStore((s) => s.setSelectedModel);
+  const setParam = usePromptStore((s) => s.setParam);
 
   const queryClient = useQueryClient();
   const [currentGenId, setCurrentGenId] = useState<string | null>(null);
@@ -126,10 +131,20 @@ export function ImageCreateWorkspace() {
     [token, createMutation, isGenerating, t],
   );
 
-  const handleSelectGeneration = useCallback((url: string) => {
-    setCurrentGenId(null);
-    setSelectedImageUrl(url);
-  }, []);
+  const handleSelectGeneration = useCallback(
+    (gen: Generation) => {
+      setCurrentGenId(null);
+      setSelectedImageUrl(gen.result_url ?? null);
+
+      // promptStore에 프롬프트/모델/파라미터 복원
+      setPrompt(gen.prompt);
+      setSelectedModel(gen.model_id);
+      if (gen.aspect_ratio) {
+        setParam("aspectRatio", gen.aspect_ratio);
+      }
+    },
+    [setPrompt, setSelectedModel, setParam],
+  );
 
   const handleToggleHistory = useCallback(() => {
     setHistoryExpanded((prev) => !prev);
