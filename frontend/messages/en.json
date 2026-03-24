@@ -102,9 +102,9 @@
     "modelLabel": "Model",
     "models": {
       "nano-banana-pro": "Nano Banana Pro",
-      "nano-banana-2": "Nano Banana 2",
-      "gpt-image": "GPT Image",
-      "flux": "Flux",
+      "imagen-4": "Imagen 4",
+      "gpt-image-1": "GPT Image",
+      "flux-2-pro": "Flux",
       "veo-3_1": "Veo 3.1",
       "veo-3_1-fast": "Veo 3.1 Fast",
       "sora-2": "Sora 2",
@@ -270,6 +270,19 @@
     "brightness": "Brightness",
     "contrast": "Contrast",
     "saturation": "Saturation"
+  },
+  "ImageCreate": {
+    "generating": "Generating image...",
+    "generatingDesc": "AI is creating your image. Please wait a moment.",
+    "emptyPreview": "Image Preview",
+    "emptyPreviewDesc": "Enter a prompt and click Generate",
+    "recentGenerations": "Recent Generations",
+    "viewAll": "View All",
+    "showLess": "Show Less",
+    "noHistory": "No images generated yet",
+    "loginRequired": "Please sign in to generate images",
+    "generateSuccess": "Image generation complete!",
+    "generateFailed": "Image generation failed"
   },
   "LanguageSwitcher": {
     "ko": "한국어",
