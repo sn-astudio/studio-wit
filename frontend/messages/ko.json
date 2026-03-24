@@ -229,6 +229,31 @@
     "reset": "초기화",
     "cropHint": "드래그하여 영역을 선택하세요"
   },
+  "ImageEdit": {
+    "selectImage": "편집할 이미지를 선택하세요",
+    "uploadImage": "이미지 업로드",
+    "orSelectFromHistory": "또는 아래 히스토리에서 선택",
+    "filterAll": "전체",
+    "download": "다운로드",
+    "downloadSuccess": "다운로드가 시작되었습니다",
+    "tabEdit": "편집",
+    "tabFilter": "필터",
+    "tabAI": "AI 편집",
+    "aiPromptPlaceholder": "이 이미지를 참고하여 생성할 이미지를 설명하세요...",
+    "aiGenerate": "AI 생성",
+    "aiGenerateStarted": "AI 이미지 생성을 시작했습니다",
+    "aiGenerateError": "AI 생성에 실패했습니다",
+    "aiGenerating": "AI 이미지 생성 중...",
+    "aiGenerateComplete": "AI 이미지 생성 완료!",
+    "exportImage": "이미지 내보내기",
+    "exportSuccess": "편집한 이미지가 내보내졌습니다",
+    "useAsSource": "편집 소스로 사용",
+    "noHistory": "아직 생성된 이미지가 없습니다",
+    "elapsed": "경과",
+    "modelLabel": "모델",
+    "aspectRatio": "비율",
+    "loginRequired": "로그인이 필요합니다"
+  },
   "LanguageSwitcher": {
     "ko": "한국어",
     "en": "English"

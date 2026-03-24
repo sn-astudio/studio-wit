@@ -229,6 +229,31 @@
     "reset": "Reset",
     "cropHint": "Drag to select an area"
   },
+  "ImageEdit": {
+    "selectImage": "Select an image to edit",
+    "uploadImage": "Upload Image",
+    "orSelectFromHistory": "or select from history below",
+    "filterAll": "All",
+    "download": "Download",
+    "downloadSuccess": "Download started",
+    "tabEdit": "Edit",
+    "tabFilter": "Filter",
+    "tabAI": "AI Edit",
+    "aiPromptPlaceholder": "Describe the image you want to generate based on this reference...",
+    "aiGenerate": "AI Generate",
+    "aiGenerateStarted": "AI image generation started",
+    "aiGenerateError": "AI generation failed",
+    "aiGenerating": "Generating AI image...",
+    "aiGenerateComplete": "AI image generation complete!",
+    "exportImage": "Export Image",
+    "exportSuccess": "Edited image exported",
+    "useAsSource": "Use as source",
+    "noHistory": "No images generated yet",
+    "elapsed": "elapsed",
+    "modelLabel": "Model",
+    "aspectRatio": "Aspect Ratio",
+    "loginRequired": "Please sign in"
+  },
   "LanguageSwitcher": {
     "ko": "한국어",
     "en": "English"
