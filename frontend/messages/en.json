@@ -99,17 +99,25 @@
     "uploadFile": "Upload file",
     "selectFromGallery": "Select from image gallery",
     "noGeneratedImages": "No generated images yet",
+    "public": "Public",
+    "private": "Private",
+    "publicTooltip": "Visible in gallery",
+    "privateTooltip": "Only you can see this",
     "modelLabel": "Model",
     "models": {
       "nano-banana-pro": "Nano Banana Pro",
       "imagen-4": "Imagen 4",
       "gpt-image-1": "GPT Image",
       "flux-2-pro": "Flux",
+      "nano-banana-2": "Nano Banana 2",
+      "gpt-image": "GPT Image",
+      "flux": "Flux",
+      "veo-3": "Veo 3",
       "veo-3_1": "Veo 3.1",
       "veo-3_1-fast": "Veo 3.1 Fast",
       "sora-2": "Sora 2",
       "sora-2-pro": "Sora 2 Pro",
-      "kling-3_0-pro": "Kling 3.0 Pro"
+      "kling": "Kling"
     },
     "params": {
       "aspectRatio": "Aspect Ratio",
@@ -326,8 +334,13 @@
     "downloadMerged": "Download",
     "saveMerged": "Save",
     "mergeAgain": "Start over",
+    "save": "Save",
     "saveSuccess": "Saved to history",
     "saveError": "Failed to save",
+    "public": "Public",
+    "private": "Private",
+    "publicDescription": "Visible in gallery",
+    "privateDescription": "Only you",
     "selectVideoAction": "Select Video",
     "saveToHistory": "Save to DB",
     "downloadOnly": "Download Only",
@@ -352,7 +365,11 @@
     "filterSepia": "Sepia",
     "brightness": "Brightness",
     "contrast": "Contrast",
-    "saturation": "Saturation"
+    "saturation": "Saturation",
+    "tabSwitchConfirmTitle": "Unsaved changes",
+    "tabSwitchConfirmMessage": "Your unsaved work will be lost. Switch tab?",
+    "tabSwitchConfirm": "Switch",
+    "tabSwitchCancel": "Cancel"
   },
   "LanguageSwitcher": {
     "ko": "한국어",

@@ -38,7 +38,7 @@ class GenerationAdmin(ModelView, model=Generation):
         Generation.is_public,
         Generation.created_at,
     ]
-    column_searchable_list = [Generation.prompt, Generation.model_id]
+    column_searchable_list = [Generation.prompt, Generation.model_id, Generation.user_id]
     column_sortable_list = [
         Generation.type,
         Generation.status,

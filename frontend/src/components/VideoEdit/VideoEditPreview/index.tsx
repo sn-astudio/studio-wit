@@ -30,15 +30,15 @@ export function VideoEditPreview({
 
   if (!videoUrl) {
     return (
-      <div className="flex aspect-video max-h-[280px] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/40">
-        <Film className="mb-3 size-12 text-zinc-600" />
-        <p className="text-sm text-zinc-500">{t("selectVideo")}</p>
+      <div className="flex aspect-video max-h-[280px] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-400 bg-zinc-100/40 dark:border-zinc-700 dark:bg-zinc-900/40">
+        <Film className="mb-3 size-12 text-zinc-600 dark:text-zinc-600" />
+        <p className="text-sm text-zinc-600 dark:text-zinc-500">{t("selectVideo")}</p>
       </div>
     );
   }
 
   return (
-    <div className="flex aspect-video max-h-[280px] w-full items-center justify-center overflow-hidden rounded-2xl border border-zinc-800 bg-black">
+    <div className="flex aspect-video max-h-[280px] w-full items-center justify-center overflow-hidden rounded-2xl border border-zinc-300 bg-zinc-50 dark:border-zinc-800 dark:bg-black">
       <video
         ref={videoRef}
         src={videoUrl}

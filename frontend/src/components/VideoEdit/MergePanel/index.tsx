@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   Download,
+  Globe,
+  Lock,
   Loader2,
   Merge,
   Save,
@@ -12,16 +14,19 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
 import { useMergeVideos, useSaveEdit } from "@/hooks/queries/useVideoEdit";
+import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 
 import { downloadVideo } from "../utils";
 import type { MergeClip, MergePanelProps } from "./types";
 
-export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onMoveClipRef, onResetClipsRef, onClipsChange }: MergePanelProps) {
+export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onMoveClipRef, onResetClipsRef, onSetClipsRef, onClipsChange }: MergePanelProps) {
   const t = useTranslations("VideoEdit");
   const [clips, setClips] = useState<MergeClip[]>([]);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [clipCounter, setClipCounter] = useState(0);
+  const [isPublicSave, setIsPublicSave] = useState(false);
 
+  const notify = useNotifyOnComplete();
   const mergeMutation = useMergeVideos();
   const saveEditMutation = useSaveEdit();
 
@@ -41,12 +46,13 @@ export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onM
         result_url: resultUrl,
         edit_type: "merge",
         prompt: `Merged ${clips.length} clips`,
+        is_public: isPublicSave,
       });
       toast.success(t("saveSuccess"));
     } catch {
       toast.error(t("saveError"));
     }
-  }, [resultUrl, clips.length, saveEditMutation, t]);
+  }, [resultUrl, clips.length, saveEditMutation, t, isPublicSave]);
 
   const removeClip = useCallback((id: string) => {
     setClips((prev) => prev.filter((c) => c.id !== id));
@@ -85,6 +91,10 @@ export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onM
     onResetClipsRef?.(resetClips);
   }, [resetClips, onResetClipsRef]);
 
+  useEffect(() => {
+    onSetClipsRef?.(setClips);
+  }, [onSetClipsRef]);
+
   // 클립 변경 시 부모에 알림
   useEffect(() => {
     onClipsChange?.(clips);
@@ -102,6 +112,7 @@ export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onM
       setResultUrl(result.result_url);
       onMergeComplete?.(result.result_url);
       toast.success(t("mergeSuccess"));
+      notify(t("mergeSuccess"));
     } catch {
       toast.error(t("mergeError"));
     }
@@ -111,7 +122,7 @@ export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onM
     <div className="space-y-3">
       {!resultUrl && (
         <>
-          <p className="text-xs text-zinc-400">{t("mergeDescription")}</p>
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">{t("mergeDescription")}</p>
 
           {/* 합치기 버튼 */}
           <Button
@@ -152,9 +163,17 @@ export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onM
                   {t("mergeComplete")}
                 </span>
               </div>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
                 {t("mergeResultReady")}
               </p>
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                onClick={() => setIsPublicSave(!isPublicSave)}
+              >
+                {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
+                <span className="text-zinc-700 dark:text-zinc-300">{isPublicSave ? t("public") : t("private")}</span>
+              </button>
               <div className="flex gap-1.5">
                 <Button
                   size="sm"

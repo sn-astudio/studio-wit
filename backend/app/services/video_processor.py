@@ -91,10 +91,13 @@ async def capture_frame(video_url: str, timestamp: float) -> str:
             tempfile.gettempdir(), f"frame_{uuid.uuid4().hex}.png"
         )
 
+        # ss를 input 옵션으로 넣으면 키프레임 기반 seek → 빈 프레임 가능
+        # input에서 디코딩 후 정확한 시간의 프레임을 캡처하기 위해
+        # ss를 output 옵션으로 사용
         (
             ffmpeg
-            .input(input_path, ss=timestamp)
-            .output(output_path, vframes=1, format="image2")
+            .input(input_path)
+            .output(output_path, ss=timestamp, vframes=1, format="image2")
             .overwrite_output()
             .run(quiet=True)
         )

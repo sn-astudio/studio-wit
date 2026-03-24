@@ -11,7 +11,7 @@ export function CfgScaleSlider({ value, onChange }: CfgScaleSliderProps) {
         <span className="text-xs text-zinc-500">
           {config.min}
         </span>
-        <span className="text-xs font-medium text-zinc-300">{value}</span>
+        <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{value}</span>
         <span className="text-xs text-zinc-500">
           {config.max}
         </span>
@@ -23,7 +23,7 @@ export function CfgScaleSlider({ value, onChange }: CfgScaleSliderProps) {
         step={config.step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-zinc-800 accent-primary"
+        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-zinc-200 accent-primary dark:bg-zinc-800"
       />
     </div>
   );

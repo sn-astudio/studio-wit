@@ -63,6 +63,7 @@ export interface GenerateParams {
   style?: string;
   quality?: string;
   guidance_scale?: number;
+  cfg_scale?: number;
   num_steps?: number;
   duration?: number;
   input_image_url?: string;
@@ -73,6 +74,7 @@ export interface GenerateRequest {
   prompt: string;
   negative_prompt?: string;
   params?: GenerateParams;
+  is_public?: boolean;
 }
 
 export interface GenerationError {
@@ -215,6 +217,7 @@ export interface SaveEditRequest {
   edit_type: string;
   prompt?: string;
   params_json?: string;
+  is_public?: boolean;
 }
 
 export interface SaveEditResponse {

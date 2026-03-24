@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 
 import { Button } from "@/components/ui/Button";
+import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import {
   useSpeedVideo,
   useReverseVideo,
@@ -28,8 +29,9 @@ const FILTER_PRESETS = [
   { id: "sepia", labelKey: "filterSepia" },
 ] as const;
 
-export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter }: EffectsPanelProps) {
+export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDirty }: EffectsPanelProps) {
   const t = useTranslations("VideoEdit");
+  const notify = useNotifyOnComplete();
 
   // 속도
   const [speed, setSpeed] = useState(1);
@@ -40,6 +42,13 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter }: Ef
   const [saturation, setSaturation] = useState(1);
   // 결과
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+
+  // 변경 감지
+  useEffect(() => {
+    if (speed !== 1 || selectedFilter !== "none" || brightness !== 0 || contrast !== 1 || saturation !== 1) {
+      onDirty?.();
+    }
+  }, [speed, selectedFilter, brightness, contrast, saturation, onDirty]);
 
   // 실시간 CSS filter 프리뷰
   useEffect(() => {
@@ -75,10 +84,11 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter }: Ef
       setResultUrl(result.result_url);
       onEffectApplied?.(result.result_url);
       toast.success(t("effectApplied"));
+      notify(t("effectApplied"));
     } catch {
       toast.error(t("effectError"));
     }
-  }, [sourceUrl, speed, speedMutation, onEffectApplied, t]);
+  }, [sourceUrl, speed, speedMutation, onEffectApplied, t, notify]);
 
   const handleReverse = useCallback(async () => {
     if (!sourceUrl) return;
@@ -89,10 +99,11 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter }: Ef
       setResultUrl(result.result_url);
       onEffectApplied?.(result.result_url);
       toast.success(t("effectApplied"));
+      notify(t("effectApplied"));
     } catch {
       toast.error(t("effectError"));
     }
-  }, [sourceUrl, reverseMutation, onEffectApplied, t]);
+  }, [sourceUrl, reverseMutation, onEffectApplied, t, notify]);
 
   const handleApplyFilter = useCallback(async () => {
     if (!sourceUrl) return;
@@ -116,6 +127,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter }: Ef
       setResultUrl(result.result_url);
       onEffectApplied?.(result.result_url);
       toast.success(t("effectApplied"));
+      notify(t("effectApplied"));
     } catch {
       toast.error(t("effectError"));
     }
@@ -128,6 +140,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter }: Ef
     filterMutation,
     onEffectApplied,
     t,
+    notify,
   ]);
 
   return (
@@ -149,7 +162,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter }: Ef
               className={`rounded-md px-2 py-1 text-xs transition-colors ${
                 speed === s
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-800/60 text-zinc-400 hover:text-zinc-200"
+                  : "bg-zinc-200/60 text-zinc-500 hover:text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:text-zinc-200"
               }`}
             >
               {s}x
@@ -210,7 +223,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter }: Ef
               className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
                 selectedFilter === f.id
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-800/60 text-zinc-400 hover:text-zinc-200"
+                  : "bg-zinc-200/60 text-zinc-500 hover:text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:text-zinc-200"
               }`}
             >
               {t(f.labelKey)}
@@ -301,7 +314,7 @@ function SliderControl({
         className="flex-1"
       >
         <SliderPrimitive.Control className="relative flex h-4 w-full cursor-pointer items-center">
-          <SliderPrimitive.Track className="h-1 w-full rounded-full bg-zinc-800">
+          <SliderPrimitive.Track className="h-1 w-full rounded-full bg-zinc-200 dark:bg-zinc-800">
             <SliderPrimitive.Indicator className="rounded-full bg-primary" />
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb className="block size-3 rounded-full border-2 border-primary bg-background shadow-sm" />

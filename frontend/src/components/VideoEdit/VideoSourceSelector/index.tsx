@@ -1,16 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, Upload, Loader2, Plus } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Upload,
+  Loader2,
+  Plus,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/Button";
 import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/Tooltip";
-import { TooltipProvider } from "@/components/ui/Tooltip";
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
 import { useUploadVideo } from "@/hooks/queries/useVideoEdit";
 import { downloadVideo } from "../utils";
@@ -27,6 +34,7 @@ export function VideoSourceSelector({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadVideo();
   const [modelFilter, setModelFilter] = useState<string>("all");
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const {
     data: historyData,
@@ -59,12 +67,10 @@ export function VideoSourceSelector({
   const allGenerations =
     historyData?.pages.flatMap((p) => p.generations) ?? [];
 
-  // 사용 가능한 모델 목록 추출
   const availableModels = [
     ...new Set(allGenerations.map((g) => g.model_id)),
   ];
 
-  // 모델 필터 적용
   const completedVideos =
     modelFilter === "all"
       ? allGenerations
@@ -78,80 +84,108 @@ export function VideoSourceSelector({
 
       try {
         const result = await uploadMutation.mutateAsync(file);
-        onSourceSelected({
-          url: result.url,
-          duration: result.duration,
-          width: result.width,
-          height: result.height,
-          name: file.name,
-        });
+        if (mergeMode && onAddToMerge) {
+          onAddToMerge(result.url, file.name);
+        } else {
+          onSourceSelected({
+            url: result.url,
+            duration: result.duration,
+            width: result.width,
+            height: result.height,
+            name: file.name,
+          });
+        }
       } catch {
         // TODO: toast error
       }
     },
-    [uploadMutation, onSourceSelected],
+    [uploadMutation, onSourceSelected, mergeMode, onAddToMerge],
+  );
+
+  const handleSelectVideo = useCallback(
+    (gen: (typeof allGenerations)[0]) => {
+      if (onSelectVideo) {
+        onSelectVideo(gen.result_url!, gen.prompt);
+      } else if (mergeMode && onAddToMerge) {
+        onAddToMerge(gen.result_url!, gen.prompt.slice(0, 30));
+      } else {
+        onSourceSelected({
+          url: gen.result_url!,
+          duration: 0,
+          width: 0,
+          height: 0,
+          name: gen.prompt.slice(0, 30),
+        });
+      }
+    },
+    [onSelectVideo, mergeMode, onAddToMerge, onSourceSelected],
   );
 
   const uploading = uploadMutation.isPending || isLoading;
+  const hasItems = completedVideos.length > 0;
 
   return (
-    <div className="space-y-3">
-      {/* 업로드 버튼 */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          disabled={uploading}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {uploading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Upload className="size-4" />
+    <div className="space-y-2">
+      {/* 헤더: 업로드 + 필터 + 접기 */}
+      <div className="flex items-center justify-between px-0.5">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1.5 text-xs"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Upload className="size-3.5" />
+            )}
+            {t("uploadVideo")}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          {/* 모델 필터 */}
+          {hasItems && availableModels.length > 1 && (
+            <Select value={modelFilter} onValueChange={setModelFilter}>
+              <SelectTrigger className="h-6 w-auto min-w-[80px] gap-1 border-zinc-400 bg-zinc-100/60 px-2 text-[11px] dark:border-zinc-700 dark:bg-zinc-800/60">
+                {modelFilter === "all" ? t("filterAll") : modelFilter}
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("filterAll")}</SelectItem>
+                {availableModels.map((model) => (
+                  <SelectItem key={model} value={model}>
+                    {model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
-          {t("uploadVideo")}
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="video/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        <span className="text-xs text-zinc-500">{t("orSelectFromHistory")}</span>
+        </div>
+
+        {hasItems && (
+          <button
+            onClick={() => setIsExpanded((v) => !v)}
+            className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            {isExpanded ? (
+              <ChevronUp className="size-3.5" />
+            ) : (
+              <ChevronDown className="size-3.5" />
+            )}
+            {completedVideos.length}
+          </button>
+        )}
       </div>
 
-      {/* 모델 필터 */}
-      {availableModels.length > 1 && (
-        <div className="flex items-center gap-0.5 rounded-lg bg-zinc-800/60 p-0.5">
-          <button
-            onClick={() => setModelFilter("all")}
-            className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-              modelFilter === "all"
-                ? "bg-zinc-700 text-zinc-100"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            {t("filterAll")}
-          </button>
-          {availableModels.map((model) => (
-            <button
-              key={model}
-              onClick={() => setModelFilter(model)}
-              className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-                modelFilter === model
-                  ? "bg-zinc-700 text-zinc-100"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              {model}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {completedVideos.length > 0 && (
+      {/* 그리드 */}
+      {hasItems && isExpanded && (
         <>
           {mergeMode && (
             <p className="flex items-center gap-1.5 text-xs text-primary">
@@ -159,27 +193,13 @@ export function VideoSourceSelector({
               {t("clickToAddClip")}
             </p>
           )}
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-5 sm:gap-2">
             {completedVideos.map((gen) => (
               <div
                 key={gen.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => {
-                  if (onSelectVideo) {
-                    onSelectVideo(gen.result_url!, gen.prompt);
-                  } else if (mergeMode && onAddToMerge) {
-                    onAddToMerge(gen.result_url!, gen.prompt.slice(0, 30));
-                  } else {
-                    onSourceSelected({
-                      url: gen.result_url!,
-                      duration: 0,
-                      width: 0,
-                      height: 0,
-                      name: gen.prompt.slice(0, 30),
-                    });
-                  }
-                }}
+                onClick={() => handleSelectVideo(gen)}
                 onMouseEnter={(e) => {
                   const video = e.currentTarget.querySelector("video");
                   video?.play().catch(() => {});
@@ -194,7 +214,7 @@ export function VideoSourceSelector({
                 className={`group relative aspect-video cursor-pointer overflow-hidden rounded-lg border transition-colors ${
                   mergeMode
                     ? "border-primary/30 hover:border-primary"
-                    : "border-zinc-800 hover:border-zinc-600"
+                    : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
                 }`}
               >
                 <video
@@ -213,26 +233,22 @@ export function VideoSourceSelector({
                   </div>
                 )}
                 {/* 다운로드 버튼 */}
-                <TooltipProvider delay={200}>
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            downloadVideo(gen.result_url!, `${gen.model_id}_${gen.id.slice(0, 8)}.mp4`);
-                          }}
-                          className="absolute top-1.5 right-1.5 flex size-7 cursor-pointer items-center justify-center rounded-full bg-black/60 text-zinc-200 opacity-0 transition-opacity hover:bg-black/80 hover:text-white group-hover:opacity-100"
-                        />
-                      }
-                    >
-                      <Download className="size-4" />
-                    </TooltipTrigger>
-                    <TooltipContent>{t("download")}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 pt-4 opacity-0 transition-opacity group-hover:opacity-100">
-                  <p className="truncate text-[9px] text-zinc-300">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    downloadVideo(
+                      gen.result_url!,
+                      `${gen.model_id}_${gen.id.slice(0, 8)}.mp4`,
+                    );
+                  }}
+                  className="absolute top-1 right-1 z-10 flex size-6 cursor-pointer items-center justify-center rounded-full bg-black/60 text-zinc-200 opacity-100 hover:bg-black/80 hover:text-white sm:top-1.5 sm:right-1.5 sm:size-7 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100"
+                >
+                  <Download className="size-3 sm:size-4" />
+                </button>
+                {/* 프롬프트 오버레이 */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1 pt-3 sm:p-1.5 sm:pt-4 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                  <p className="truncate text-[9px] text-zinc-300 sm:text-[10px]">
                     {gen.prompt}
                   </p>
                 </div>
