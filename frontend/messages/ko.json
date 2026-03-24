@@ -5,6 +5,8 @@
   },
   "Header": {
     "image": "Image",
+    "imageGenerate": "이미지 생성",
+    "imageEdit": "이미지 편집",
     "video": "Video",
     "gallery": "Gallery",
     "signOut": "로그아웃",

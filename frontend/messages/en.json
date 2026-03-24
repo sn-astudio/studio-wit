@@ -5,6 +5,8 @@
   },
   "Header": {
     "image": "Image",
+    "imageGenerate": "Generate",
+    "imageEdit": "Edit",
     "video": "Video",
     "gallery": "Gallery",
     "signOut": "Sign out",
