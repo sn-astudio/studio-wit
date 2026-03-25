@@ -8,7 +8,16 @@ import { useRouter, usePathname } from "@/i18n/routing";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
-import { ChevronDown, Globe, LogOut, Menu, Moon, Sun, User, X } from "lucide-react";
+import {
+  ChevronDown,
+  Globe,
+  LogOut,
+  Menu,
+  Moon,
+  Sun,
+  User,
+  X,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { NAV_ITEMS } from "./const";
 
@@ -43,10 +52,16 @@ export function Header() {
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(e.target as Node)
+      ) {
         setProfileOpen(false);
       }
-      if (navDropdownRef.current && !navDropdownRef.current.contains(e.target as Node)) {
+      if (
+        navDropdownRef.current &&
+        !navDropdownRef.current.contains(e.target as Node)
+      ) {
         setNavDropdown(null);
       }
     };
@@ -69,7 +84,11 @@ export function Header() {
         <nav className="hidden items-center gap-1 md:flex">
           {NAV_ITEMS.map((item) =>
             item.children ? (
-              <div key={item.labelKey} className="relative" ref={navDropdownRef}>
+              <div
+                key={item.labelKey}
+                className="relative"
+                ref={navDropdownRef}
+              >
                 <button
                   onClick={() =>
                     setNavDropdown((prev) =>
@@ -83,14 +102,15 @@ export function Header() {
                     className={`size-3.5 transition-transform ${navDropdown === item.labelKey ? "rotate-180" : ""}`}
                   />
                 </button>
+
                 {navDropdown === item.labelKey && (
                   <div className="absolute left-0 top-full mt-1 min-w-[140px] rounded-lg border border-border/80 bg-popover p-1 shadow-lg">
                     {item.children.map((child) => (
                       <Link
                         key={child.labelKey}
                         href={child.href}
-                        onClick={() => setNavDropdown(null)}
                         className="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                        onClick={() => setNavDropdown(null)}
                       >
                         {t(child.labelKey)}
                       </Link>

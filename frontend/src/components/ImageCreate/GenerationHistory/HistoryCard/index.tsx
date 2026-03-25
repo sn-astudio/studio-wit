@@ -19,7 +19,7 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
     <button
       onClick={() => {
         if (!isCompleted) return;
-        onSelect?.(gen.result_url!);
+        onSelect?.(gen);
       }}
       disabled={!isCompleted}
       style={{ aspectRatio: aspectStyle }}
