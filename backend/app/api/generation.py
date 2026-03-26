@@ -64,6 +64,9 @@ async def _run_generation(generation_id: str, model_id: str, request: GenerateRe
                 )
             else:
                 input_image_url = params.pop("input_image_url", None)
+                # negative_prompt를 params에 포함 (Kling 등에서 사용)
+                if request.negative_prompt:
+                    params["negative_prompt"] = request.negative_prompt
                 gen_result = await provider.generate_video(
                     prompt=request.prompt,
                     input_image_url=input_image_url,
@@ -176,6 +179,7 @@ async def create_generation(
         prompt=body.prompt,
         negative_prompt=body.negative_prompt,
         params_json=json.dumps(body.params.model_dump(exclude_none=True)) if body.params else None,
+        is_public=body.is_public if body.is_public is not None else False,
     )
     db.add(gen)
     await db.commit()

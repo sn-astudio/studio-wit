@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import { TOOLS } from "./const";
 
 export function Features() {
@@ -25,34 +26,43 @@ export function Features() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {TOOLS.map((tool) => (
-            <Card
-              key={tool.titleKey}
-              className="group cursor-pointer border-border/60 bg-card/80 transition-all duration-300 hover:border-primary/40 hover:bg-card"
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary transition-colors group-hover:bg-primary/25">
-                    <tool.icon className="h-5 w-5" />
+          {TOOLS.map((tool) => {
+            const card = (
+              <Card
+                key={tool.titleKey}
+                className="group cursor-pointer border-border/60 bg-card/80 transition-all duration-300 hover:border-primary/40 hover:bg-card"
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary transition-colors group-hover:bg-primary/25">
+                      <tool.icon className="h-5 w-5" />
+                    </div>
+                    {tool.badgeKey && (
+                      <Badge
+                        variant="secondary"
+                        className="text-xs font-medium text-primary"
+                      >
+                        {t(tool.badgeKey)}
+                      </Badge>
+                    )}
                   </div>
-                  {tool.badgeKey && (
-                    <Badge
-                      variant="secondary"
-                      className="text-xs font-medium text-primary"
-                    >
-                      {t(tool.badgeKey)}
-                    </Badge>
-                  )}
-                </div>
-                <CardTitle className="mt-3 text-base">
-                  {t(tool.titleKey)}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>{t(tool.descriptionKey)}</CardDescription>
-              </CardContent>
-            </Card>
-          ))}
+                  <CardTitle className="mt-3 text-base">
+                    {t(tool.titleKey)}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>{t(tool.descriptionKey)}</CardDescription>
+                </CardContent>
+              </Card>
+            );
+            return tool.href ? (
+              <Link key={tool.titleKey} href={tool.href}>
+                {card}
+              </Link>
+            ) : (
+              <div key={tool.titleKey}>{card}</div>
+            );
+          })}
         </div>
       </div>
     </section>

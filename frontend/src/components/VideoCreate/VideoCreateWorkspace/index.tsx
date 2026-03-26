@@ -21,13 +21,16 @@ import { doesModelSupportImageInput } from "@/components/PromptInput/const";
 
 import { VideoPreview } from "../VideoPreview";
 import { GenerationHistory } from "../GenerationHistory";
-import { toGenerateParams } from "./utils";
+import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
+
+import { extractNegativePrompt, toGenerateParams } from "./utils";
 
 export function VideoCreateWorkspace() {
   const t = useTranslations("VideoCreate");
   const token = useAuthStore((s) => s.token);
 
   const queryClient = useQueryClient();
+  const notify = useNotifyOnComplete();
   const [currentGenId, setCurrentGenId] = useState<string | null>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [historyExpanded, setHistoryExpanded] = useState(false);
@@ -81,17 +84,19 @@ export function VideoCreateWorkspace() {
       if (currentGen.status === "completed") {
         handledIdsRef.current.add(currentGen.id);
         toast.success(t("generateSuccess"));
+        notify(t("generateSuccess"), currentGen.prompt ?? undefined);
         setSelectedVideoUrl(currentGen.result_url ?? null);
         setCurrentGenId(null);
         queryClient.invalidateQueries({ queryKey: queryKeys.generation.all });
       } else if (currentGen.status === "failed") {
         handledIdsRef.current.add(currentGen.id);
         toast.error(currentGen.error?.message ?? t("generateFailed"));
+        notify(t("generateFailed"), currentGen.error?.message ?? undefined);
         setCurrentGenId(null);
         queryClient.invalidateQueries({ queryKey: queryKeys.generation.all });
       }
     }
-  }, [currentGen, t, queryClient]);
+  }, [currentGen, t, queryClient, notify]);
 
   const handleSubmit = useCallback(
     async (state: PromptInputState) => {
@@ -102,6 +107,7 @@ export function VideoCreateWorkspace() {
       if (createMutation.isPending || uploadImageMutation.isPending || isGenerating) return;
 
       const params = toGenerateParams(state.params);
+      const negative_prompt = extractNegativePrompt(state.params);
 
       // 비지원 모델에 이미지 첨부 시 차단
       if (state.attachedImages.length > 0 && !doesModelSupportImageInput(state.selectedModel)) {
@@ -124,13 +130,16 @@ export function VideoCreateWorkspace() {
         {
           model_id: state.selectedModel,
           prompt: state.prompt,
+          negative_prompt,
           params,
+          is_public: state.isPublic,
         },
         {
           onSuccess: (res) => {
             setSelectedVideoUrl(null);
             prevStatusRef.current = res.generation.status;
             setCurrentGenId(res.generation.id);
+            usePromptStore.getState().setPrompt("");
           },
           onError: (err) => {
             toast.error(err.message || t("generateFailed"));
@@ -148,6 +157,8 @@ export function VideoCreateWorkspace() {
       setCurrentGenId(null);
       setSelectedVideoUrl(gen.result_url ?? null);
       restoreFromGeneration(gen);
+      // 모바일: 스크롤 맨 위로
+      window.scrollTo({ top: 0, behavior: "instant" });
     },
     [restoreFromGeneration],
   );
@@ -157,10 +168,10 @@ export function VideoCreateWorkspace() {
   }, []);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden">
+    <div className="min-h-[calc(100vh-64px)]">
       {/* Video preview — 전체 보기 모드에서 숨김 */}
       {!historyExpanded && (
-        <div className="min-h-[30vh] shrink-0 p-3 sm:min-h-[200px] sm:flex-1 sm:p-4">
+        <div className="aspect-video max-h-[40vh] p-3 sm:aspect-auto sm:h-[45vh] sm:max-h-none sm:p-4">
           <VideoPreview
             videoUrl={videoUrl ?? undefined}
             isGenerating={isGenerating || createMutation.isPending}
@@ -171,19 +182,17 @@ export function VideoCreateWorkspace() {
 
       {/* PromptInput — 전체 보기 모드에서 숨김 */}
       {!historyExpanded && (
-        <div className="shrink-0 px-3 pb-2 sm:px-4 sm:pb-3">
+        <div className="px-3 pb-2 sm:px-4 sm:pb-3">
           <PromptInput mode="video" disabled={isGenerating || createMutation.isPending || uploadImageMutation.isPending} onSubmit={handleSubmit} />
         </div>
       )}
 
-      {/* Generation history — 전체 보기 모드에서 전체 화면 차지 */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <GenerationHistory
-          onSelect={handleSelectGeneration}
-          expanded={historyExpanded}
-          onToggleExpand={handleToggleHistory}
-        />
-      </div>
+      {/* Generation history */}
+      <GenerationHistory
+        onSelect={handleSelectGeneration}
+        expanded={historyExpanded}
+        onToggleExpand={handleToggleHistory}
+      />
     </div>
   );
 }

@@ -47,6 +47,7 @@ export interface PromptInputState {
   attachedImages: File[];
   selectedModel: string;
   params: Record<string, string | number>;
+  isPublic: boolean;
 }
 
 export interface PromptInputProps {

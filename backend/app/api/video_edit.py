@@ -4,8 +4,11 @@ import uuid
 import logging
 from datetime import datetime, timezone
 from typing import Optional
+from urllib.parse import unquote
 
-from fastapi import APIRouter, Depends, UploadFile, File
+import httpx
+from fastapi import APIRouter, Depends, Query, UploadFile, File
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.dependencies import get_current_user
@@ -98,6 +101,7 @@ class SaveEditRequest(BaseModel):
     edit_type: str = Field(..., description="편집 타입 (merge, trim, speed, reverse, filter)")
     prompt: str = Field(default="", description="결과 설명/프롬프트")
     params_json: Optional[str] = Field(None, description="편집 파라미터 JSON")
+    is_public: Optional[bool] = Field(False, description="갤러리 공개 여부")
 
 
 class SaveEditResponse(BaseModel):
@@ -253,7 +257,7 @@ async def save_edit_endpoint(
         prompt=req.prompt or f"Edited with {req.edit_type}",
         params_json=req.params_json or "{}",
         result_url=req.result_url,
-        is_public=False,
+        is_public=req.is_public if req.is_public is not None else False,
         created_at=now,
         completed_at=now,
     )
@@ -263,3 +267,28 @@ async def save_edit_endpoint(
         db.refresh(gen)
 
     return SaveEditResponse(id=gen.id, result_url=gen.result_url)
+
+
+@router.get("/download", summary="비디오 다운로드 프록시")
+async def download_proxy(
+    url: str = Query(..., description="다운로드할 비디오 URL"),
+    filename: str = Query("video.mp4", description="저장 파일명"),
+    user: User = Depends(get_current_user),
+):
+    """외부 URL의 비디오를 프록시하여 다운로드 헤더와 함께 반환한다."""
+    decoded_url = unquote(url)
+
+    async def stream():
+        async with httpx.AsyncClient(follow_redirects=True, timeout=120) as client:
+            async with client.stream("GET", decoded_url) as resp:
+                resp.raise_for_status()
+                async for chunk in resp.aiter_bytes(chunk_size=65536):
+                    yield chunk
+
+    return StreamingResponse(
+        stream(),
+        media_type="video/mp4",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )

@@ -1,3 +1,5 @@
+import type { Dispatch, SetStateAction } from "react";
+
 export interface MergeClip {
   id: string;
   url: string;
@@ -11,5 +13,6 @@ export interface MergePanelProps {
   onRemoveClipRef?: (removeClip: (id: string) => void) => void;
   onMoveClipRef?: (moveClip: (idx: number, direction: -1 | 1) => void) => void;
   onResetClipsRef?: (resetClips: () => void) => void;
+  onSetClipsRef?: (setClips: Dispatch<SetStateAction<MergeClip[]>>) => void;
   onClipsChange?: (clips: MergeClip[]) => void;
 }

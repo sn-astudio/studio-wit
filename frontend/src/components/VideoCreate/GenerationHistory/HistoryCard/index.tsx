@@ -57,8 +57,8 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
         isProcessing
           ? "pointer-events-none border border-primary/20 bg-primary/5"
           : isFailed
-            ? "pointer-events-none border border-red-900/40 bg-red-950/20 opacity-60"
-            : "border border-zinc-800/60 bg-zinc-900/60 transition-colors hover:border-zinc-700 cursor-pointer"
+            ? "pointer-events-none border border-red-300/40 bg-red-50/20 opacity-60 dark:border-red-900/40 dark:bg-red-950/20"
+            : "cursor-pointer border border-zinc-200/60 bg-zinc-100/60 transition-colors hover:border-zinc-300 dark:border-zinc-800/60 dark:bg-zinc-900/60 dark:hover:border-zinc-700"
       }`}
     >
       {/* Thumbnail / Video */}
@@ -88,13 +88,13 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
       )}
       {isCompleted && !hovering && !gen.thumbnail_url && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <Play className="size-4 text-zinc-600 transition-colors group-hover:text-zinc-400" />
+          <Play className="size-4 text-zinc-400 transition-colors group-hover:text-zinc-500 dark:text-zinc-600 dark:group-hover:text-zinc-400" />
         </div>
       )}
 
-      {/* 호버 액션 버튼 */}
+      {/* 호버 액션 버튼 — 모바일에서 항상 보이도록 */}
       {isCompleted && gen.result_url && (
-        <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="absolute top-1 right-1 flex gap-0.5 opacity-100 sm:top-1.5 sm:right-1.5 sm:gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
           <TooltipProvider delay={200}>
             <Tooltip>
               <TooltipTrigger
@@ -104,11 +104,11 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
                       e.stopPropagation();
                       router.push(`/video-edit?url=${encodeURIComponent(gen.result_url!)}`);
                     }}
-                    className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-black/60 text-zinc-200 transition-colors hover:bg-primary/80 hover:text-white"
+                    className="flex size-6 cursor-pointer items-center justify-center rounded-full bg-black/60 text-zinc-200 transition-colors hover:bg-primary/80 hover:text-white sm:size-7"
                   />
                 }
               >
-                <Film className="size-3.5" />
+                <Film className="size-3 sm:size-3.5" />
               </TooltipTrigger>
               <TooltipContent>편집</TooltipContent>
             </Tooltip>
@@ -122,11 +122,11 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
                       e.stopPropagation();
                       downloadVideo(gen.result_url!, `${gen.model_id}_${gen.id.slice(0, 8)}.mp4`);
                     }}
-                    className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-black/60 text-zinc-200 transition-colors hover:bg-black/80 hover:text-white"
+                    className="flex size-6 cursor-pointer items-center justify-center rounded-full bg-black/60 text-zinc-200 transition-colors hover:bg-black/80 hover:text-white sm:size-7"
                   />
                 }
               >
-                <Download className="size-4" />
+                <Download className="size-3 sm:size-4" />
               </TooltipTrigger>
               <TooltipContent>다운로드</TooltipContent>
             </Tooltip>
@@ -134,9 +134,9 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
         </div>
       )}
 
-      {/* Bottom gradient overlay with info */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1.5 pt-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-        <p className="truncate text-left text-[9px] leading-tight text-zinc-200">
+      {/* Bottom gradient overlay with info — 모바일에서 항상 시간 표시 */}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1 pt-3 sm:p-1.5 sm:pt-4 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+        <p className="hidden truncate text-left text-[9px] leading-tight text-zinc-200 sm:block">
           {gen.prompt}
         </p>
         <span className="text-[8px] text-zinc-400">{timeAgo}</span>

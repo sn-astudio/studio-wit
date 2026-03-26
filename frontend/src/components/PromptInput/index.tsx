@@ -85,6 +85,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
       attachedImages: state.attachedImages,
       selectedModel: state.selectedModel,
       params: state.params,
+      isPublic: state.isPublic,
     });
   }, [prompt, onSubmit]);
 
@@ -115,14 +116,15 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
     <TooltipProvider delay={300}>
       <div className="w-full">
         <div className="mx-auto max-w-4xl">
-          <div className="grid grid-cols-[1fr_auto] rounded-2xl bg-zinc-900 shadow-lg">
-            {/* Left: input + options */}
-            <div className="min-w-0 flex-1 p-3">
-              {/* Row 1: Prompt input */}
+          <div className="rounded-2xl bg-zinc-100 shadow-lg sm:flex dark:bg-zinc-900">
+            {/* Left: input + options (PC) */}
+            <div className="min-w-0 flex-1">
+            {/* Prompt input */}
+            <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">
               <div className="flex items-center gap-2">
                 <div className="relative" ref={dropdownRef}>
                   <button
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full border border-zinc-700 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full border border-zinc-300 text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-700 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                     onClick={() => {
                       if (mode === "video") {
                         setShowDropdown((v) => !v);
@@ -137,25 +139,25 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
 
                   {/* 비디오 모드 드롭다운 */}
                   {showDropdown && mode === "video" && (
-                    <div className="absolute top-full left-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 shadow-xl">
+                    <div className="absolute top-full left-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
                       <button
-                        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-300 transition-colors hover:bg-zinc-800"
+                        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                         onClick={() => {
                           fileInputRef.current?.click();
                           setShowDropdown(false);
                         }}
                       >
-                        <Upload className="size-4 text-zinc-500" />
+                        <Upload className="size-4 text-zinc-600 dark:text-zinc-500" />
                         {t("uploadFile")}
                       </button>
                       <button
-                        className="flex w-full items-center gap-2.5 border-t border-zinc-800 px-3 py-2.5 text-left text-sm text-zinc-300 transition-colors hover:bg-zinc-800"
+                        className="flex w-full items-center gap-2.5 border-t border-zinc-200 px-3 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800"
                         onClick={() => {
                           setShowDropdown(false);
                           setShowGalleryModal(true);
                         }}
                       >
-                        <ImageIcon className="size-4 text-zinc-500" />
+                        <ImageIcon className="size-4 text-zinc-600 dark:text-zinc-500" />
                         {t("selectFromGallery")}
                       </button>
                     </div>
@@ -175,7 +177,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={t(placeholderKey)}
-                  className="max-h-[120px] min-h-[40px] flex-1 border-none bg-transparent py-1.5 text-zinc-100 shadow-none placeholder:text-zinc-500 focus-visible:ring-0 dark:bg-transparent"
+                  className="max-h-[120px] min-h-[40px] flex-1 border-none bg-transparent py-1.5 text-zinc-800 shadow-none placeholder:text-zinc-400 focus-visible:ring-0 dark:bg-transparent dark:text-zinc-100 dark:placeholder:text-zinc-500"
                   rows={1}
                 />
               </div>
@@ -191,7 +193,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                         width={56}
                         height={56}
                         unoptimized
-                        className="size-14 rounded-md border border-zinc-700 object-cover"
+                        className="size-14 rounded-md border border-zinc-300 object-cover dark:border-zinc-700"
                       />
                       <button
                         onClick={() => removeImage(index)}
@@ -204,14 +206,27 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                   ))}
                 </div>
               )}
-
-              {/* Row 2: Options bar */}
-              <OptionsBar mode={mode} />
             </div>
 
-            {/* Right: Generate button */}
+            {/* Options bar */}
+            <div className="overflow-x-auto scrollbar-none px-2.5 pb-2.5 sm:px-3 sm:pb-3">
+              <OptionsBar mode={mode} />
+            </div>
+            </div>{/* end left */}
+
+            {/* Generate button — 모바일: 하단 full width / PC: 오른쪽 세로 */}
+            <div className="px-2.5 pb-2.5 sm:hidden">
+              <button
+                className="w-full cursor-pointer rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                onClick={handleSubmit}
+                disabled={!prompt.trim() || disabled}
+              >
+                {t("submit")}
+                {mode === "image" && <> ✦ {numImages ?? 1}</>}
+              </button>
+            </div>
             <button
-              className="m-2 cursor-pointer rounded-xl bg-primary text-base font-semibold text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 aspect-square flex items-center justify-center"
+              className="m-2 hidden shrink-0 cursor-pointer rounded-xl bg-primary px-6 text-base font-semibold text-primary-foreground transition-opacity hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 sm:block"
               onClick={handleSubmit}
               disabled={!prompt.trim() || disabled}
             >
@@ -223,15 +238,15 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
       </div>
       {/* 이미지 갤러리 모달 */}
       {showGalleryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-2xl rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60">
+          <div className="w-full max-w-2xl rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-white">
+              <h2 className="text-base font-semibold text-zinc-900 dark:text-white">
                 {t("selectFromGallery")}
               </h2>
               <button
                 onClick={() => setShowGalleryModal(false)}
-                className="text-zinc-400 hover:text-zinc-200"
+                className="text-zinc-600 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
               >
                 <X className="size-5" />
               </button>
@@ -245,7 +260,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                       handleSelectGeneratedImage(gen.result_url!);
                       setShowGalleryModal(false);
                     }}
-                    className="group relative aspect-square overflow-hidden rounded-lg border border-zinc-800 transition-colors hover:border-primary"
+                    className="group relative aspect-square overflow-hidden rounded-lg border border-zinc-200 transition-colors hover:border-primary dark:border-zinc-800"
                   >
                     <Image
                       src={gen.result_url!}

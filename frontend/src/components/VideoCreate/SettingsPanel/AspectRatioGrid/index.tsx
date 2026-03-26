@@ -17,7 +17,7 @@ export function AspectRatioGrid({ modelId, value, onChange }: AspectRatioGridPro
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
             value === option.value
               ? "bg-primary text-primary-foreground shadow-sm"
-              : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-300"
+              : "bg-zinc-200 text-zinc-600 hover:bg-zinc-300 hover:text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
           }`}
         >
           {option.value}

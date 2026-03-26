@@ -61,18 +61,33 @@ class FalProvider(BaseProvider):
         input_image_url: Optional[str] = None,
         **params,
     ) -> GenerationResult:
-        """Kling으로 비디오 생성 (비동기 — queue 방식)"""
-        body = {
+        """Kling v2.1으로 비디오 생성 (비동기 — queue 방식)"""
+        # duration은 "5" 또는 "10"만 허용
+        raw_duration = int(params.get("duration", 5))
+        duration = "10" if raw_duration >= 10 else "5"
+
+        body: dict = {
             "prompt": prompt,
-            "duration": str(params.get("duration", 5)),
+            "duration": duration,
             "aspect_ratio": params.get("aspect_ratio", "16:9"),
         }
+
+        # negative_prompt / cfg_scale
+        if params.get("negative_prompt"):
+            body["negative_prompt"] = params["negative_prompt"]
+        if params.get("cfg_scale") is not None:
+            body["cfg_scale"] = float(params["cfg_scale"])
+
+        # image-to-video vs text-to-video
         if input_image_url:
             body["image_url"] = input_image_url
+            endpoint = f"{self.BASE_URL}/fal-ai/kling-video/v2.1/master/image-to-video"
+        else:
+            endpoint = f"{self.BASE_URL}/fal-ai/kling-video/v2.1/master/text-to-video"
 
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
-                f"{self.BASE_URL}/fal-ai/kling-video/v2/master",
+                endpoint,
                 headers=self.headers,
                 json=body,
             )

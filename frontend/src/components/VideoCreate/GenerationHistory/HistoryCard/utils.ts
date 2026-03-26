@@ -23,15 +23,37 @@ export function getAspectStyle(aspectRatio: string | null): string {
   }
 }
 
-/** 비디오 다운로드 */
-export function downloadVideo(url: string, filename: string) {
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.target = "_blank";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+/** 비디오 다운로드 (백엔드 프록시 경유) */
+export async function downloadVideo(url: string, filename: string) {
+  const { getAccessToken } = await import("@/services/api");
+
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  const proxyUrl = `${BASE_URL}/api/video/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
+
+  const headers: Record<string, string> = {};
+  const token = getAccessToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  try {
+    const res = await fetch(proxyUrl, { headers });
+    if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    }, 100);
+  } catch {
+    window.open(url, "_blank");
+  }
 }
 
 /** 날짜 문자열 → 상대 시간 표시 */

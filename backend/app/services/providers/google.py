@@ -206,6 +206,16 @@ class GoogleProvider(BaseProvider):
                     error_message=error_msg or "콘텐츠 정책에 의해 비디오가 차단되었습니다.",
                 )
 
+            if not video_url:
+                # done=true인데 결과 URL이 없으면 콘텐츠 정책 등으로 차단된 것
+                error = data.get("error", {})
+                error_msg = error.get("message", "") if error else ""
+                return GenerationResult(
+                    status="failed",
+                    error_code="CONTENT_POLICY",
+                    error_message=error_msg or "비디오가 생성되었으나 결과를 받지 못했습니다. 콘텐츠 정책에 의해 차단되었을 수 있습니다.",
+                )
+
             return GenerationResult(
                 status="completed",
                 result_url=video_url,

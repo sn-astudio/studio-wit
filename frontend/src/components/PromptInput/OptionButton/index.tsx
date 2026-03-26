@@ -52,13 +52,13 @@ export function OptionButton({ paramType }: OptionButtonProps) {
           <TooltipTrigger
             render={
               <SelectTrigger
-                className="h-7 w-auto gap-1 rounded-lg border-none bg-zinc-800/60 px-2 hover:bg-zinc-700"
+                className="h-9 w-auto gap-1 rounded-lg border-none bg-zinc-200/60 px-2 hover:bg-zinc-300 sm:h-7 dark:bg-zinc-800/60 dark:hover:bg-zinc-700"
                 render={<Button variant="ghost" size="sm" />}
               />
             }
           >
             <Icon className="size-3.5" />
-            <span className="text-xs text-zinc-300">{displayValue}</span>
+            <span className="text-xs text-zinc-600 dark:text-zinc-300">{displayValue}</span>
           </TooltipTrigger>
           <TooltipContent>{t(config.labelKey)}</TooltipContent>
         </Tooltip>
@@ -84,21 +84,21 @@ export function OptionButton({ paramType }: OptionButtonProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 gap-1 rounded-lg bg-zinc-800/60 px-2 hover:bg-zinc-700"
+                    className="h-9 gap-1 rounded-lg bg-zinc-200/60 px-2 hover:bg-zinc-300 sm:h-7 dark:bg-zinc-800/60 dark:hover:bg-zinc-700"
                   />
                 }
               />
             }
           >
             <Icon className="size-3.5" />
-            <span className="text-xs text-zinc-300">{paramValue}</span>
+            <span className="text-xs text-zinc-600 dark:text-zinc-300">{paramValue}</span>
           </TooltipTrigger>
           <TooltipContent>{t(config.labelKey)}</TooltipContent>
         </Tooltip>
         <PopoverContent className="w-56 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium">{t(config.labelKey)}</span>
-            <span className="text-xs text-zinc-300">{paramValue}</span>
+            <span className="text-xs text-zinc-600 dark:text-zinc-300">{paramValue}</span>
           </div>
           <SliderPrimitive.Root
             value={Number(paramValue)}
@@ -132,7 +132,7 @@ export function OptionButton({ paramType }: OptionButtonProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 gap-1 px-1.5"
+                  className="h-9 gap-1 px-1.5 sm:h-7"
                 />
               }
             />

@@ -3,7 +3,7 @@ import { VideoCreateWorkspace } from "@/components/VideoCreate";
 
 export default function VideoPage() {
   return (
-    <div className="h-screen overflow-hidden">
+    <div className="min-h-screen">
       <Header />
       <main className="pt-16">
         <VideoCreateWorkspace />
