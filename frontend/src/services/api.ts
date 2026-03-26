@@ -31,8 +31,43 @@ import type {
   ReverseResponse,
   FilterRequest,
   FilterResponse,
+  TextOverlayRequest,
+  TextOverlayResponse,
+  WatermarkRequest,
+  WatermarkResponse,
+  SubtitlesRequest,
+  SubtitlesResponse,
+  ExtractAudioRequest,
+  ExtractAudioResponse,
+  RemoveAudioRequest,
+  RemoveAudioResponse,
+  ReplaceAudioRequest,
+  ReplaceAudioResponse,
+  AdjustVolumeRequest,
+  AdjustVolumeResponse,
+  MixAudioRequest,
+  MixAudioResponse,
   SaveEditRequest,
   SaveEditResponse,
+  ChangeResolutionRequest,
+  ChangeResolutionResponse,
+  VideoToGifRequest,
+  VideoToGifResponse,
+  ExtractThumbnailsRequest,
+  ExtractThumbnailsResponse,
+  CropRequest,
+  CropResponse,
+  LetterboxRequest,
+  LetterboxResponse,
+  RotateRequest,
+  RotateResponse,
+  ChangeFpsRequest,
+  ChangeFpsResponse,
+  DetectScenesRequest,
+  DetectScenesResponse,
+  SplitSceneRequest,
+  SplitSceneResponse,
+  BulkDownloadRequest,
 } from "@/types/api";
 
 // ── 설정 ──
@@ -271,6 +306,157 @@ export const videoEditApi = {
       method: "POST",
       body: JSON.stringify(body),
     });
+  },
+
+  /** 텍스트 오버레이 */
+  textOverlay(body: TextOverlayRequest) {
+    return request<TextOverlayResponse>("/api/video/text-overlay", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 워터마크 추가 */
+  watermark(body: WatermarkRequest) {
+    return request<WatermarkResponse>("/api/video/watermark", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 자막 추가 */
+  subtitles(body: SubtitlesRequest) {
+    return request<SubtitlesResponse>("/api/video/subtitles", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 오디오 추출 */
+  extractAudio(body: ExtractAudioRequest) {
+    return request<ExtractAudioResponse>("/api/video/extract-audio", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 오디오 제거 */
+  removeAudio(body: RemoveAudioRequest) {
+    return request<RemoveAudioResponse>("/api/video/remove-audio", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 오디오 교체 */
+  replaceAudio(body: ReplaceAudioRequest) {
+    return request<ReplaceAudioResponse>("/api/video/replace-audio", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 볼륨 조절 */
+  adjustVolume(body: AdjustVolumeRequest) {
+    return request<AdjustVolumeResponse>("/api/video/adjust-volume", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** BGM 믹싱 */
+  mixAudio(body: MixAudioRequest) {
+    return request<MixAudioResponse>("/api/video/mix-audio", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 해상도 변환 */
+  changeResolution(body: ChangeResolutionRequest) {
+    return request<ChangeResolutionResponse>("/api/video/change-resolution", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** FPS 변환 */
+  changeFps(body: ChangeFpsRequest) {
+    return request<ChangeFpsResponse>("/api/video/change-fps", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 회전/뒤집기 */
+  rotate(body: RotateRequest) {
+    return request<RotateResponse>("/api/video/rotate", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 크롭 */
+  crop(body: CropRequest) {
+    return request<CropResponse>("/api/video/crop", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 레터박스 */
+  letterbox(body: LetterboxRequest) {
+    return request<LetterboxResponse>("/api/video/letterbox", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 썸네일 추출 */
+  extractThumbnails(body: ExtractThumbnailsRequest) {
+    return request<ExtractThumbnailsResponse>("/api/video/extract-thumbnails", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** GIF 변환 */
+  videoToGif(body: VideoToGifRequest) {
+    return request<VideoToGifResponse>("/api/video/to-gif", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 장면 감지 */
+  detectScenes(body: DetectScenesRequest) {
+    return request<DetectScenesResponse>("/api/video/detect-scenes", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 장면 분할 */
+  splitScene(body: SplitSceneRequest) {
+    return request<SplitSceneResponse>("/api/video/split-scene", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 일괄 다운로드 (ZIP) */
+  async bulkDownload(body: BulkDownloadRequest): Promise<Blob> {
+    const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const token = getAccessToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${BASE}/api/video/bulk-download`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error("Bulk download failed");
+    return res.blob();
   },
 
   /** 편집 결과 저장 (merge 등 자동 저장되지 않은 결과를 히스토리에 저장) */

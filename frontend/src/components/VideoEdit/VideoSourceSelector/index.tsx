@@ -2,14 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Check,
   ChevronDown,
   ChevronUp,
   Download,
   Upload,
   Loader2,
   Plus,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -20,6 +23,7 @@ import {
 } from "@/components/ui/Select";
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
 import { useUploadVideo } from "@/hooks/queries/useVideoEdit";
+import { videoEditApi } from "@/services/api";
 import { downloadVideo } from "../utils";
 import type { VideoSourceSelectorProps } from "./types";
 
@@ -35,6 +39,18 @@ export function VideoSourceSelector({
   const uploadMutation = useUploadVideo();
   const [modelFilter, setModelFilter] = useState<string>("all");
   const [isExpanded, setIsExpanded] = useState(true);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   const {
     data: historyData,
@@ -96,7 +112,7 @@ export function VideoSourceSelector({
           });
         }
       } catch {
-        // TODO: toast error
+        toast.error(t("uploadError"));
       }
     },
     [uploadMutation, onSourceSelected, mergeMode, onAddToMerge],
@@ -104,6 +120,10 @@ export function VideoSourceSelector({
 
   const handleSelectVideo = useCallback(
     (gen: (typeof allGenerations)[0]) => {
+      if (selectMode) {
+        toggleSelect(gen.id);
+        return;
+      }
       if (onSelectVideo) {
         onSelectVideo(gen.result_url!, gen.prompt);
       } else if (mergeMode && onAddToMerge) {
@@ -118,8 +138,36 @@ export function VideoSourceSelector({
         });
       }
     },
-    [onSelectVideo, mergeMode, onAddToMerge, onSourceSelected],
+    [onSelectVideo, mergeMode, onAddToMerge, onSourceSelected, selectMode, toggleSelect],
   );
+
+  const handleBulkDownload = useCallback(async () => {
+    const selected = allGenerations.filter(
+      (g) => selectedIds.has(g.id) && g.result_url,
+    );
+    if (selected.length === 0) return;
+    setIsBulkDownloading(true);
+    try {
+      const blob = await videoEditApi.bulkDownload({
+        urls: selected.map((g) => g.result_url!),
+        filenames: selected.map((g, i) => `${g.model_id}_${i + 1}.mp4`),
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `videos_${selected.length}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+      toast.success(t("bulkDownloadSuccess", { count: selected.length }));
+      setSelectMode(false);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error(t("bulkDownloadError"));
+    } finally {
+      setIsBulkDownloading(false);
+    }
+  }, [allGenerations, selectedIds, t]);
 
   const uploading = uploadMutation.isPending || isLoading;
   const hasItems = completedVideos.length > 0;
@@ -169,19 +217,34 @@ export function VideoSourceSelector({
           )}
         </div>
 
-        {hasItems && (
-          <button
-            onClick={() => setIsExpanded((v) => !v)}
-            className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-          >
-            {isExpanded ? (
-              <ChevronUp className="size-3.5" />
-            ) : (
-              <ChevronDown className="size-3.5" />
-            )}
-            {completedVideos.length}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {hasItems && !mergeMode && (
+            <button
+              onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); }}
+              className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
+                selectMode
+                  ? "text-primary"
+                  : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+              }`}
+            >
+              {selectMode ? <X className="size-3" /> : <Download className="size-3" />}
+              {selectMode ? t("cancelSelect") : t("bulkDownload")}
+            </button>
+          )}
+          {hasItems && (
+            <button
+              onClick={() => setIsExpanded((v) => !v)}
+              className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            >
+              {isExpanded ? (
+                <ChevronUp className="size-3.5" />
+              ) : (
+                <ChevronDown className="size-3.5" />
+              )}
+              {completedVideos.length}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 그리드 */}
@@ -200,6 +263,21 @@ export function VideoSourceSelector({
                 role="button"
                 tabIndex={0}
                 onClick={() => handleSelectVideo(gen)}
+                className="relative"
+              >
+                {selectMode && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleSelect(gen.id); }}
+                    className={`absolute top-1 left-1 z-10 flex size-5 items-center justify-center rounded border-2 transition-colors ${
+                      selectedIds.has(gen.id)
+                        ? "border-primary bg-primary text-white"
+                        : "border-zinc-300 bg-black/40 dark:border-zinc-600"
+                    }`}
+                  >
+                    {selectedIds.has(gen.id) && <Check className="size-3" />}
+                  </button>
+                )}
+              <div
                 onMouseEnter={(e) => {
                   const video = e.currentTarget.querySelector("video");
                   video?.play().catch(() => {});
@@ -253,8 +331,32 @@ export function VideoSourceSelector({
                   </p>
                 </div>
               </div>
+              </div>
             ))}
           </div>
+          {/* 선택 모드 하단 바 (fixed) */}
+          {selectMode && selectedIds.size > 0 && (
+            <div className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-200 bg-background/95 px-4 py-2.5 backdrop-blur-sm dark:border-zinc-800">
+              <div className="mx-auto flex max-w-screen-xl items-center justify-between">
+                <span className="text-xs font-medium text-primary">
+                  {t("selectedCount", { count: selectedIds.size })}
+                </span>
+                <Button
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={handleBulkDownload}
+                  disabled={isBulkDownloading}
+                >
+                  {isBulkDownloading ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Download className="size-3.5" />
+                  )}
+                  {t("downloadZip")}
+                </Button>
+              </div>
+            </div>
+          )}
           {/* 무한 스크롤 트리거 */}
           <div ref={observerRef} className="h-1" />
           {isFetchingNextPage && (

@@ -212,6 +212,99 @@ export interface FilterResponse {
   result_url: string;
 }
 
+export interface TextOverlayRequest {
+  source_url: string;
+  text: string;
+  position?: "top" | "center" | "bottom";
+  font_size?: number;
+  color?: string;
+  start_time?: number;
+  end_time?: number;
+}
+
+export interface TextOverlayResponse {
+  result_url: string;
+}
+
+export interface WatermarkRequest {
+  source_url: string;
+  mode: "text" | "image";
+  text?: string;
+  image_url?: string;
+  position?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center";
+  opacity?: number;
+  font_size?: number;
+  color?: string;
+}
+
+export interface WatermarkResponse {
+  result_url: string;
+}
+
+export interface SubtitleItem {
+  text: string;
+  start_time: number;
+  end_time: number;
+  position?: "top" | "center" | "bottom";
+  font_size?: number;
+  color?: string;
+  border_w?: number;
+  border_color?: string;
+  box_color?: string;
+}
+
+export interface SubtitlesRequest {
+  source_url: string;
+  subtitles: SubtitleItem[];
+}
+
+export interface SubtitlesResponse {
+  result_url: string;
+}
+
+// 오디오
+export interface ExtractAudioRequest { source_url: string; }
+export interface ExtractAudioResponse { audio_url: string; }
+export interface RemoveAudioRequest { source_url: string; }
+export interface RemoveAudioResponse { result_url: string; }
+export interface ReplaceAudioRequest { source_url: string; audio_url: string; }
+export interface ReplaceAudioResponse { result_url: string; }
+export interface AdjustVolumeRequest { source_url: string; volume: number; }
+export interface AdjustVolumeResponse { result_url: string; }
+export interface MixAudioRequest { source_url: string; audio_url: string; original_volume: number; mix_volume: number; }
+export interface MixAudioResponse { result_url: string; }
+
+export interface ChangeResolutionRequest { source_url: string; resolution: string; }
+export interface ChangeResolutionResponse { result_url: string; }
+
+export interface VideoToGifRequest { source_url: string; start_time?: number; end_time?: number; width?: number; fps?: number; }
+export interface VideoToGifResponse { gif_url: string; }
+
+export interface ExtractThumbnailsRequest { source_url: string; count?: number; }
+export interface ExtractThumbnailsResponse { thumbnails: string[]; }
+
+export interface CropRequest { source_url: string; x: number; y: number; width: number; height: number; }
+export interface CropResponse { result_url: string; }
+
+export interface LetterboxRequest { source_url: string; target_ratio: string; color?: string; }
+export interface LetterboxResponse { result_url: string; }
+
+export interface RotateRequest { source_url: string; transform: string; }
+export interface RotateResponse { result_url: string; }
+
+export interface ChangeFpsRequest { source_url: string; fps: number; }
+export interface ChangeFpsResponse { result_url: string; }
+
+// 장면 분할
+export interface DetectScenesRequest { source_url: string; threshold?: number; min_scene_duration?: number; }
+export interface SceneInfo { index: number; start: number; end: number; duration: number; }
+export interface DetectScenesResponse { scenes: SceneInfo[]; }
+export interface SplitSceneRequest { source_url: string; start_time: number; end_time: number; }
+export interface SplitSceneResponse { result_url: string; }
+
+// 일괄 다운로드
+export interface BulkDownloadRequest { urls: string[]; filenames?: string[]; }
+
 export interface SaveEditRequest {
   result_url: string;
   edit_type: string;

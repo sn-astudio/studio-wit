@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Download, Globe, Lock, Loader2, Merge, Save, Scissors, Sparkles } from "lucide-react";
+import { Download, Globe, Lock, Loader2, Merge, MessageCircle, Save, ScanSearch, Scissors, Sparkles, Volume2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { ChevronDown, ChevronUp, Film, Trash2, Wand2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Columns2, Crop, Film, ImageIcon, Pause, Play, Redo2, RotateCcw, Trash2, Undo2, Wand2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -27,13 +27,20 @@ import { TrimControls } from "../TrimControls";
 import { AIEditPanel } from "../AIEditPanel";
 import { MergePanel } from "../MergePanel";
 import { EffectsPanel } from "../EffectsPanel";
+import { SubtitlesPanel } from "../SubtitlesPanel";
+import { AudioPanel } from "../AudioPanel";
+import { GifPanel } from "../GifPanel";
+import { SceneSplitPanel } from "../SceneSplitPanel";
+import { ThumbnailPanel } from "../ThumbnailPanel";
+import { CropPanel } from "../CropPanel";
 import { VideoSourceSelectModal } from "../VideoSourceSelectModal";
 import type { MergeClip } from "../MergePanel/types";
 import { downloadVideo } from "../utils";
+import { useVideoEditStore } from "@/stores/videoEditStore";
 import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import type { VideoSource } from "./types";
 
-type EditTab = "trim" | "ai" | "effects" | "merge";
+type EditTab = "trim" | "ai" | "effects" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop";
 
 export function VideoEditWorkspace() {
   const t = useTranslations("VideoEdit");
@@ -46,7 +53,7 @@ export function VideoEditWorkspace() {
   // 탭 (URL ?tab= 파라미터로 초기값 설정)
   const [activeTab, setActiveTab] = useState<EditTab>(() => {
     const tab = searchParams.get("tab");
-    if (tab === "ai" || tab === "trim" || tab === "effects" || tab === "merge") return tab;
+    if (tab === "ai" || tab === "trim" || tab === "effects" || tab === "merge" || tab === "subtitles") return tab;
     return "trim";
   });
 
@@ -80,11 +87,140 @@ export function VideoEditWorkspace() {
   const [trimStart, setTrimStart] = useState(0);
   const [trimEnd, setTrimEnd] = useState(0);
 
-  // 결과
-  const [resultUrl, setResultUrl] = useState<string | null>(null);
+  // 결과 + Undo/Redo
+  const [resultUrl, setResultUrlRaw] = useState<string | null>(null);
+  const historyRef = useRef<{ url: string | null; snapshot: import("@/stores/videoEditStore").EffectsSnapshot }[]>([]);
+  const [historyIdx, setHistoryIdx] = useState(-1);
+  const restoreEffects = useVideoEditStore((s) => s.restoreEffects);
+  const resetEffects = useVideoEditStore((s) => s.resetEffects);
 
-  // 효과 프리뷰 필터
+  const canUndo = historyIdx >= 0;
+  const canRedo = historyIdx < historyRef.current.length - 1;
+
+  // 편집 결과 저장 (히스토리에 push)
+  const setResultUrl = useCallback((url: string | null) => {
+    if (url === null) {
+      // 리셋 호출은 히스토리에 넣지 않음
+      setResultUrlRaw(null);
+      return;
+    }
+    const snapshot = { ...useVideoEditStore.getState().effects };
+    const newHistory = historyRef.current.slice(0, historyIdx + 1);
+    newHistory.push({ url, snapshot });
+    historyRef.current = newHistory;
+    setHistoryIdx(newHistory.length - 1);
+    setResultUrlRaw(url);
+  }, [historyIdx]);
+
+  const clearPreviews = useCallback(() => {
+    setPreviewCssFilter("");
+    setPreviewTextOverlay(null);
+    setPreviewWatermark(null);
+    setPreviewSubtitles([]);
+    setPreviewSpeed(1);
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    if (historyIdx < 0) return;
+    const newIdx = historyIdx - 1;
+    setHistoryIdx(newIdx);
+    if (newIdx >= 0) {
+      const entry = historyRef.current[newIdx];
+      setResultUrlRaw(entry.url);
+      restoreEffects(entry.snapshot);
+    } else {
+      setResultUrlRaw(null);
+      resetEffects();
+    }
+    clearPreviews();
+  }, [historyIdx, restoreEffects, resetEffects, clearPreviews]);
+
+  const handleRedo = useCallback(() => {
+    if (historyIdx >= historyRef.current.length - 1) return;
+    const newIdx = historyIdx + 1;
+    const entry = historyRef.current[newIdx];
+    setHistoryIdx(newIdx);
+    setResultUrlRaw(entry.url);
+    restoreEffects(entry.snapshot);
+    clearPreviews();
+  }, [historyIdx, restoreEffects, clearPreviews]);
+
+  const handleReset = useCallback(() => {
+    setResultUrlRaw(null);
+    historyRef.current = [];
+    setHistoryIdx(-1);
+    resetEffects();
+    clearPreviews();
+  }, [resetEffects, clearPreviews]);
+
+  // Ctrl+Z / Ctrl+Shift+Z 키보드 단축키
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [handleUndo, handleRedo]);
+
+  // 비교 모드
+  const [compareMode, setCompareMode] = useState(false);
+  const [syncPlaying, setSyncPlaying] = useState(false);
+  const originalVideoRef = useRef<HTMLVideoElement | null>(null);
+  // 소스 변경 시 비교 모드 + 히스토리 + 이펙트 리셋
+  useEffect(() => {
+    setCompareMode(false);
+    setSyncPlaying(false);
+    historyRef.current = [];
+    setHistoryIdx(-1);
+    resetEffects();
+  }, [source?.url, resetEffects]);
+
+  const handleSyncPlayPause = useCallback(() => {
+    const orig = originalVideoRef.current;
+    const edit = videoRef.current;
+    if (!orig || !edit) return;
+
+    if (syncPlaying) {
+      orig.pause();
+      edit.pause();
+      setSyncPlaying(false);
+    } else {
+      // 둘 다 처음부터 동시 재생
+      orig.currentTime = 0;
+      edit.currentTime = 0;
+      orig.play();
+      edit.play();
+      setSyncPlaying(true);
+    }
+  }, [syncPlaying, videoRef]);
+
+  // 영상 끝나면 동시 재생 상태 리셋
+  useEffect(() => {
+    const orig = originalVideoRef.current;
+    const edit = videoRef.current;
+    if (!compareMode || !orig || !edit) return;
+    const handler = () => setSyncPlaying(false);
+    orig.addEventListener("ended", handler);
+    edit.addEventListener("ended", handler);
+    return () => {
+      orig.removeEventListener("ended", handler);
+      edit.removeEventListener("ended", handler);
+    };
+  }, [compareMode, videoRef]);
+
+  // 효과 프리뷰
   const [previewCssFilter, setPreviewCssFilter] = useState("");
+  const [previewTextOverlay, setPreviewTextOverlay] = useState<import("../VideoEditPreview/types").TextOverlayPreview | null>(null);
+  const [previewWatermark, setPreviewWatermark] = useState<import("../VideoEditPreview/types").WatermarkPreview | null>(null);
+  const [previewSubtitles, setPreviewSubtitles] = useState<import("../VideoEditPreview/types").SubtitlePreviewItem[]>([]);
+  const [previewSpeed, setPreviewSpeed] = useState(1);
 
   // 합치기
   const addMergeClipRef = useRef<((url: string, name?: string) => void) | null>(null);
@@ -234,6 +370,9 @@ export function VideoEditWorkspace() {
     setTrimEnd(duration);
     setCurrentTime(0);
     setPreviewCssFilter("");
+    setPreviewTextOverlay(null);
+    setPreviewWatermark(null);
+    setPreviewSpeed(1);
     setMergePreviewUrl(null);
     setMergeClips([]);
     setMergeDragIdx(null);
@@ -259,6 +398,9 @@ export function VideoEditWorkspace() {
         mergeClips.length > 0 ||
         !!mergePreviewUrl ||
         !!previewCssFilter ||
+        !!previewTextOverlay ||
+        !!previewWatermark ||
+        previewSpeed !== 1 ||
         isPanelDirty;
 
       if (hasChanges) {
@@ -335,7 +477,7 @@ export function VideoEditWorkspace() {
     }
   }, [source, trimStart, trimEnd, trimMutation, t]);
 
-  const handleReset = useCallback(() => {
+  const handleTrimReset = useCallback(() => {
     setTrimStart(0);
     setTrimEnd(duration);
     setResultUrl(null);
@@ -441,52 +583,94 @@ export function VideoEditWorkspace() {
 
   return (
     <div className="flex h-[calc(100dvh-64px)] flex-col sm:p-4">
-      {/* 탭 전환 (스크롤 밖 고정) */}
-      <div className="flex shrink-0 gap-0.5 overflow-x-auto bg-background px-2.5 pt-2 pb-1.5 sm:gap-1 sm:px-0 sm:pt-0 sm:pb-2">
-        <button
-          onClick={() => switchTab("trim")}
-          className={`flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs transition-colors sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
-            activeTab === "trim"
-              ? "bg-zinc-200 text-foreground dark:bg-zinc-800"
-              : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-          }`}
+      {/* 탭 전환 + Undo/Redo */}
+      <div className="flex shrink-0 items-center gap-1.5 bg-background px-2.5 pt-2 pb-1.5 sm:px-0 sm:pt-0 sm:pb-2">
+        <div className="flex gap-0.5">
+          <button
+            onClick={handleUndo}
+            disabled={!canUndo}
+            className="flex size-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200 disabled:opacity-30 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            title={`${t("undo")} (Ctrl+Z)`}
+          >
+            <Undo2 className="size-4" />
+          </button>
+          <button
+            onClick={handleRedo}
+            disabled={!canRedo}
+            className="flex size-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200 disabled:opacity-30 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            title={`${t("redo")} (Ctrl+Shift+Z)`}
+          >
+            <Redo2 className="size-4" />
+          </button>
+          <button
+            onClick={handleReset}
+            disabled={!canUndo && !canRedo}
+            className="flex size-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-red-500 disabled:opacity-30 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
+            title={t("resetToOriginal")}
+          >
+            <RotateCcw className="size-4" />
+          </button>
+        </div>
+        <Select
+          value={activeTab}
+          onValueChange={(value) => switchTab(value)}
+          className="flex-1"
         >
-          <Scissors className="size-3 sm:size-3.5" />
-          {t("tabTrim")}
-        </button>
-        <button
-          onClick={() => switchTab("ai")}
-          className={`flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs transition-colors sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
-            activeTab === "ai"
-              ? "bg-zinc-200 text-foreground dark:bg-zinc-800"
-              : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-          }`}
-        >
-          <Sparkles className="size-3 sm:size-3.5" />
-          {t("tabAI")}
-        </button>
-        <button
-          onClick={() => switchTab("effects")}
-          className={`flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs transition-colors sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
-            activeTab === "effects"
-              ? "bg-zinc-200 text-foreground dark:bg-zinc-800"
-              : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-          }`}
-        >
-          <Wand2 className="size-3 sm:size-3.5" />
-          {t("tabEffects")}
-        </button>
-        <button
-          onClick={() => switchTab("merge")}
-          className={`flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs transition-colors sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
-            activeTab === "merge"
-              ? "bg-zinc-200 text-foreground dark:bg-zinc-800"
-              : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-          }`}
-        >
-          <Merge className="size-3 sm:size-3.5" />
-          {t("tabMerge")}
-        </button>
+          <SelectTrigger className="h-9 w-full gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium dark:border-zinc-700 dark:bg-zinc-900">
+            {activeTab === "trim" && <Scissors className="size-4" />}
+            {activeTab === "ai" && <Sparkles className="size-4" />}
+            {activeTab === "effects" && <Wand2 className="size-4" />}
+            {activeTab === "merge" && <Merge className="size-4" />}
+            {activeTab === "subtitles" && <MessageCircle className="size-4" />}
+            {activeTab === "audio" && <Volume2 className="size-4" />}
+            {activeTab === "gif" && <Film className="size-4" />}
+            {activeTab === "scene" && <ScanSearch className="size-4" />}
+            {activeTab === "thumbnail" && <ImageIcon className="size-4" />}
+            {activeTab === "crop" && <Crop className="size-4" />}
+            {activeTab === "trim" && t("tabTrim")}
+            {activeTab === "ai" && t("tabAI")}
+            {activeTab === "effects" && t("tabEffects")}
+            {activeTab === "merge" && t("tabMerge")}
+            {activeTab === "subtitles" && t("tabSubtitles")}
+            {activeTab === "audio" && t("tabAudio")}
+            {activeTab === "gif" && t("tabGif")}
+            {activeTab === "scene" && t("tabScene")}
+            {activeTab === "thumbnail" && t("tabThumbnail")}
+            {activeTab === "crop" && t("tabCrop")}
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="trim">
+              <span className="flex items-center gap-2"><Scissors className="size-3.5" />{t("tabTrim")}</span>
+            </SelectItem>
+            <SelectItem value="ai">
+              <span className="flex items-center gap-2"><Sparkles className="size-3.5" />{t("tabAI")}</span>
+            </SelectItem>
+            <SelectItem value="effects">
+              <span className="flex items-center gap-2"><Wand2 className="size-3.5" />{t("tabEffects")}</span>
+            </SelectItem>
+            <SelectItem value="merge">
+              <span className="flex items-center gap-2"><Merge className="size-3.5" />{t("tabMerge")}</span>
+            </SelectItem>
+            <SelectItem value="subtitles">
+              <span className="flex items-center gap-2"><MessageCircle className="size-3.5" />{t("tabSubtitles")}</span>
+            </SelectItem>
+            <SelectItem value="audio">
+              <span className="flex items-center gap-2"><Volume2 className="size-3.5" />{t("tabAudio")}</span>
+            </SelectItem>
+            <SelectItem value="gif">
+              <span className="flex items-center gap-2"><Film className="size-3.5" />{t("tabGif")}</span>
+            </SelectItem>
+            <SelectItem value="scene">
+              <span className="flex items-center gap-2"><ScanSearch className="size-3.5" />{t("tabScene")}</span>
+            </SelectItem>
+            <SelectItem value="thumbnail">
+              <span className="flex items-center gap-2"><ImageIcon className="size-3.5" />{t("tabThumbnail")}</span>
+            </SelectItem>
+            <SelectItem value="crop">
+              <span className="flex items-center gap-2"><Crop className="size-3.5" />{t("tabCrop")}</span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* AI 생성 진행 미니 바 (AI 탭이 아닐 때 표시) */}
@@ -512,7 +696,7 @@ export function VideoEditWorkspace() {
       {/* AI 생성 완료 미니 바 (AI 탭이 아닐 때 표시) */}
       {aiIsCompleted && aiGeneration?.result_url && activeTab !== "ai" && (
         <div
-          className="mx-2.5 flex cursor-pointer items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 transition-colors hover:bg-primary/10 sm:mx-0"
+          className="mx-2.5 mb-2 flex cursor-pointer items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 transition-colors hover:bg-primary/10 sm:mx-0"
           onClick={() => setActiveTab("ai")}
           role="button"
           tabIndex={0}
@@ -627,22 +811,89 @@ export function VideoEditWorkspace() {
               )}
             </div>
           ) : (
-            <>
-              <VideoEditPreview
-                videoUrl={displayUrl}
-                currentTime={currentTime}
-                onTimeUpdate={setCurrentTime}
-                onDurationLoaded={handleDurationLoaded}
-                videoRef={videoRef}
-                cssFilter={activeTab === "effects" ? previewCssFilter : undefined}
-              />
+            <div className="relative">
+              {/* 비교 모드 토글 */}
+              {resultUrl && source?.url && resultUrl !== source.url && (
+                <button
+                  onClick={() => setCompareMode((v) => !v)}
+                  className={`absolute top-2 right-2 z-10 flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium shadow transition-colors ${
+                    compareMode
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-black/50 text-white hover:bg-black/70"
+                  }`}
+                >
+                  <Columns2 className="size-3.5" />
+                  {t("comparePreview")}
+                </button>
+              )}
 
-            </>
+              {compareMode && resultUrl && source?.url && resultUrl !== source.url ? (
+                <div className="space-y-1.5">
+                  <div className="flex aspect-video max-h-[280px] w-full gap-1 overflow-hidden rounded-2xl border border-zinc-300 bg-zinc-50 dark:border-zinc-800 dark:bg-black">
+                    {/* 원본 */}
+                    <div className="relative flex flex-1 items-center justify-center overflow-hidden">
+                      <video
+                        ref={originalVideoRef}
+                        src={source.url}
+                        className="max-h-[280px] max-w-full object-contain"
+                        muted
+                      />
+                      <span className="absolute top-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        {t("original")}
+                      </span>
+                    </div>
+                    {/* 편집본 */}
+                    <div className="relative flex flex-1 items-center justify-center overflow-hidden">
+                      <video
+                        ref={videoRef}
+                        src={resultUrl}
+                        className="max-h-[280px] max-w-full object-contain"
+                        style={activeTab === "effects" && previewCssFilter ? { filter: previewCssFilter } : undefined}
+                        muted
+                        onTimeUpdate={() => {
+                          if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
+                        }}
+                        onLoadedMetadata={() => {
+                          if (videoRef.current) handleDurationLoaded(videoRef.current.duration);
+                        }}
+                      />
+                      <span className="absolute top-1 left-1 rounded bg-primary/80 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        {t("edited")}
+                      </span>
+                    </div>
+                  </div>
+                  {/* 동시 재생 버튼 */}
+                  <button
+                    onClick={handleSyncPlayPause}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-zinc-200/60 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    {syncPlaying ? (
+                      <><Pause className="size-3.5" />{t("syncPause")}</>
+                    ) : (
+                      <><Play className="size-3.5" />{t("syncPlay")}</>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <VideoEditPreview
+                  videoUrl={displayUrl}
+                  currentTime={currentTime}
+                  onTimeUpdate={setCurrentTime}
+                  onDurationLoaded={handleDurationLoaded}
+                  videoRef={videoRef}
+                  cssFilter={activeTab === "effects" ? previewCssFilter : undefined}
+                  textOverlay={activeTab === "effects" ? previewTextOverlay : undefined}
+                  watermark={activeTab === "effects" ? previewWatermark : undefined}
+                  subtitles={activeTab === "subtitles" ? previewSubtitles : undefined}
+                  playbackRate={activeTab === "effects" ? previewSpeed : 1}
+                />
+              )}
+            </div>
           )}
         </div>
 
         {/* 오른쪽(PC) / 아래(모바일): 편집 옵션 */}
-        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 pr-2 sm:gap-3 sm:pr-3">
           {/* 트리밍 탭 */}
           {source && activeTab === "trim" && duration > 0 && (
             <div className="space-y-2">
@@ -652,7 +903,7 @@ export function VideoEditWorkspace() {
                 duration={duration}
                 isTrimming={trimMutation.isPending}
                 onTrim={handleTrim}
-                onReset={handleReset}
+                onReset={handleTrimReset}
               />
 
               {resultUrl && (
@@ -842,6 +1093,9 @@ export function VideoEditWorkspace() {
                 sourceUrl={source.url}
                 onEffectApplied={setResultUrl}
                 onPreviewFilter={setPreviewCssFilter}
+                onPreviewTextOverlay={setPreviewTextOverlay}
+                onPreviewWatermark={setPreviewWatermark}
+                onPreviewSpeed={setPreviewSpeed}
                 onDirty={() => setIsPanelDirty(true)}
               />
 
@@ -922,6 +1176,124 @@ export function VideoEditWorkspace() {
               }}
               onClipsChange={(c) => setMergeClips(c)}
             />
+          )}
+
+          {/* 자막 탭 */}
+          {source && activeTab === "subtitles" && (
+            <>
+              <SubtitlesPanel
+                sourceUrl={source.url}
+                duration={duration}
+                onSubtitlesApplied={setResultUrl}
+                onPreviewSubtitles={setPreviewSubtitles}
+                onDirty={() => setIsPanelDirty(true)}
+              />
+              {resultUrl && (
+                <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+                  <span className="text-sm font-semibold text-primary">
+                    {t("subtitlesApplied")}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5"
+                      onClick={() =>
+                        downloadVideo(resultUrl, `subtitles_${Date.now()}.mp4`)
+                      }
+                    >
+                      <Download className="size-3.5" />
+                      {t("download")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5"
+                      onClick={async () => {
+                        try {
+                          await saveEditMutation.mutateAsync({
+                            result_url: resultUrl,
+                            edit_type: "subtitles",
+                            prompt: source?.name || "Subtitles added",
+                          });
+                          toast.success(t("saveSuccess"));
+                        } catch {
+                          toast.error(t("saveError"));
+                        }
+                      }}
+                    >
+                      <Save className="size-3.5" />
+                      {t("save")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {source && activeTab === "audio" && (
+              <AudioPanel
+                sourceUrl={source.url}
+                onAudioApplied={setResultUrl}
+                onSave={async (url, isPublic) => {
+                  await saveEditMutation.mutateAsync({
+                    result_url: url,
+                    edit_type: "audio",
+                    prompt: source?.name || "Audio edited",
+                    is_public: isPublic,
+                  });
+                }}
+                onDirty={() => setIsPanelDirty(true)}
+              />
+          )}
+
+          {source && activeTab === "gif" && (
+              <GifPanel
+                sourceUrl={source.url}
+                onDirty={() => setIsPanelDirty(true)}
+              />
+          )}
+
+          {source && activeTab === "scene" && (
+              <SceneSplitPanel
+                sourceUrl={source.url}
+                duration={source.duration ?? duration}
+                onSceneExtracted={(url) => {
+                  setSource({ ...source, url });
+                }}
+              />
+          )}
+
+          {source && activeTab === "thumbnail" && (
+              <ThumbnailPanel
+                sourceUrl={source.url}
+                onSave={async (url, isPublic) => {
+                  await saveEditMutation.mutateAsync({
+                    result_url: url,
+                    edit_type: "thumbnail",
+                    prompt: source?.name || "Thumbnail",
+                    is_public: isPublic,
+                  });
+                }}
+              />
+          )}
+
+          {source && activeTab === "crop" && (
+              <CropPanel
+                sourceUrl={source.url}
+                videoWidth={source.width || 1280}
+                videoHeight={source.height || 720}
+                onCropApplied={setResultUrl}
+                onSave={async (url, isPublic) => {
+                  await saveEditMutation.mutateAsync({
+                    result_url: url,
+                    edit_type: "crop",
+                    prompt: source?.name || "Cropped",
+                    is_public: isPublic,
+                  });
+                }}
+                onDirty={() => setIsPanelDirty(true)}
+              />
           )}
         </div>
       </div>
