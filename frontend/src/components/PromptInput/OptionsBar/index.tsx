@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Minus, Plus } from "lucide-react";
+import { Image, Minus, Plus } from "lucide-react";
 
 import { Separator } from "@/components/ui/Separator";
 import { usePromptStore } from "@/stores/promptStore";
@@ -49,15 +49,27 @@ function NumImagesCounter() {
 }
 
 export function OptionsBar({ mode }: OptionsBarProps) {
+  const t = useTranslations("PromptInput");
   const selectedModel = usePromptStore((s) => s.selectedModel);
+  const attachedImages = usePromptStore((s) => s.attachedImages);
   const models = getModelsForMode(mode);
 
   if (models.length === 0) return null;
 
   const currentModel = models.find((m) => m.id === selectedModel);
   const supportedParams = currentModel?.supportedParams ?? [];
+
+  const isImg2Vid =
+    attachedImages.length > 0 && (currentModel?.supportsImageInput ?? false);
+
   // Filter out numImages from regular option buttons — rendered as counter
-  const filteredParams = supportedParams.filter((p) => p !== "numImages");
+  // Veo img2vid에서는 duration도 숨김 (Veo API가 img2vid에서 duration 미지원)
+  const filteredParams = supportedParams.filter((p) => {
+    if (p === "numImages") return false;
+    if (p === "duration" && isImg2Vid && selectedModel.startsWith("veo-"))
+      return false;
+    return true;
+  });
   const hasNumImages = supportedParams.includes("numImages");
 
   return (
@@ -67,6 +79,16 @@ export function OptionsBar({ mode }: OptionsBarProps) {
       aria-label="Generation options"
     >
       <ModelSelector models={models} />
+
+      {isImg2Vid && (
+        <>
+          <Separator orientation="vertical" className="mx-0.5 h-5" />
+          <span className="inline-flex items-center gap-1 rounded-md bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-300">
+            <Image className="size-3" />
+            {t("img2vidMode")}
+          </span>
+        </>
+      )}
 
       {filteredParams.length > 0 && (
         <>

@@ -1,10 +1,12 @@
 """생성(Generation) API 라우터"""
 
 import json
+import uuid
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile
+from pydantic import BaseModel
 from sqlalchemy import func, select
 
 from app.core.exceptions import ForbiddenException, NotFoundException
@@ -23,6 +25,10 @@ from app.models.schemas import Generation as GenerationSchema
 from app.services.model_router import get_model_type, get_provider_for_model
 
 router = APIRouter(prefix="/api", tags=["Generation"])
+
+
+class ImageUploadResponse(BaseModel):
+    url: str
 
 
 # ── 백그라운드 생성 태스크 ──
@@ -294,3 +300,32 @@ async def list_generations(
         next_cursor=generations[-1].id if has_more else None,
         has_more=has_more,
     )
+
+
+@router.post(
+    "/upload-image",
+    response_model=ImageUploadResponse,
+    summary="이미지 업로드",
+    description="이미지 파일을 S3에 업로드하고 CDN URL을 반환한다. img2vid 등에서 input_image_url로 사용.",
+    responses={
+        401: {"model": ErrorResponse, "description": "JWT 없음 또는 만료"},
+        500: {"model": ErrorResponse, "description": "S3 업로드 실패"},
+    },
+)
+async def upload_image(
+    file: UploadFile = File(..., description="업로드할 이미지 파일"),
+    _user: User = Depends(get_current_user),
+):
+    """이미지 파일을 S3에 업로드하고 CDN URL을 반환한다."""
+    from app.services.storage import upload_generation_image
+
+    image_data = await file.read()
+    upload_id = uuid.uuid4().hex
+    ext = file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "png"
+
+    cdn_url = await upload_generation_image(f"input_{upload_id}", image_data, ext)
+    if not cdn_url:
+        from app.core.exceptions import AppException
+        raise AppException(status_code=500, code="UPLOAD_FAILED", message="S3 업로드 실패")
+
+    return ImageUploadResponse(url=cdn_url)

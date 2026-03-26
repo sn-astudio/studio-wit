@@ -111,6 +111,23 @@ class OpenAIProvider(BaseProvider):
             ("size", (None, size)),
         ]
 
+        # img2vid: 이미지 다운로드 → multipart에 추가
+        if input_image_url:
+            try:
+                async with httpx.AsyncClient(timeout=60, follow_redirects=True) as dl:
+                    img_resp = await dl.get(input_image_url)
+                    img_resp.raise_for_status()
+                mime_type = img_resp.headers.get("content-type", "image/png")
+                ext = mime_type.split("/")[-1] if "/" in mime_type else "png"
+                files.append(("input_image", (f"input.{ext}", img_resp.content, mime_type)))
+            except Exception as e:
+                logger.error("Sora img2vid 이미지 다운로드 실패: %s", e)
+                return GenerationResult(
+                    status="failed",
+                    error_code="PROVIDER_ERROR",
+                    error_message=f"입력 이미지 다운로드 실패: {e}",
+                )
+
         headers_no_ct = {"Authorization": f"Bearer {self.api_key}"}
 
         async with httpx.AsyncClient(timeout=60) as client:

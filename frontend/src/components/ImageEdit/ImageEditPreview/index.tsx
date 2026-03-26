@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ImageIcon, Download } from "lucide-react";
+import { ImageIcon, Download, Film } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { EditorCanvas } from "@/components/ImageCreate/ImageEditor/EditorCanvas";
@@ -16,6 +16,7 @@ export function ImageEditPreview({
   cropRect,
   onCropChange,
   onExport,
+  onGenerateVideo,
 }: ImageEditPreviewProps) {
   const t = useTranslations("ImageEdit");
 
@@ -38,7 +39,16 @@ export function ImageEditPreview({
         cropRect={cropRect}
         onCropChange={onCropChange}
       />
-      <div className="flex items-center justify-end border-t border-zinc-800 px-3 py-2">
+      <div className="flex items-center justify-end gap-1 border-t border-zinc-800 px-3 py-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onGenerateVideo}
+          className="cursor-pointer gap-1.5"
+        >
+          <Film className="size-4" />
+          <span className="text-xs">{t("generateVideo")}</span>
+        </Button>
         <Button
           variant="ghost"
           size="sm"

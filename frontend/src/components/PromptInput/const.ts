@@ -65,30 +65,35 @@ export const VIDEO_MODELS: ModelDefinition[] = [
     nameKey: "models.veo-3_1",
     icon: GoogleIcon,
     supportedParams: ["aspectRatio", "duration", "resolution"],
+    supportsImageInput: true,
   },
   {
     id: "veo-3.1-fast",
     nameKey: "models.veo-3_1-fast",
     icon: GoogleIcon,
     supportedParams: ["aspectRatio", "duration", "resolution"],
+    supportsImageInput: true,
   },
   {
     id: "sora-2",
     nameKey: "models.sora-2",
     icon: OpenAIIcon,
     supportedParams: ["aspectRatio", "duration"],
+    supportsImageInput: true,
   },
   {
     id: "sora-2-pro",
     nameKey: "models.sora-2-pro",
     icon: OpenAIIcon,
     supportedParams: ["aspectRatio", "duration"],
+    supportsImageInput: true,
   },
   {
     id: "kling-3.0-pro",
     nameKey: "models.kling-3_0-pro",
     icon: KlingIcon,
     supportedParams: ["aspectRatio", "duration", "negativePrompt", "cfgScale"],
+    supportsImageInput: true,
   },
 ];
 
@@ -359,6 +364,11 @@ export const MODEL_PARAM_OPTIONS: Record<
     ],
   },
 };
+
+export function doesModelSupportImageInput(modelId: string): boolean {
+  const model = VIDEO_MODELS.find((m) => m.id === modelId);
+  return model?.supportsImageInput ?? false;
+}
 
 export function getModelsForMode(mode: "image" | "video"): ModelDefinition[] {
   return mode === "image" ? IMAGE_MODELS : VIDEO_MODELS;

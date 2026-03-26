@@ -26,7 +26,6 @@ export function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [navDropdown, setNavDropdown] = useState<string | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const navDropdownRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const t = useTranslations("Header");
   const tLang = useTranslations("LanguageSwitcher");
@@ -59,15 +58,15 @@ export function Header() {
         setProfileOpen(false);
       }
       if (
-        navDropdownRef.current &&
-        !navDropdownRef.current.contains(e.target as Node)
+        navDropdown &&
+        !(e.target as HTMLElement).closest?.("[data-nav-dropdown]")
       ) {
         setNavDropdown(null);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [navDropdown]);
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border/60 bg-background/85 backdrop-blur-xl">
@@ -87,7 +86,7 @@ export function Header() {
               <div
                 key={item.labelKey}
                 className="relative"
-                ref={navDropdownRef}
+                data-nav-dropdown
               >
                 <button
                   onClick={() =>

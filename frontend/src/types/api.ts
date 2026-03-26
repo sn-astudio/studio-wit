@@ -138,6 +138,12 @@ export interface LikeToggleResponse {
   like_count: number;
 }
 
+// ── Image Upload ──
+
+export interface ImageUploadResponse {
+  url: string;
+}
+
 // ── Video Edit ──
 
 export interface TrimRequest {
