@@ -115,7 +115,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
     <TooltipProvider delay={300}>
       <div className="w-full">
         <div className="mx-auto max-w-4xl">
-          <div className="flex rounded-2xl bg-zinc-900 shadow-lg">
+          <div className="grid grid-cols-[1fr_auto] rounded-2xl bg-zinc-900 shadow-lg">
             {/* Left: input + options */}
             <div className="min-w-0 flex-1 p-3">
               {/* Row 1: Prompt input */}
@@ -182,7 +182,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
 
               {/* Attached image thumbnails */}
               {attachedImages.length > 0 && (
-                <div className="mt-2 flex gap-2 overflow-x-auto pl-10">
+                <div className="mt-2 flex gap-2 overflow-x-auto pl-10 pt-2">
                   {attachedImages.map((file, index) => (
                     <div key={index} className="group relative shrink-0">
                       <Image
@@ -211,7 +211,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
 
             {/* Right: Generate button */}
             <button
-              className="m-2 shrink-0 cursor-pointer rounded-xl bg-primary px-6 text-base font-semibold text-primary-foreground transition-opacity hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+              className="m-2 cursor-pointer rounded-xl bg-primary text-base font-semibold text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 aspect-square flex items-center justify-center"
               onClick={handleSubmit}
               disabled={!prompt.trim() || disabled}
             >
