@@ -29,8 +29,8 @@ function VisibilityToggle() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 gap-1 rounded-lg bg-zinc-200/60 px-2 hover:bg-zinc-300 sm:h-7 dark:bg-zinc-800/60 dark:hover:bg-zinc-700"
-            onClick={() => setIsPublic(!isPublic)}
+            className="h-9 w-[4.5rem] gap-1 rounded-lg bg-zinc-200/60 px-2 hover:bg-zinc-300 sm:h-7 dark:bg-zinc-800/60 dark:hover:bg-zinc-700"
+            onClick={(e) => { e.preventDefault(); setIsPublic(!isPublic); }}
           />
         }
       >
@@ -39,7 +39,7 @@ function VisibilityToggle() {
         ) : (
           <Lock className="size-3.5" />
         )}
-        <span className="text-xs text-zinc-600 dark:text-zinc-300">
+        <span className="min-w-[2.5rem] text-center text-xs text-zinc-600 dark:text-zinc-300">
           {isPublic ? t("public") : t("private")}
         </span>
       </TooltipTrigger>
@@ -101,7 +101,7 @@ export function OptionsBar({ mode }: OptionsBarProps) {
 
   return (
     <div
-      className="flex items-center gap-1 overflow-x-auto"
+      className="flex items-center gap-1 overflow-x-auto scrollbar-none"
       role="toolbar"
       aria-label="Generation options"
     >

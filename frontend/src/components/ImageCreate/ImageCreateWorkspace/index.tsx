@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { PromptInput } from "@/components/PromptInput";
 import type { PromptInputState } from "@/components/PromptInput/types";
 import { useAuthStore } from "@/stores/auth";
+import { usePromptStore } from "@/stores/promptStore";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCreateGeneration,
@@ -114,6 +115,7 @@ export function ImageCreateWorkspace() {
             setSelectedImageUrl(null);
             prevStatusRef.current = res.generation.status;
             setCurrentGenId(res.generation.id);
+            usePromptStore.getState().setPrompt("");
           },
           onError: (err) => {
             toast.error(err.message || t("generateFailed"));

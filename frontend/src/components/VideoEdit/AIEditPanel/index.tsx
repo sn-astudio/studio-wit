@@ -86,6 +86,7 @@ export function AIEditPanel({
         is_public: isPublic,
       });
       onAiGenerationIdChange(result.generation.id);
+      setPrompt("");
       toast.success(t("aiGenerateStarted"));
     } catch {
       toast.error(t("aiGenerateError"));

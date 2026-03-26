@@ -119,6 +119,7 @@ export function VideoCreateWorkspace() {
             setSelectedVideoUrl(null);
             prevStatusRef.current = res.generation.status;
             setCurrentGenId(res.generation.id);
+            usePromptStore.getState().setPrompt("");
           },
           onError: (err) => {
             toast.error(err.message || t("generateFailed"));
