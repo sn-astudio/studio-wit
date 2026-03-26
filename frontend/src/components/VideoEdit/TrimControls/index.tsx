@@ -22,24 +22,26 @@ export function TrimControls({
   const isFullRange = trimStart === 0 && trimEnd >= duration - 0.1;
 
   return (
-    <div className="flex items-center justify-between rounded-xl bg-zinc-900/60 px-4 py-3">
+    <div className="flex flex-col gap-2 rounded-xl bg-zinc-100/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0 dark:bg-zinc-900/60">
       <div className="flex items-center gap-4">
         <div className="space-y-0.5">
           <span className="text-[10px] text-zinc-500">{t("trimStart")}</span>
-          <p className="text-sm font-mono text-zinc-200">
+          <p className="font-mono text-sm text-zinc-700 dark:text-zinc-200">
             {formatTime(trimStart)}
           </p>
         </div>
-        <div className="text-zinc-600">→</div>
+        <div className="text-zinc-600 dark:text-zinc-600">→</div>
         <div className="space-y-0.5">
           <span className="text-[10px] text-zinc-500">{t("trimEnd")}</span>
-          <p className="text-sm font-mono text-zinc-200">
+          <p className="font-mono text-sm text-zinc-700 dark:text-zinc-200">
             {formatTime(trimEnd)}
           </p>
         </div>
         <div className="ml-2 space-y-0.5">
-          <span className="text-[10px] text-zinc-500">{t("trimDuration")}</span>
-          <p className="text-sm font-mono text-primary">
+          <span className="text-[10px] text-zinc-500">
+            {t("trimDuration")}
+          </span>
+          <p className="font-mono text-sm text-primary">
             {formatTime(trimDuration)}
           </p>
         </div>
@@ -49,7 +51,7 @@ export function TrimControls({
         <Button
           variant="ghost"
           size="sm"
-          className="gap-1.5"
+          className="flex-1 gap-1.5 sm:flex-none"
           onClick={onReset}
           disabled={isFullRange || isTrimming}
         >
@@ -58,7 +60,7 @@ export function TrimControls({
         </Button>
         <Button
           size="sm"
-          className="gap-1.5"
+          className="flex-1 gap-1.5 sm:flex-none"
           onClick={onTrim}
           disabled={isFullRange || isTrimming}
         >

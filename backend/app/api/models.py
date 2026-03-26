@@ -74,6 +74,15 @@ AVAILABLE_MODELS: List[AIModel] = [
         is_async=True,
     ),
     AIModel(
+        id="sora-2-pro",
+        name="Sora 2 Pro",
+        provider=ProviderName.openai,
+        type=ModelType.video,
+        description="OpenAI의 고품질 비디오 생성 모델",
+        supported_params=["duration", "aspect_ratio", "input_image_url"],
+        is_async=True,
+    ),
+    AIModel(
         id="flux-2-pro",
         name="Flux 2 Pro",
         provider=ProviderName.fal,

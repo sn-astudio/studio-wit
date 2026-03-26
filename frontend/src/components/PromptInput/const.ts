@@ -61,6 +61,12 @@ export const IMAGE_MODELS: ModelDefinition[] = [
 
 export const VIDEO_MODELS: ModelDefinition[] = [
   {
+    id: "veo-3",
+    nameKey: "models.veo-3",
+    icon: GoogleIcon,
+    supportedParams: ["aspectRatio", "duration"],
+  },
+  {
     id: "veo-3.1",
     nameKey: "models.veo-3_1",
     icon: GoogleIcon,
@@ -85,8 +91,8 @@ export const VIDEO_MODELS: ModelDefinition[] = [
     supportedParams: ["aspectRatio", "duration"],
   },
   {
-    id: "kling-3.0-pro",
-    nameKey: "models.kling-3_0-pro",
+    id: "kling",
+    nameKey: "models.kling",
     icon: KlingIcon,
     supportedParams: ["aspectRatio", "duration", "negativePrompt", "cfgScale"],
   },
@@ -290,6 +296,17 @@ export const MODEL_PARAM_OPTIONS: Record<
       { value: "4", labelKey: "numImages.4" },
     ],
   },
+  "veo-3": {
+    aspectRatio: [
+      { value: "16:9", labelKey: "aspectRatios.16:9" },
+      { value: "9:16", labelKey: "aspectRatios.9:16" },
+    ],
+    duration: [
+      { value: "4", labelKey: "durations.4" },
+      { value: "6", labelKey: "durations.6" },
+      { value: "8", labelKey: "durations.8" },
+    ],
+  },
   "veo-3.1": {
     aspectRatio: [
       { value: "16:9", labelKey: "aspectRatios.16:9" },
@@ -336,26 +353,15 @@ export const MODEL_PARAM_OPTIONS: Record<
       { value: "20", labelKey: "durations.20" },
     ],
   },
-  "kling-3.0-pro": {
+  "kling": {
     aspectRatio: [
       { value: "16:9", labelKey: "aspectRatios.16:9" },
       { value: "9:16", labelKey: "aspectRatios.9:16" },
       { value: "1:1", labelKey: "aspectRatios.1:1" },
     ],
     duration: [
-      { value: "3", labelKey: "durations.3" },
-      { value: "4", labelKey: "durations.4" },
       { value: "5", labelKey: "durations.5" },
-      { value: "6", labelKey: "durations.6" },
-      { value: "7", labelKey: "durations.7" },
-      { value: "8", labelKey: "durations.8" },
-      { value: "9", labelKey: "durations.9" },
       { value: "10", labelKey: "durations.10" },
-      { value: "11", labelKey: "durations.11" },
-      { value: "12", labelKey: "durations.12" },
-      { value: "13", labelKey: "durations.13" },
-      { value: "14", labelKey: "durations.14" },
-      { value: "15", labelKey: "durations.15" },
     ],
   },
 };

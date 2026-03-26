@@ -1,10 +1,10 @@
 "use client";
 
-import { Download, Loader2, Save } from "lucide-react";
+import { useState } from "react";
+import { Download, Globe, Lock, Loader2, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/Button";
-import { downloadVideo } from "../utils";
 import type { VideoSourceSelectModalProps } from "./types";
 
 export function VideoSourceSelectModal({
@@ -18,15 +18,16 @@ export function VideoSourceSelectModal({
   isDownloading,
 }: VideoSourceSelectModalProps) {
   const t = useTranslations("VideoEdit");
+  const [isPublic, setIsPublic] = useState(false);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/50">
+      <div className="w-full max-w-md rounded-lg border border-zinc-200 bg-white p-6 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
         {/* 헤더 */}
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
             {t("selectVideoAction")}
           </h2>
         </div>
@@ -45,17 +46,38 @@ export function VideoSourceSelectModal({
 
         {/* 비디오 이름 */}
         {videoName && (
-          <p className="mb-4 text-xs text-zinc-400">
-            {videoName.length > 50 ? `${videoName.slice(0, 50)}...` : videoName}
+          <p className="mb-4 text-xs text-zinc-600 dark:text-zinc-400">
+            {videoName.length > 50
+              ? `${videoName.slice(0, 50)}...`
+              : videoName}
           </p>
         )}
+
+        {/* 공개/비공개 토글 */}
+        <button
+          type="button"
+          className="mb-4 flex w-full items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          onClick={() => setIsPublic(!isPublic)}
+        >
+          {isPublic ? (
+            <Globe className="size-4 text-blue-500" />
+          ) : (
+            <Lock className="size-4 text-zinc-500" />
+          )}
+          <span className="flex-1 text-left text-zinc-700 dark:text-zinc-300">
+            {isPublic ? t("public") : t("private")}
+          </span>
+          <span className="text-xs text-zinc-500">
+            {isPublic ? t("publicDescription") : t("privateDescription")}
+          </span>
+        </button>
 
         {/* 버튼 그룹 */}
         <div className="space-y-2">
           <Button
             size="sm"
             className="w-full gap-2"
-            onClick={onSave}
+            onClick={() => onSave(isPublic)}
             disabled={isSaving || isDownloading}
           >
             {isSaving ? (

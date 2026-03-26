@@ -2,14 +2,23 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Download, Merge, Save, Scissors, Sparkles } from "lucide-react";
+import { Download, Globe, Lock, Loader2, Merge, Save, Scissors, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ChevronDown, ChevronUp, Film, Trash2, Wand2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 import { useTrimVideo, useSaveEdit } from "@/hooks/queries/useVideoEdit";
+import { useGeneration } from "@/hooks/queries/useGeneration";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/hooks/queries/keys";
 
 import { VideoEditPreview } from "../VideoEditPreview";
 import { VideoSourceSelector } from "../VideoSourceSelector";
@@ -21,17 +30,29 @@ import { EffectsPanel } from "../EffectsPanel";
 import { VideoSourceSelectModal } from "../VideoSourceSelectModal";
 import type { MergeClip } from "../MergePanel/types";
 import { downloadVideo } from "../utils";
+import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import type { VideoSource } from "./types";
 
 type EditTab = "trim" | "ai" | "effects" | "merge";
 
 export function VideoEditWorkspace() {
   const t = useTranslations("VideoEdit");
+  const notify = useNotifyOnComplete();
+  const queryClient = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
-  // 탭
-  const [activeTab, setActiveTab] = useState<EditTab>("trim");
+  // 탭 (URL ?tab= 파라미터로 초기값 설정)
+  const [activeTab, setActiveTab] = useState<EditTab>(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "ai" || tab === "trim" || tab === "effects" || tab === "merge") return tab;
+    return "trim";
+  });
+
+  // 탭 전환 확인 모달
+  const [pendingTab, setPendingTab] = useState<EditTab | null>(null);
+  const [isTabConfirmOpen, setIsTabConfirmOpen] = useState(false);
 
   // 소스 상태
   const [source, setSource] = useState<VideoSource | null>(null);
@@ -70,6 +91,7 @@ export function VideoEditWorkspace() {
   const removeMergeClipRef = useRef<((id: string) => void) | null>(null);
   const moveMergeClipRef = useRef<((idx: number, direction: -1 | 1) => void) | null>(null);
   const resetMergeClipsRef = useRef<(() => void) | null>(null);
+  const setMergeClipsInternalRef = useRef<React.Dispatch<React.SetStateAction<MergeClip[]>> | null>(null);
   const [mergePreviewUrl, setMergePreviewUrl] = useState<string | null>(null);
   const [mergeClips, setMergeClips] = useState<MergeClip[]>([]);
 
@@ -79,35 +101,206 @@ export function VideoEditWorkspace() {
   const [modalVideoName, setModalVideoName] = useState<string>("");
   const [isSavingModal, setIsSavingModal] = useState(false);
   const [isDownloadingModal, setIsDownloadingModal] = useState(false);
+  const [isPublicSave, setIsPublicSave] = useState(false);
+
+  // 자식 패널 dirty 상태
+  const [isPanelDirty, setIsPanelDirty] = useState(false);
+
+  // AI 생성 상태 (탭 전환 + 새로고침해도 유지)
+  const AI_GEN_KEY = "videoEdit_aiGenerationId";
+  const [aiGenerationId, setAiGenerationId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem(AI_GEN_KEY);
+  });
+  const [aiElapsed, setAiElapsed] = useState(0);
+  const aiTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // sessionStorage 동기화
+  useEffect(() => {
+    if (aiGenerationId) {
+      sessionStorage.setItem(AI_GEN_KEY, aiGenerationId);
+    } else {
+      sessionStorage.removeItem(AI_GEN_KEY);
+    }
+  }, [aiGenerationId]);
+
+  const { data: aiGenData } = useGeneration(aiGenerationId, !!aiGenerationId);
+  const aiGeneration = aiGenData?.generation ?? null;
+  const aiIsGenerating =
+    aiGeneration?.status === "pending" || aiGeneration?.status === "processing";
+  const aiIsCompleted = aiGeneration?.status === "completed";
+  const aiIsFailed = aiGeneration?.status === "failed";
+
+  // 완료/실패 시 sessionStorage 정리
+  useEffect(() => {
+    if (aiIsCompleted || aiIsFailed) {
+      sessionStorage.removeItem(AI_GEN_KEY);
+    }
+  }, [aiIsCompleted, aiIsFailed]);
+
+  // AI 경과 시간 타이머
+  useEffect(() => {
+    if (aiIsGenerating) {
+      aiTimerRef.current = setInterval(() => setAiElapsed((e) => e + 1), 1000);
+    } else if (aiTimerRef.current) {
+      clearInterval(aiTimerRef.current);
+      aiTimerRef.current = null;
+    }
+    return () => {
+      if (aiTimerRef.current) clearInterval(aiTimerRef.current);
+    };
+  }, [aiIsGenerating]);
+
+  // AI 완료/실패 시 알림
+  const prevAiStatusRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!aiGeneration) return;
+    const prev = prevAiStatusRef.current;
+    prevAiStatusRef.current = aiGeneration.status;
+    if (prev && prev !== aiGeneration.status) {
+      if (aiGeneration.status === "completed") {
+        notify(t("aiGenerateComplete"), aiGeneration.prompt ?? undefined);
+        queryClient.invalidateQueries({ queryKey: queryKeys.generation.all });
+      } else if (aiGeneration.status === "failed") {
+        notify(t("aiGenerateError"), aiGeneration.error?.message ?? undefined);
+      }
+    }
+  }, [aiGeneration, notify, t, queryClient]);
+
+  const handleAiGenerationIdChange = useCallback((id: string | null) => {
+    setAiGenerationId(id);
+    setAiElapsed(0);
+    prevAiStatusRef.current = null;
+  }, []);
 
   const saveEditMutation = useSaveEdit();
 
   const [mergeDragIdx, setMergeDragIdx] = useState<number | null>(null);
+  const [mergeDragOverIdx, setMergeDragOverIdx] = useState<number | null>(null);
+  const mergeDragIdxRef = useRef<number | null>(null);
+  const mergeClipListRef = useRef<HTMLDivElement>(null);
 
-  const handleMergeDragOver = useCallback(
-    (e: React.DragEvent, targetIdx: number) => {
+  const handleMergePointerDown = useCallback(
+    (e: React.PointerEvent, idx: number) => {
+      // 버튼 클릭은 무시
+      if ((e.target as HTMLElement).closest("button")) return;
       e.preventDefault();
-      if (mergeDragIdx === null || mergeDragIdx === targetIdx) return;
-      setMergeClips((prev) => {
-        const next = [...prev];
-        const [moved] = next.splice(mergeDragIdx, 1);
-        next.splice(targetIdx, 0, moved);
-        return next;
-      });
-      setMergeDragIdx(targetIdx);
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      setMergeDragIdx(idx);
+      setMergeDragOverIdx(idx);
+      mergeDragIdxRef.current = idx;
     },
-    [mergeDragIdx],
+    [],
   );
+
+  const handleMergePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (mergeDragIdxRef.current === null || !mergeClipListRef.current) return;
+      const items = mergeClipListRef.current.children;
+      const y = e.clientY;
+      for (let i = 0; i < items.length; i++) {
+        const rect = items[i].getBoundingClientRect();
+        if (y >= rect.top && y <= rect.bottom) {
+          setMergeDragOverIdx(i);
+          return;
+        }
+      }
+    },
+    [],
+  );
+
+  const handleMergePointerUp = useCallback(() => {
+    const fromIdx = mergeDragIdxRef.current;
+    const overIdx = mergeDragOverIdx;
+    setMergeDragIdx(null);
+    setMergeDragOverIdx(null);
+    mergeDragIdxRef.current = null;
+
+    if (fromIdx === null || overIdx === null || fromIdx === overIdx) return;
+
+    // MergePanel 내부 setClips만 호출 → onClipsChange로 parent에 자동 전파
+    setMergeClipsInternalRef.current?.((prev: MergeClip[]) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(overIdx, 0, moved);
+      return next;
+    });
+  }, [mergeDragOverIdx]);
+
+  // 탭 전환 로직 (모든 state 선언 이후)
+  const resetAllState = useCallback(() => {
+    setResultUrl(null);
+    setTrimStart(0);
+    setTrimEnd(duration);
+    setCurrentTime(0);
+    setPreviewCssFilter("");
+    setMergePreviewUrl(null);
+    setMergeClips([]);
+    setMergeDragIdx(null);
+    setMergeDragOverIdx(null);
+    mergeDragIdxRef.current = null;
+    setIsModalOpen(false);
+    setModalVideoUrl(null);
+    setModalVideoName("");
+    setIsSavingModal(false);
+    setIsDownloadingModal(false);
+    setIsPanelDirty(false);
+    resetMergeClipsRef.current?.();
+  }, [duration]);
+
+  const switchTab = useCallback(
+    (tab: EditTab) => {
+      if (tab === activeTab) return;
+      const trimChanged =
+        trimStart > 0 || (trimEnd > 0 && Math.abs(trimEnd - duration) > 0.1);
+      const hasChanges =
+        !!resultUrl ||
+        trimChanged ||
+        mergeClips.length > 0 ||
+        !!mergePreviewUrl ||
+        !!previewCssFilter ||
+        isPanelDirty;
+
+      if (hasChanges) {
+        setPendingTab(tab);
+        setIsTabConfirmOpen(true);
+        return;
+      }
+      resetAllState();
+      setActiveTab(tab);
+    },
+    [activeTab, resultUrl, trimStart, trimEnd, duration, mergeClips, mergePreviewUrl, previewCssFilter, isPanelDirty, resetAllState],
+  );
+
+  const confirmTabSwitch = useCallback(() => {
+    if (!pendingTab) return;
+    resetAllState();
+    setActiveTab(pendingTab);
+    setPendingTab(null);
+    setIsTabConfirmOpen(false);
+  }, [pendingTab, resetAllState]);
+
+  const cancelTabSwitch = useCallback(() => {
+    setPendingTab(null);
+    setIsTabConfirmOpen(false);
+  }, []);
 
   const trimMutation = useTrimVideo();
 
-  const handleSourceSelected = useCallback((src: VideoSource) => {
-    setSource(src);
-    setResultUrl(null);
-    setTrimStart(0);
-    setTrimEnd(0);
-    setCurrentTime(0);
-  }, []);
+  const handleSourceSelected = useCallback(
+    (src: VideoSource) => {
+      setSource(src);
+      setResultUrl(null);
+      setTrimStart(0);
+      setTrimEnd(0);
+      setCurrentTime(0);
+      // 합치기/효과 탭 제외 스크롤 최상단
+      if (activeTab !== "merge" && activeTab !== "effects") {
+        scrollRef.current?.scrollTo({ top: 0 });
+      }
+    },
+    [activeTab],
+  );
 
   const handleDurationLoaded = useCallback(
     (dur: number) => {
@@ -136,6 +329,7 @@ export function VideoEditWorkspace() {
       });
       setResultUrl(result.result_url);
       toast.success(t("trimSuccess"));
+      notify(t("trimSuccess"));
     } catch {
       toast.error(t("trimError"));
     }
@@ -193,7 +387,7 @@ export function VideoEditWorkspace() {
   }, [modalVideoUrl, modalVideoName, activeTab, closeModal]);
 
   // 모달에서 저장 (작업 완료 동영상을 저장)
-  const handleModalSave = useCallback(async () => {
+  const handleModalSave = useCallback(async (isPublic: boolean) => {
     if (!resultUrl) return;
     setIsSavingModal(true);
     try {
@@ -201,6 +395,7 @@ export function VideoEditWorkspace() {
         result_url: resultUrl,
         edit_type: activeTab,
         prompt: source?.name || "Saved video",
+        is_public: isPublic,
       });
       toast.success(t("saveSuccess"));
       resetAndLoadSelectedVideo();
@@ -245,14 +440,100 @@ export function VideoEditWorkspace() {
   }, [hasUnsavedWork]);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] flex-col gap-3 overflow-y-auto p-4">
-      {/* 메인: 프리뷰(왼쪽) + 편집옵션(오른쪽) */}
-      <div className="flex gap-4">
-        {/* 왼쪽: 프리뷰 + 타임라인 */}
-        <div className="flex w-1/2 shrink-0 flex-col gap-3">
+    <div className="flex h-[calc(100dvh-64px)] flex-col sm:p-4">
+      {/* 탭 전환 (스크롤 밖 고정) */}
+      <div className="flex shrink-0 gap-0.5 overflow-x-auto bg-background px-2.5 pt-2 pb-1.5 sm:gap-1 sm:px-0 sm:pt-0 sm:pb-2">
+        <button
+          onClick={() => switchTab("trim")}
+          className={`flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs transition-colors sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
+            activeTab === "trim"
+              ? "bg-zinc-200 text-foreground dark:bg-zinc-800"
+              : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+          }`}
+        >
+          <Scissors className="size-3 sm:size-3.5" />
+          {t("tabTrim")}
+        </button>
+        <button
+          onClick={() => switchTab("ai")}
+          className={`flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs transition-colors sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
+            activeTab === "ai"
+              ? "bg-zinc-200 text-foreground dark:bg-zinc-800"
+              : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+          }`}
+        >
+          <Sparkles className="size-3 sm:size-3.5" />
+          {t("tabAI")}
+        </button>
+        <button
+          onClick={() => switchTab("effects")}
+          className={`flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs transition-colors sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
+            activeTab === "effects"
+              ? "bg-zinc-200 text-foreground dark:bg-zinc-800"
+              : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+          }`}
+        >
+          <Wand2 className="size-3 sm:size-3.5" />
+          {t("tabEffects")}
+        </button>
+        <button
+          onClick={() => switchTab("merge")}
+          className={`flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs transition-colors sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm ${
+            activeTab === "merge"
+              ? "bg-zinc-200 text-foreground dark:bg-zinc-800"
+              : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+          }`}
+        >
+          <Merge className="size-3 sm:size-3.5" />
+          {t("tabMerge")}
+        </button>
+      </div>
+
+      {/* AI 생성 진행 미니 바 (AI 탭이 아닐 때 표시) */}
+      {aiIsGenerating && activeTab !== "ai" && (
+        <div
+          className="mx-2.5 mb-2 flex cursor-pointer items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 transition-colors hover:bg-primary/15 sm:mx-0"
+          onClick={() => setActiveTab("ai")}
+          role="button"
+          tabIndex={0}
+        >
+          <Loader2 className="size-3.5 animate-spin text-primary" />
+          <span className="flex-1 text-xs text-primary">
+            {t("aiGenerating")}
+            {aiGeneration?.progress != null && ` (${aiGeneration.progress}%)`}
+          </span>
+          <span className="text-[10px] tabular-nums text-zinc-400">
+            {Math.floor(aiElapsed / 60)}:{String(aiElapsed % 60).padStart(2, "0")}
+          </span>
+          <Sparkles className="size-3 text-primary/60" />
+        </div>
+      )}
+
+      {/* AI 생성 완료 미니 바 (AI 탭이 아닐 때 표시) */}
+      {aiIsCompleted && aiGeneration?.result_url && activeTab !== "ai" && (
+        <div
+          className="mx-2.5 flex cursor-pointer items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 transition-colors hover:bg-primary/10 sm:mx-0"
+          onClick={() => setActiveTab("ai")}
+          role="button"
+          tabIndex={0}
+        >
+          <Sparkles className="size-3.5 text-primary" />
+          <span className="flex-1 text-xs font-medium text-primary">
+            {t("aiGenerateComplete")}
+          </span>
+          <span className="text-[10px] text-primary/60">{t("tabAI")} →</span>
+        </div>
+      )}
+
+      {/* 스크롤 영역 */}
+      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-2.5 sm:gap-3 sm:px-0 sm:pb-0">
+      {/* 메인: 모바일 세로(영상→옵션) / PC 가로(프리뷰|옵션) */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+        {/* 왼쪽(PC) / 위(모바일): 프리뷰 + 타임라인 */}
+        <div className="flex flex-col gap-2 sm:w-1/2 sm:shrink-0 sm:gap-3">
           {activeTab === "merge" ? (
             /* 합치기: 결과 또는 클립 목록 */
-            <div className="min-h-[280px] w-full overflow-hidden rounded-2xl border border-zinc-800 bg-black">
+            <div className="min-h-[200px] w-full overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 sm:min-h-[280px] dark:border-zinc-800 dark:bg-black">
               {resultUrl ? (
                 /* 합치기 완료 결과 */
                 <div className="flex h-full items-center justify-center">
@@ -265,23 +546,34 @@ export function VideoEditWorkspace() {
                 </div>
               ) : (
                 /* 클립 목록 */
-                <div className="flex h-full w-full flex-col border-dashed border-zinc-700 bg-zinc-900/40">
+                <div className="flex h-full w-full flex-col border-dashed border-zinc-400 bg-zinc-100/40 dark:border-zinc-700 dark:bg-zinc-900/40">
                   {mergeClips.length === 0 ? (
-                    <div className="flex flex-1 flex-col items-center justify-center gap-2 text-zinc-600">
+                    <div className="flex flex-1 flex-col items-center justify-center gap-2 text-zinc-600 dark:text-zinc-600">
                       <Film className="mb-3 size-12" />
-                      <p className="text-sm text-zinc-500">{t("mergePreviewEmpty")}</p>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-500">{t("mergePreviewEmpty")}</p>
                     </div>
                   ) : (
-                    <div className="flex w-full flex-col overflow-y-auto p-2 gap-1.5">
+                    <div
+                      ref={mergeClipListRef}
+                      className="flex w-full flex-col overflow-y-auto p-2 gap-1.5 touch-none"
+                      onPointerMove={handleMergePointerMove}
+                      onPointerUp={handleMergePointerUp}
+                      onPointerCancel={handleMergePointerUp}
+                    >
                       {mergeClips.map((clip, idx) => (
                         <div
                           key={clip.id}
-                          draggable
-                          onDragStart={() => setMergeDragIdx(idx)}
-                          onDragOver={(e) => handleMergeDragOver(e, idx)}
-                          onDragEnd={() => setMergeDragIdx(null)}
-                          className={`flex shrink-0 cursor-grab items-center gap-2 rounded-lg bg-zinc-900/60 px-2 py-1.5 transition-colors hover:bg-zinc-800/60 ${
-                            mergeDragIdx === idx ? "ring-1 ring-primary" : ""
+                          onPointerDown={(e) =>
+                            handleMergePointerDown(e, idx)
+                          }
+                          className={`flex shrink-0 cursor-grab items-center gap-2 rounded-lg bg-zinc-100/60 px-2 py-1.5 transition-colors hover:bg-zinc-200/60 dark:bg-zinc-900/60 dark:hover:bg-zinc-800/60 ${
+                            mergeDragIdx === idx
+                              ? "opacity-50"
+                              : ""
+                          } ${
+                            mergeDragOverIdx === idx && mergeDragIdx !== null && mergeDragIdx !== idx
+                              ? "ring-1 ring-primary"
+                              : ""
                           }`}
                         >
                           <div className="flex shrink-0 flex-col">
@@ -291,7 +583,7 @@ export function VideoEditWorkspace() {
                                 moveMergeClipRef.current?.(idx, -1);
                               }}
                               disabled={idx === 0}
-                              className="text-zinc-600 hover:text-zinc-300 disabled:opacity-20"
+                              className="text-zinc-400 hover:text-zinc-700 disabled:opacity-20 dark:text-zinc-600 dark:hover:text-zinc-300"
                             >
                               <ChevronUp className="size-3" />
                             </button>
@@ -301,12 +593,12 @@ export function VideoEditWorkspace() {
                                 moveMergeClipRef.current?.(idx, 1);
                               }}
                               disabled={idx === mergeClips.length - 1}
-                              className="text-zinc-600 hover:text-zinc-300 disabled:opacity-20"
+                              className="text-zinc-400 hover:text-zinc-700 disabled:opacity-20 dark:text-zinc-600 dark:hover:text-zinc-300"
                             >
                               <ChevronDown className="size-3" />
                             </button>
                           </div>
-                          <span className="text-xs font-mono text-zinc-500 w-4 text-center">
+                          <span className="w-4 text-center font-mono text-xs text-zinc-500">
                             {idx + 1}
                           </span>
                           <video
@@ -315,7 +607,7 @@ export function VideoEditWorkspace() {
                             muted
                             preload="metadata"
                           />
-                          <span className="min-w-0 flex-1 truncate text-xs text-zinc-300">
+                          <span className="min-w-0 flex-1 truncate text-xs text-zinc-700 dark:text-zinc-300">
                             {clip.name ?? `Clip ${idx + 1}`}
                           </span>
                           <button
@@ -323,7 +615,7 @@ export function VideoEditWorkspace() {
                               e.stopPropagation();
                               removeMergeClipRef.current?.(clip.id);
                             }}
-                            className="shrink-0 text-zinc-600 hover:text-red-400"
+                            className="shrink-0 text-zinc-400 hover:text-red-400 dark:text-zinc-600"
                           >
                             <Trash2 className="size-3" />
                           </button>
@@ -345,72 +637,12 @@ export function VideoEditWorkspace() {
                 cssFilter={activeTab === "effects" ? previewCssFilter : undefined}
               />
 
-              {/* 타임라인 (트림 탭, 소스 있고 결과 없을 때만) */}
-              {activeTab === "trim" && source && duration > 0 && !resultUrl && (
-                <VideoTimeline
-                  duration={duration}
-                  currentTime={currentTime}
-                  trimStart={trimStart}
-                  trimEnd={trimEnd}
-                  onTrimStartChange={setTrimStart}
-                  onTrimEndChange={setTrimEnd}
-                  onSeek={handleSeek}
-                />
-              )}
             </>
           )}
         </div>
 
-        {/* 오른쪽: 편집 옵션 (합치기 탭에서는 전체 폭) */}
-        <div className="flex min-w-0 flex-1 flex-col gap-3">
-          {/* 탭 전환 */}
-          <div className="flex gap-1 rounded-lg bg-zinc-900/60 p-1">
-            <button
-              onClick={() => setActiveTab("trim")}
-              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm transition-colors ${
-                activeTab === "trim"
-                  ? "bg-zinc-800 text-foreground"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              <Scissors className="size-3.5" />
-              {t("tabTrim")}
-            </button>
-            <button
-              onClick={() => setActiveTab("ai")}
-              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm transition-colors ${
-                activeTab === "ai"
-                  ? "bg-zinc-800 text-foreground"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              <Sparkles className="size-3.5" />
-              {t("tabAI")}
-            </button>
-            <button
-              onClick={() => setActiveTab("effects")}
-              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm transition-colors ${
-                activeTab === "effects"
-                  ? "bg-zinc-800 text-foreground"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              <Wand2 className="size-3.5" />
-              {t("tabEffects")}
-            </button>
-            <button
-              onClick={() => setActiveTab("merge")}
-              className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm transition-colors ${
-                activeTab === "merge"
-                  ? "bg-zinc-800 text-foreground"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              <Merge className="size-3.5" />
-              {t("tabMerge")}
-            </button>
-          </div>
-
+        {/* 오른쪽(PC) / 아래(모바일): 편집 옵션 */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:gap-3">
           {/* 트리밍 탭 */}
           {source && activeTab === "trim" && duration > 0 && (
             <div className="space-y-2">
@@ -428,6 +660,14 @@ export function VideoEditWorkspace() {
                   <span className="text-sm font-semibold text-primary">
                     {t("trimComplete")}
                   </span>
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                    onClick={() => setIsPublicSave(!isPublicSave)}
+                  >
+                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
+                    <span className="text-zinc-700 dark:text-zinc-300">{isPublicSave ? t("public") : t("private")}</span>
+                  </button>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -451,6 +691,7 @@ export function VideoEditWorkspace() {
                             result_url: resultUrl,
                             edit_type: "trim",
                             prompt: source?.name || "Trimmed video",
+                            is_public: isPublicSave,
                           });
                           toast.success(t("saveSuccess"));
                         } catch {
@@ -468,11 +709,130 @@ export function VideoEditWorkspace() {
           )}
 
           {/* AI 편집 탭 */}
-          {source && activeTab === "ai" && (
-            <AIEditPanel
-              sourceUrl={source.url}
-              currentTime={currentTime}
-            />
+          {activeTab === "ai" && (
+            <>
+              {source && (
+                <AIEditPanel
+                  sourceUrl={source.url}
+                  currentTime={currentTime}
+                  videoRef={videoRef}
+                  onDirty={() => setIsPanelDirty(true)}
+                  aiGenerationId={aiGenerationId}
+                  onAiGenerationIdChange={handleAiGenerationIdChange}
+                  aiGeneration={aiGeneration}
+                  aiIsGenerating={aiIsGenerating}
+                  aiIsCompleted={aiIsCompleted}
+                  aiIsFailed={aiIsFailed}
+                  aiElapsed={aiElapsed}
+                />
+              )}
+              {/* 소스 없어도 생성 상태 표시 */}
+              {!source && (aiIsGenerating || aiIsCompleted || aiIsFailed) && (
+                <div className="space-y-3">
+                  {aiIsGenerating && (
+                    <div className="space-y-2 rounded-lg bg-primary/10 px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="size-4 animate-spin text-primary" />
+                        <span className="flex-1 text-sm text-primary">
+                          {t("aiGenerating")}
+                          {aiGeneration?.progress != null && ` (${aiGeneration.progress}%)`}
+                        </span>
+                        <span className="text-xs tabular-nums text-zinc-400">
+                          {Math.floor(aiElapsed / 60)}:{String(aiElapsed % 60).padStart(2, "0")}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                        {aiGeneration?.progress != null ? (
+                          <div
+                            className="h-full rounded-full bg-primary transition-all duration-500"
+                            style={{ width: `${aiGeneration.progress}%` }}
+                          />
+                        ) : (
+                          <div className="h-full w-1/3 animate-[indeterminate_1.5s_ease-in-out_infinite] rounded-full bg-primary" />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {aiIsCompleted && aiGeneration?.result_url && (
+                    <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-2">
+                      <video
+                        src={aiGeneration.result_url}
+                        className="h-20 rounded-md"
+                        controls
+                        muted
+                        loop
+                      />
+                      <div className="flex flex-1 flex-col gap-1.5 py-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <Sparkles className="size-3 text-primary" />
+                          <span className="text-xs font-medium text-primary">
+                            {t("aiGenerateComplete")}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                          onClick={() => setIsPublicSave(!isPublicSave)}
+                        >
+                          {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
+                          <span className="text-zinc-700 dark:text-zinc-300">{isPublicSave ? t("public") : t("private")}</span>
+                        </button>
+                        <div className="flex gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 flex-1 gap-1.5 text-xs"
+                            onClick={() =>
+                              downloadVideo(
+                                aiGeneration.result_url!,
+                                `ai_edit_${Date.now()}.mp4`,
+                              )
+                            }
+                          >
+                            <Download className="size-3" />
+                            {t("download")}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 flex-1 gap-1.5 text-xs"
+                            disabled={saveEditMutation.isPending}
+                            onClick={async () => {
+                              try {
+                                await saveEditMutation.mutateAsync({
+                                  result_url: aiGeneration.result_url!,
+                                  edit_type: "ai",
+                                  prompt: aiGeneration.prompt || "AI edited video",
+                                  is_public: isPublicSave,
+                                });
+                                toast.success(t("saveSuccess"));
+                              } catch {
+                                toast.error(t("saveError"));
+                              }
+                            }}
+                          >
+                            {saveEditMutation.isPending ? (
+                              <Loader2 className="size-3 animate-spin" />
+                            ) : (
+                              <Save className="size-3" />
+                            )}
+                            {t("save")}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {aiIsFailed && aiGeneration && (
+                    <div className="flex items-center gap-3 rounded-lg border border-red-300/40 bg-red-50/20 px-4 py-2 dark:border-red-900/40 dark:bg-red-950/20">
+                      <span className="text-sm text-red-600 dark:text-red-400">
+                        {t("aiGenerateError")}
+                        {aiGeneration.error?.message && `: ${aiGeneration.error.message}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
           {/* 효과 탭 */}
@@ -482,6 +842,7 @@ export function VideoEditWorkspace() {
                 sourceUrl={source.url}
                 onEffectApplied={setResultUrl}
                 onPreviewFilter={setPreviewCssFilter}
+                onDirty={() => setIsPanelDirty(true)}
               />
 
               {resultUrl && (
@@ -489,6 +850,14 @@ export function VideoEditWorkspace() {
                   <span className="text-sm font-semibold text-primary">
                     {t("effectApplied")}
                   </span>
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                    onClick={() => setIsPublicSave(!isPublicSave)}
+                  >
+                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
+                    <span className="text-zinc-700 dark:text-zinc-300">{isPublicSave ? t("public") : t("private")}</span>
+                  </button>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -512,6 +881,7 @@ export function VideoEditWorkspace() {
                             result_url: resultUrl,
                             edit_type: "effects",
                             prompt: source?.name || "Effect applied",
+                            is_public: isPublicSave,
                           });
                           toast.success(t("saveSuccess"));
                         } catch {
@@ -547,11 +917,29 @@ export function VideoEditWorkspace() {
               onResetClipsRef={(fn) => {
                 resetMergeClipsRef.current = fn;
               }}
+              onSetClipsRef={(fn) => {
+                setMergeClipsInternalRef.current = fn;
+              }}
               onClipsChange={(c) => setMergeClips(c)}
             />
           )}
         </div>
       </div>
+
+      {/* 타임라인 (트림 탭, 소스 있고 결과 없을 때만) — 전체 너비 */}
+      {activeTab === "trim" && source && duration > 0 && !resultUrl && (
+        <div className="px-2 sm:px-4">
+        <VideoTimeline
+          duration={duration}
+          currentTime={currentTime}
+          trimStart={trimStart}
+          trimEnd={trimEnd}
+          onTrimStartChange={setTrimStart}
+          onTrimEndChange={setTrimEnd}
+          onSeek={handleSeek}
+        />
+        </div>
+      )}
 
       {/* 소스 선택 */}
       <VideoSourceSelector
@@ -561,6 +949,7 @@ export function VideoEditWorkspace() {
         onAddToMerge={(url, name) => addMergeClipRef.current?.(url, name)}
         onSelectVideo={resultUrl ? openModal : undefined}
       />
+      </div>{/* 스크롤 영역 끝 */}
 
       {/* 모달 */}
       <VideoSourceSelectModal
@@ -573,6 +962,36 @@ export function VideoEditWorkspace() {
         isSaving={isSavingModal}
         isDownloading={isDownloadingModal}
       />
+
+      {/* 탭 전환 확인 모달 */}
+      {isTabConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60">
+          <div className="mx-4 w-full max-w-sm space-y-4 rounded-2xl border border-zinc-300 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+            <h3 className="text-base font-semibold text-foreground">
+              {t("tabSwitchConfirmTitle")}
+            </h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              {t("tabSwitchConfirmMessage")}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={cancelTabSwitch}
+              >
+                {t("tabSwitchCancel")}
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={confirmTabSwitch}
+              >
+                {t("tabSwitchConfirm")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

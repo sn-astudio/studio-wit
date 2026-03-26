@@ -7,6 +7,14 @@ export function toGenerateParams(
   const result: GenerateParams = {};
   if (params.aspectRatio) result.aspect_ratio = params.aspectRatio as AspectRatio;
   if (params.duration) result.duration = Number(params.duration);
-  if (params.cfgScale) result.guidance_scale = Number(params.cfgScale);
+  if (params.cfgScale) result.cfg_scale = Number(params.cfgScale);
   return result;
+}
+
+/** params에서 negative_prompt 추출 */
+export function extractNegativePrompt(
+  params: Record<string, string | number>,
+): string | undefined {
+  const val = params.negativePrompt;
+  return val && String(val).trim() ? String(val).trim() : undefined;
 }

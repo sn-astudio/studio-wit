@@ -39,11 +39,11 @@ export function SettingsPanel() {
   const supportedParams = currentModel?.supportedParams ?? [];
 
   return (
-    <div className="flex w-72 shrink-0 flex-col overflow-hidden border-l border-zinc-800 bg-zinc-950/50">
+    <div className="flex w-72 shrink-0 flex-col overflow-hidden border-l border-zinc-300 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-950/50">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-zinc-800 px-4 py-3">
-        <Settings2 className="size-4 text-zinc-400" />
-        <span className="text-sm font-semibold text-zinc-200">
+      <div className="flex items-center gap-2 border-b border-zinc-300 px-4 py-3 dark:border-zinc-800">
+        <Settings2 className="size-4 text-zinc-600 dark:text-zinc-400" />
+        <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
           {tv("settings")}
         </span>
       </div>
@@ -55,7 +55,7 @@ export function SettingsPanel() {
             value={selectedModel}
             onValueChange={(value) => setSelectedModel(value as string)}
           >
-            <SelectTrigger className="h-9 w-full rounded-lg border-zinc-700 bg-zinc-900 text-sm hover:bg-zinc-800">
+            <SelectTrigger className="h-9 w-full rounded-lg border-zinc-300 bg-white text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800">
               {currentModel && (
                 <span className="flex items-center gap-2">
                   <currentModel.icon className="size-4 shrink-0" />
@@ -144,7 +144,7 @@ export function SettingsPanel() {
               value={(params.negativePrompt as string) ?? ""}
               onChange={(e) => setParam("negativePrompt", e.target.value)}
               placeholder={t("params.negativePrompt")}
-              className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-primary/50 focus:outline-none"
+              className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-800 placeholder:text-zinc-400 focus:border-primary/50 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:placeholder:text-zinc-600"
               rows={2}
             />
           </SettingGroup>

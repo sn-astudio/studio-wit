@@ -4,6 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Clock, Film, Loader2 } from "lucide-react";
 
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 import { useAuthStore } from "@/stores/auth";
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
 
@@ -71,67 +77,57 @@ export function GenerationHistory({
   const hasItems = token && allGenerations.length > 0;
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden border-t border-zinc-800/80">
-      <div className="flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-1.5">
-          <Clock className="size-3 text-zinc-600" />
-          <span className="text-[11px] font-medium text-zinc-500">
-            {t("recentGenerations")}
-          </span>
+    <div className="border-t border-zinc-300 dark:border-zinc-800/80">
+      <div className="flex items-center justify-between px-2.5 py-1.5 sm:px-4 sm:py-2">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <Clock className="size-3 text-zinc-600 dark:text-zinc-600" />
+            <span className="text-[11px] font-medium text-zinc-500">
+              {t("recentGenerations")}
+            </span>
+          </div>
+          {/* 모델 필터 셀렉트 */}
+          {hasItems && availableModels.length > 1 && (
+            <Select
+              value={modelFilter}
+              onValueChange={setModelFilter}
+            >
+              <SelectTrigger className="h-6 w-auto min-w-[80px] gap-1 border-zinc-400 bg-zinc-100/60 px-2 text-[11px] dark:border-zinc-700 dark:bg-zinc-800/60">
+                {modelFilter === "all" ? t("filterAll") : modelFilter}
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("filterAll")}</SelectItem>
+                {availableModels.map((model) => (
+                  <SelectItem key={model} value={model}>
+                    {model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         {hasItems && onToggleExpand && (
           <button
             onClick={onToggleExpand}
-            className="cursor-pointer text-[11px] text-zinc-600 transition-colors hover:text-zinc-400"
+            className="cursor-pointer text-[11px] font-medium text-primary/80 transition-colors hover:text-primary dark:text-primary/70 dark:hover:text-primary"
           >
             {expanded ? t("showLess") : t("viewAll")}
           </button>
         )}
       </div>
 
-      {/* 모델 필터 */}
-      {hasItems && availableModels.length > 1 && (
-        <div className="flex items-center gap-0.5 px-4 pb-2">
-          <div className="flex items-center gap-0.5 rounded-lg bg-zinc-800/60 p-0.5">
-            <button
-              onClick={() => setModelFilter("all")}
-              className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-                modelFilter === "all"
-                  ? "bg-zinc-700 text-zinc-100"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              {t("filterAll")}
-            </button>
-            {availableModels.map((model) => (
-              <button
-                key={model}
-                onClick={() => setModelFilter(model)}
-                className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-                  modelFilter === model
-                    ? "bg-zinc-700 text-zinc-100"
-                    : "text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {model}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {!hasItems ? (
         <div className="flex w-full items-center justify-center py-6">
           <div className="text-center">
-            <Film className="mx-auto size-6 text-zinc-800" />
-            <p className="mt-1.5 text-xs text-zinc-600">{t("noHistory")}</p>
+            <Film className="mx-auto size-6 text-zinc-300 dark:text-zinc-800" />
+            <p className="mt-1.5 text-xs text-zinc-600 dark:text-zinc-600">{t("noHistory")}</p>
           </div>
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
-          <div className="columns-2 gap-2 sm:columns-3 lg:columns-4">
+        <div className="px-2.5 pb-3 sm:px-4">
+          <div className="grid grid-cols-2 gap-1.5 sm:columns-3 sm:block sm:gap-2 lg:columns-4">
             {generations.map((gen) => (
-              <div key={gen.id} className="mb-2 break-inside-avoid">
+              <div key={gen.id} className="sm:mb-2 sm:break-inside-avoid">
                 <HistoryCard gen={gen} onSelect={handleSelect} />
               </div>
             ))}

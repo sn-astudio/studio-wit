@@ -37,7 +37,7 @@ export function ModelSelector({ models }: ModelSelectorProps) {
         <TooltipTrigger
           render={
             <SelectTrigger
-              className="h-7 gap-1.5 rounded-lg border-none bg-zinc-800/60 px-2.5 hover:bg-zinc-700"
+              className="h-9 gap-1.5 rounded-lg border-none bg-zinc-200/60 px-2.5 hover:bg-zinc-300 sm:h-7 dark:bg-zinc-800/60 dark:hover:bg-zinc-700"
               render={<Button variant="ghost" size="sm" />}
             />
           }

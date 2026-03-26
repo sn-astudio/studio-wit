@@ -103,8 +103,9 @@ class GenerateParams(BaseModel):
     style: Optional[str] = Field(None, description="스타일 프리셋", examples=["photorealistic"])
     quality: Optional[str] = Field(None, description="품질 (standard, hd)", examples=["hd"])
     guidance_scale: Optional[float] = Field(None, description="프롬프트 반영 강도", ge=1.0, le=20.0, examples=[7.5])
+    cfg_scale: Optional[float] = Field(None, description="CFG 스케일 (Kling)", ge=0.0, le=1.0, examples=[0.5])
     num_steps: Optional[int] = Field(None, description="생성 스텝 수", ge=10, le=50, examples=[30])
-    duration: Optional[int] = Field(None, description="비디오 길이 (초)", ge=2, le=16, examples=[5])
+    duration: Optional[int] = Field(None, description="비디오 길이 (초)", ge=2, le=20, examples=[5])
     input_image_url: Optional[str] = Field(None, description="Image-to-Video용 입력 이미지 URL")
 
 
@@ -126,6 +127,7 @@ class GenerateRequest(BaseModel):
         examples=["blurry, low quality"],
     )
     params: Optional[GenerateParams] = Field(None, description="모델별 추가 파라미터")
+    is_public: Optional[bool] = Field(False, description="갤러리 공개 여부")
 
 
 class GenerationError(BaseModel):

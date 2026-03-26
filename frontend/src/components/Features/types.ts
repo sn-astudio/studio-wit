@@ -5,4 +5,5 @@ export interface Tool {
   titleKey: string;
   descriptionKey: string;
   badgeKey: string | null;
+  href: string | null;
 }
