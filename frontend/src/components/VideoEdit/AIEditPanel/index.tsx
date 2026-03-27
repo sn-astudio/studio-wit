@@ -329,7 +329,7 @@ export function AIEditPanel({
 
       {/* 생성 완료 결과 */}
       {aiIsCompleted && aiGeneration?.result_url && (
-        <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-2">
+        <div className="mb-2 flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-2">
           <video
             src={aiGeneration.result_url}
             className="h-20 rounded-md"

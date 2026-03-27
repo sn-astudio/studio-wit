@@ -45,42 +45,43 @@ export async function downloadImage(url: string, filename?: string) {
   }
 }
 
-/** 비디오 URL을 백엔드 프록시를 통해 다운로드 */
+/** blob으로 다운로드하는 헬퍼 */
+async function fetchAndDownload(fetchUrl: string, name: string, headers?: Record<string, string>): Promise<boolean> {
+  const res = await fetch(fetchUrl, headers ? { headers } : undefined);
+  if (!res.ok) return false;
+  const blob = await res.blob();
+  if (blob.type === "application/json" || blob.size < 1000) return false;
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  }, 100);
+  return true;
+}
+
+/** 비디오 다운로드: CDN 직접 → 프록시 → 새 탭 순으로 시도 */
 export async function downloadVideo(url: string, filename?: string) {
   const name = filename ?? `video_${Date.now()}.mp4`;
-  const proxyUrl = `${BASE_URL}/api/video/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(name)}`;
 
-  const headers: Record<string, string> = {};
-  const token = getAccessToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
+  // 1차: CDN URL에서 직접 blob 다운로드
   try {
-    const res = await fetch(proxyUrl, { headers });
-    if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+    if (await fetchAndDownload(url, name)) return;
+  } catch { /* fallthrough */ }
 
-    const blob = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
+  // 2차: 백엔드 프록시 경유
+  try {
+    const proxyUrl = `${BASE_URL}/api/video/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(name)}`;
+    const headers: Record<string, string> = {};
+    const token = getAccessToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    if (await fetchAndDownload(proxyUrl, name, headers)) return;
+  } catch { /* fallthrough */ }
 
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    }, 100);
-  } catch {
-    // fallback: 직접 URL 다운로드 시도
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = name;
-    a.target = "_blank";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => document.body.removeChild(a), 100);
-  }
+  // 3차: 새 탭에서 열기
+  window.open(url, "_blank");
 }
