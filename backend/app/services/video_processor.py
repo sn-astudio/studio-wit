@@ -264,7 +264,7 @@ async def speed_video(source_url: str, speed_factor: float) -> str:
         cmd = [
             "ffmpeg", "-y", "-i", input_path,
             "-filter:v", f"setpts={pts_factor}*PTS",
-            "-an",  # 오디오 제거 (속도 변경 시 싱크 문제 방지)
+            "-af", f"atempo={speed_factor}",
             "-c:v", "libx264", "-preset", "fast", "-crf", "23", "-pix_fmt", "yuv420p",
             "-movflags", "+faststart",
             output_path,
@@ -300,7 +300,7 @@ async def reverse_video(source_url: str) -> str:
         cmd = [
             "ffmpeg", "-y", "-i", input_path,
             "-vf", "reverse",
-            "-an",
+            "-af", "areverse",
             "-c:v", "libx264", "-preset", "fast", "-crf", "23", "-pix_fmt", "yuv420p",
             "-movflags", "+faststart",
             output_path,
@@ -352,7 +352,7 @@ async def apply_filter(
         cmd = [
             "ffmpeg", "-y", "-i", input_path,
             "-vf", vf,
-            "-an",
+            "-c:a", "copy",
             "-c:v", "libx264", "-preset", "fast", "-crf", "23", "-pix_fmt", "yuv420p",
             "-movflags", "+faststart",
             output_path,
@@ -431,7 +431,7 @@ async def add_text_overlay(
             "ffmpeg", "-y", "-i", input_path,
             "-vf", drawtext,
             "-c:v", "libx264", "-preset", "fast", "-crf", "23", "-pix_fmt", "yuv420p",
-            "-an",
+            "-c:a", "copy",
             "-movflags", "+faststart",
             output_path,
         ]
@@ -644,7 +644,7 @@ async def add_subtitles(
             "ffmpeg", "-y", "-i", input_path,
             "-vf", vf,
             "-c:v", "libx264", "-preset", "fast", "-crf", "23", "-pix_fmt", "yuv420p",
-            "-an",
+            "-c:a", "copy",
             "-movflags", "+faststart",
             output_path,
         ]

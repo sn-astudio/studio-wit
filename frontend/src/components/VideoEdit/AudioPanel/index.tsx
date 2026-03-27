@@ -79,11 +79,15 @@ export function AudioPanel({ sourceUrl, onAudioApplied, onSave, onDirty }: Audio
     if (!sourceUrl) return;
     try {
       const result = await extractMutation.mutateAsync({ source_url: sourceUrl });
-      // 다운로드 링크 생성
+      // blob 다운로드
+      const res = await fetch(result.audio_url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = result.audio_url;
+      a.href = url;
       a.download = "audio.mp3";
       a.click();
+      URL.revokeObjectURL(url);
       toast.success(t("audioExtracted"));
       notify(t("audioExtracted"));
     } catch {
@@ -176,12 +180,16 @@ export function AudioPanel({ sourceUrl, onAudioApplied, onSave, onDirty }: Audio
   }, [pendingResult, isPublicSave, onSave, t]);
 
   // 로컬 다운로드
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async () => {
     if (!pendingResult) return;
+    const res = await fetch(pendingResult);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = pendingResult;
+    a.href = url;
     a.download = "audio_edited.mp4";
     a.click();
+    URL.revokeObjectURL(url);
   }, [pendingResult]);
 
   const [openSection, setOpenSection] = useState<string | null>(null);
