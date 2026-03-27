@@ -14,6 +14,26 @@ from app.services.storage import upload_generation_image, upload_generation_vide
 
 logger = logging.getLogger(__name__)
 
+# ──────────────────────────────────────
+# 한국어 폰트 경로 탐색 (Linux/Docker 우선)
+# ──────────────────────────────────────
+_FONT_CANDIDATES = [
+    # Linux / Docker (fonts-noto-cjk 패키지)
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    # Linux (fonts-nanum 패키지)
+    "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",
+    "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+    # macOS
+    "/Library/Fonts/NanumGothicBold.otf",
+    "/System/Library/Fonts/AppleSDGothicNeo.ttc",
+]
+
+def _find_font() -> Optional[str]:
+    """시스템에서 사용 가능한 한국어 폰트를 찾아 반환한다."""
+    return next((f for f in _FONT_CANDIDATES if os.path.exists(f)), None)
+
 
 async def get_video_info(video_url: str) -> dict:
     """비디오 URL에서 duration, width, height, fps 등 메타데이터를 추출한다."""
@@ -389,15 +409,7 @@ async def add_text_overlay(
         # 텍스트 이스케이프 (ffmpeg drawtext용)
         escaped_text = text.replace("'", "\\'").replace(":", "\\:")
 
-        # 한국어 지원 폰트 탐색
-        font_candidates = [
-            "/Library/Fonts/NanumGothicBold.otf",
-            "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",
-            "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
-            "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
-            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
-        ]
-        fontfile = next((f for f in font_candidates if os.path.exists(f)), None)
+        fontfile = _find_font()
 
         # drawtext 필터 구성
         drawtext = f"drawtext=text='{escaped_text}'"
@@ -510,14 +522,7 @@ async def add_watermark(
         else:
             # 텍스트 워터마크
             escaped_text = text.replace("'", "\\'").replace(":", "\\:")
-            font_candidates = [
-                "/Library/Fonts/NanumGothicBold.otf",
-                "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",
-                "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
-                "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
-                "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
-            ]
-            fontfile = next((f for f in font_candidates if os.path.exists(f)), None)
+            fontfile = _find_font()
 
             # 위치 → drawtext 좌표
             dt_pos_map = {
@@ -593,15 +598,7 @@ async def add_subtitles(
             tempfile.gettempdir(), f"subs_{uuid.uuid4().hex}.mp4"
         )
 
-        # 한국어 지원 폰트 탐색
-        font_candidates = [
-            "/Library/Fonts/NanumGothicBold.otf",
-            "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",
-            "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
-            "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
-            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
-        ]
-        fontfile = next((f for f in font_candidates if os.path.exists(f)), None)
+        fontfile = _find_font()
 
         # 여러 drawtext 필터를 콤마로 체인
         filters = []
