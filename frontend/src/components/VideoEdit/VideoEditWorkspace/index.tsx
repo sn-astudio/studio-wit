@@ -40,7 +40,7 @@ import { useVideoEditStore } from "@/stores/videoEditStore";
 import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import type { VideoSource } from "./types";
 
-type EditTab = "trim" | "ai" | "effects" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop";
+type EditTab = "trim" | "ai" | "effects" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop" | "scene" | "preset";
 
 export function VideoEditWorkspace() {
   const t = useTranslations("VideoEdit");
