@@ -7,7 +7,7 @@ from typing import Optional
 from urllib.parse import unquote
 
 import httpx
-from fastapi import APIRouter, Depends, Query, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -20,6 +20,9 @@ from app.services.video_processor import (
     crop_video, add_letterbox, rotate_video, change_fps,
     extract_audio, remove_audio, replace_audio, adjust_volume, mix_audio,
     detect_scenes, split_scene,
+    apply_creative_preset,
+    shorts_convert, video_collage, before_after_video,
+    add_poll_overlay, add_quiz_overlay,
 )
 from app.services.storage import upload_generation_video
 
@@ -704,3 +707,197 @@ async def bulk_download(
             "Content-Disposition": f'attachment; filename="videos_{len(req.urls)}.zip"',
         },
     )
+
+
+# ──────────────────────────────────────
+# 크리에이티브 프리셋
+# ──────────────────────────────────────
+
+class CreativePresetRequest(BaseModel):
+    source_url: str = Field(..., description="원본 비디오 URL")
+    preset: str = Field(..., description="프리셋 이름 (camcorder, cctv, breaking_news, old_tv, drone_view, countdown, film_credits, vintage_cam)")
+    params: Optional[dict] = Field(None, description="프리셋별 커스텀 파라미터")
+
+
+@router.post("/creative-preset")
+async def creative_preset_endpoint(
+    req: CreativePresetRequest,
+    user: User = Depends(get_current_user),
+):
+    """크리에이티브 프리셋 적용"""
+    try:
+        result_url = await apply_creative_preset(
+            source_url=req.source_url,
+            preset=req.preset,
+            params=req.params,
+        )
+        return {"result_url": result_url}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception("크리에이티브 프리셋 적용 실패")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ──────────────────────────────────────
+# 쇼츠/릴스 자동 변환
+# ──────────────────────────────────────
+class ShortsConvertRequest(BaseModel):
+    source_url: str
+    crop_x: str = Field("center", description="크롭 위치: left, center, right")
+
+
+@router.post("/shorts-convert")
+async def shorts_convert_endpoint(
+    req: ShortsConvertRequest,
+    user: User = Depends(get_current_user),
+):
+    try:
+        result_url = await shorts_convert(
+            video_url=req.source_url,
+            crop_x=req.crop_x,
+        )
+        return {"result_url": result_url}
+    except Exception as e:
+        logger.exception("쇼츠 변환 실패")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ──────────────────────────────────────
+# 영상 콜라주
+# ──────────────────────────────────────
+class CollageRequest(BaseModel):
+    video_urls: list = Field(..., description="영상 URL 목록 (2~4개)")
+    layout: str = Field("2x1", description="레이아웃: 2x1, 1x2, 2x2, 3x1, 1x3")
+    output_width: int = Field(1280, description="출력 너비")
+    output_height: int = Field(720, description="출력 높이")
+
+
+@router.post("/collage")
+async def collage_endpoint(
+    req: CollageRequest,
+    user: User = Depends(get_current_user),
+):
+    if len(req.video_urls) < 2:
+        raise HTTPException(status_code=400, detail="최소 2개 영상이 필요합니다")
+    if len(req.video_urls) > 4:
+        raise HTTPException(status_code=400, detail="최대 4개 영상까지 가능합니다")
+    try:
+        result_url = await video_collage(
+            video_urls=req.video_urls,
+            layout=req.layout,
+            output_width=req.output_width,
+            output_height=req.output_height,
+        )
+        return {"result_url": result_url}
+    except Exception as e:
+        logger.exception("영상 콜라주 실패")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ──────────────────────────────────────
+# 비포/애프터 비교 영상
+# ──────────────────────────────────────
+class BeforeAfterRequest(BaseModel):
+    before_url: str = Field(..., description="비포 영상 URL")
+    after_url: str = Field(..., description="애프터 영상 URL")
+    mode: str = Field("side_by_side", description="비교 모드: side_by_side, slide")
+    output_width: int = Field(1280, description="출력 너비")
+    output_height: int = Field(720, description="출력 높이")
+
+
+@router.post("/before-after")
+async def before_after_endpoint(
+    req: BeforeAfterRequest,
+    user: User = Depends(get_current_user),
+):
+    try:
+        result_url = await before_after_video(
+            before_url=req.before_url,
+            after_url=req.after_url,
+            mode=req.mode,
+            output_width=req.output_width,
+            output_height=req.output_height,
+        )
+        return {"result_url": result_url}
+    except Exception as e:
+        logger.exception("비포/애프터 영상 생성 실패")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ──────────────────────────────────────
+# A/B 투표 오버레이
+# ──────────────────────────────────────
+class PollQuestionItem(BaseModel):
+    question: str = Field(..., description="투표 질문")
+    option_a: str = Field(..., description="A 옵션")
+    option_b: str = Field(..., description="B 옵션")
+    start: float = Field(0, description="표시 시작 시간(초)")
+    end: float = Field(5, description="표시 종료 시간(초)")
+
+
+class PollOverlayRequest(BaseModel):
+    source_url: str
+    questions: list[PollQuestionItem] = Field(..., description="투표 질문 세트")
+    text_color: str = Field("white", description="텍스트 색상")
+    accent_color: str = Field("#4A90D9", description="A 옵션 박스 색상")
+
+
+@router.post("/poll-overlay")
+async def poll_overlay_endpoint(
+    req: PollOverlayRequest,
+    user: User = Depends(get_current_user),
+):
+    try:
+        questions_data = [q.model_dump() for q in req.questions]
+        result_url = await add_poll_overlay(
+            video_url=req.source_url,
+            questions=questions_data,
+            text_color=req.text_color,
+            accent_color=req.accent_color,
+        )
+        return {"result_url": result_url}
+    except Exception as e:
+        logger.exception("투표 오버레이 실패")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ──────────────────────────────────────
+# 퀴즈 오버레이
+# ──────────────────────────────────────
+class QuizQuestionItem(BaseModel):
+    question: str = Field(..., description="퀴즈 질문")
+    choices: list = Field(..., description="보기 목록 (2~4개)")
+    answer_index: int = Field(0, description="정답 인덱스 (0부터)")
+    start: float = Field(0, description="표시 시작 시간(초)")
+    end: float = Field(10, description="표시 종료 시간(초)")
+    reveal_after: float = Field(5, description="정답 공개까지 시간(초)")
+
+
+class QuizOverlayRequest(BaseModel):
+    source_url: str
+    questions: list[QuizQuestionItem] = Field(..., description="퀴즈 질문 세트")
+    text_color: str = Field("white", description="텍스트 색상")
+
+
+@router.post("/quiz-overlay")
+async def quiz_overlay_endpoint(
+    req: QuizOverlayRequest,
+    user: User = Depends(get_current_user),
+):
+    for q in req.questions:
+        if len(q.choices) < 2 or len(q.choices) > 4:
+            raise HTTPException(status_code=400, detail="보기는 2~4개여야 합니다")
+        if q.answer_index < 0 or q.answer_index >= len(q.choices):
+            raise HTTPException(status_code=400, detail="정답 인덱스가 범위를 벗어났습니다")
+    try:
+        questions_data = [q.model_dump() for q in req.questions]
+        result_url = await add_quiz_overlay(
+            video_url=req.source_url,
+            questions=questions_data,
+            text_color=req.text_color,
+        )
+        return {"result_url": result_url}
+    except Exception as e:
+        logger.exception("퀴즈 오버레이 실패")
+        raise HTTPException(status_code=500, detail=str(e))

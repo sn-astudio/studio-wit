@@ -345,6 +345,165 @@ async def apply_filter(
             contrast = params.get("contrast", 1)       # 0.0 ~ 3.0
             saturation = params.get("saturation", 1)    # 0.0 ~ 3.0
             vf = f"eq=brightness={brightness}:contrast={contrast}:saturation={saturation}"
+        # ── 빈티지/레트로 필터 ──
+        elif filter_name == "vhs":
+            # VHS 효과: 색 번짐 + 노이즈 + 스캔라인 + 채도 낮춤
+            vf = (
+                "noise=c0s=15:c0f=t+u,"
+                "eq=saturation=0.7:contrast=1.2:brightness=0.05,"
+                "colorbalance=rs=0.1:gs=-0.05:bs=-0.1:rm=0.1:gm=-0.05:bm=-0.1,"
+                "unsharp=3:3:-1.5:3:3:-1.5,"
+                "vignette=PI/4"
+            )
+        elif filter_name == "8mm":
+            # 8mm 필름: 따뜻한 색감 + 비네팅 + 그레인 + 약간 과노출
+            vf = (
+                "noise=c0s=20:c0f=t,"
+                "eq=saturation=0.8:contrast=1.3:brightness=0.08,"
+                "colorbalance=rs=0.15:gs=0.05:bs=-0.1:rh=0.1:gh=0.02:bh=-0.08,"
+                "vignette=PI/3.5"
+            )
+        elif filter_name == "bw_film":
+            # 흑백 필름: grayscale + 높은 콘트라스트 + 그레인
+            vf = (
+                "colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3,"
+                "eq=contrast=1.4:brightness=0.02,"
+                "noise=c0s=18:c0f=t,"
+                "vignette=PI/4"
+            )
+        elif filter_name == "retro70":
+            # 70년대 레트로: 바랜 색감 + 낮은 채도 + 따뜻한 톤
+            vf = (
+                "eq=saturation=0.6:contrast=1.1:brightness=0.05,"
+                "colorbalance=rs=0.12:gs=0.06:bs=-0.06:rm=0.08:gm=0.03:bm=-0.04,"
+                "vignette=PI/5"
+            )
+        elif filter_name == "instagram":
+            # 인스타 필터: 높은 대비 + 따뜻한 하이라이트 + 채도 업
+            vf = (
+                "eq=saturation=1.3:contrast=1.25:brightness=0.03,"
+                "colorbalance=rh=0.08:gh=0.02:bh=-0.05:rs=0.05:gs=0.0:bs=-0.03,"
+                "unsharp=5:5:1.0:5:5:0.0"
+            )
+        elif filter_name == "cool":
+            # 쿨톤: 파란/청록 강조 + 채도 약간 낮춤
+            vf = (
+                "eq=saturation=0.85:contrast=1.1,"
+                "colorbalance=rs=-0.1:gs=0.0:bs=0.12:rm=-0.08:gm=0.02:bm=0.1:rh=-0.06:gh=0.02:bh=0.08"
+            )
+        elif filter_name == "warm":
+            # 웜톤: 오렌지/노란 강조
+            vf = (
+                "eq=saturation=1.1:contrast=1.05:brightness=0.03,"
+                "colorbalance=rs=0.12:gs=0.04:bs=-0.08:rm=0.08:gm=0.02:bm=-0.06:rh=0.06:gh=0.02:bh=-0.04"
+            )
+        elif filter_name == "cinematic":
+            # 시네마틱: 틸 & 오렌지 + 레터박스 느낌 비네팅
+            vf = (
+                "eq=saturation=0.9:contrast=1.2:brightness=-0.02,"
+                "colorbalance=rs=0.08:gs=-0.02:bs=-0.08:rm=-0.04:gm=0.0:bm=0.06:rh=0.06:gh=-0.02:bh=-0.06,"
+                "vignette=PI/3"
+            )
+        elif filter_name == "faded":
+            # 페이디드: 검은색이 회색으로 바래진 효과
+            vf = (
+                "curves=m='0/0.15 0.5/0.5 1/0.9',"
+                "eq=saturation=0.7:contrast=0.9"
+            )
+        elif filter_name == "noir":
+            # 느와르: 고대비 흑백 + 강한 비네팅
+            vf = (
+                "colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3,"
+                "eq=contrast=1.6:brightness=-0.03,"
+                "vignette=PI/2.5"
+            )
+        elif filter_name == "oversaturated":
+            # 과채도: 비비드한 색감
+            vf = (
+                "eq=saturation=1.8:contrast=1.15,"
+                "unsharp=5:5:0.8:5:5:0.0"
+            )
+        elif filter_name == "bleach":
+            # 블리치 바이패스: 은잔류 효과 (탈색 느낌)
+            vf = (
+                "eq=saturation=0.4:contrast=1.5:brightness=-0.02,"
+                "colorbalance=rs=0.04:gs=0.02:bs=-0.02"
+            )
+        # ── 재미 필터 ──
+        elif filter_name == "glitch":
+            # 글리치: 색수차(RGB 분리) + 노이즈 + 깜빡임
+            vf = (
+                "split=3[r][g][b];"
+                "[r]lutrgb=g=0:b=0,crop=iw:ih:0:0[r1];"
+                "[g]lutrgb=r=0:b=0,crop=iw:ih:0:0[g1];"
+                "[b]lutrgb=r=0:g=0,crop=iw:ih:0:0[b1];"
+                "[r1][g1]blend=all_mode=addition[rg];"
+                "[rg][b1]blend=all_mode=addition,"
+                "noise=c0s=30:c0f=t+u,"
+                "eq=contrast=1.3:saturation=1.2"
+            )
+        elif filter_name == "mirror":
+            # 미러: 좌우 반전 합성
+            vf = "split[a][b];[b]hflip[b1];[a][b1]hstack"
+        elif filter_name == "kaleidoscope":
+            # 만화경: 4분할 미러
+            vf = (
+                "split[a][b];"
+                "[a]crop=iw/2:ih/2:0:0,split[tl1][tl2];"
+                "[tl2]hflip[tr];"
+                "[tl1][tr]hstack[top];"
+                "[b]crop=iw/2:ih/2:0:0,split[bl1][bl2];"
+                "[bl2]hflip[br];"
+                "[bl1][br]hstack[bot];"
+                "[top][bot]vstack"
+            )
+        elif filter_name == "cartoon":
+            # 애니메이션/만화: 엣지 감지 + 색상 단순화
+            vf = (
+                "edgedetect=low=0.1:high=0.3:mode=colormix,"
+                "eq=saturation=1.5:contrast=1.3"
+            )
+        elif filter_name == "emboss":
+            # 엠보스: 양각 효과
+            vf = "convolution='0 -1 0 -1 4 -1 0 -1 0:0 -1 0 -1 4 -1 0 -1 0:0 -1 0 -1 4 -1 0 -1 0:0 -1 0 -1 4 -1 0 -1 0'"
+        elif filter_name == "edge_glow":
+            # 엣지 글로우: 네온 엣지
+            vf = (
+                "edgedetect=low=0.08:high=0.2:mode=colormix,"
+                "eq=saturation=2.0:brightness=0.1:contrast=1.5,"
+                "colorbalance=rs=0.1:bs=0.15"
+            )
+        elif filter_name == "pixelize":
+            # 픽셀화: 모자이크 느낌
+            scale = params.get("scale", 10)
+            vf = f"scale=iw/{scale}:ih/{scale}:flags=neighbor,scale=iw*{scale}:ih*{scale}:flags=neighbor"
+        elif filter_name == "thermal":
+            # 열화상 카메라
+            vf = (
+                "colorchannelmixer=rr=0:rg=0:rb=1:gr=1:gg=0:gb=0:br=0:bg=1:bb=0,"
+                "eq=saturation=1.5:contrast=1.3,"
+                "colorbalance=rs=0.2:gs=-0.1:bs=-0.2"
+            )
+        elif filter_name == "negative":
+            # 네거티브/반전
+            vf = "negate"
+        elif filter_name == "posterize":
+            # 포스터라이즈: 색상 단계 축소
+            vf = "pp=al,eq=saturation=1.3:contrast=1.2"
+        elif filter_name == "sharpen":
+            # 선명하게
+            vf = "unsharp=5:5:1.5:5:5:1.0"
+        elif filter_name == "blur":
+            # 블러
+            strength = params.get("strength", 5)
+            vf = f"boxblur={strength}:{strength}"
+        elif filter_name == "boomerang":
+            # 부메랑: 정방향 + 역방향 반복
+            vf = "split[a][b];[b]reverse[r];[a][r]concat=n=2:v=1:a=0"
+        elif filter_name == "timelapse":
+            # 타임랩스: 8배속
+            speed = params.get("speed", 8)
+            vf = f"setpts=PTS/{speed}"
         else:
             raise ValueError(f"지원하지 않는 필터: {filter_name}")
 
@@ -1314,6 +1473,752 @@ async def split_scene(
 
         edit_id = uuid.uuid4().hex
         cdn_url = await upload_generation_video(f"scene_{edit_id}", video_data, "mp4")
+        if not cdn_url:
+            raise RuntimeError("S3 업로드 실패")
+        return cdn_url
+    finally:
+        if input_path and os.path.exists(input_path):
+            os.unlink(input_path)
+        if output_path and os.path.exists(output_path):
+            os.unlink(output_path)
+
+
+# ──────────────────────────────────────
+# 크리에이티브 프리셋
+# ──────────────────────────────────────
+
+def _build_creative_vf(
+    preset: str,
+    params: Optional[dict] = None,
+    font_path: Optional[str] = None,
+) -> str:
+    """프리셋에 따라 ffmpeg -vf 문자열을 반환한다."""
+    params = params or {}
+    fp = font_path or _find_font()
+    fp_esc = fp.replace(":", r"\:")
+    custom_text = params.get("custom_text", "").replace(":", r"\:").replace("'", r"'\''")
+    date_text = params.get("date_text", "2025.03.28")
+    cam_name = params.get("cam_name", "CAM-01")
+    tc = params.get("text_color", "white")
+    # hex 색상을 ffmpeg 형식으로 변환 (#ffffff → 0xffffff)
+    if tc.startswith("#"):
+        tc = "0x" + tc[1:]
+
+    if preset == "camcorder":
+        return (
+            f"noise=c0s=12:c0f=t+u,"
+            f"vignette=PI/4,"
+            f"eq=saturation=0.85:contrast=1.1,"
+            f"drawtext=fontfile='{fp_esc}':text='● REC':fontcolor=red:fontsize=28:x=30:y=25"
+            f":enable='lt(mod(t\\,2)\\,1.5)',"
+            f"drawtext=fontfile='{fp_esc}':text='%{{pts\\:hms}}':fontcolor={tc}:fontsize=24"
+            f":x=w-text_w-30:y=25:borderw=1:bordercolor=black@0.5,"
+            f"drawtext=fontfile='{fp_esc}':text='{date_text}':fontcolor={tc}@0.8:fontsize=20"
+            f":x=30:y=h-50:borderw=1:bordercolor=black@0.5,"
+            f"drawtext=fontfile='{fp_esc}':text='{cam_name}':fontcolor={tc}@0.8:fontsize=20"
+            f":x=w-text_w-30:y=h-50:borderw=1:bordercolor=black@0.5"
+        )
+    elif preset == "cctv":
+        # 흑백 + 날짜시간 + 카메라번호 + 저화질 느낌
+        return (
+            f"colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3,"
+            f"eq=contrast=1.3:brightness=-0.03,"
+            f"noise=c0s=25:c0f=t,"
+            f"drawtext=fontfile='{fp_esc}':text='{date_text}  %{{pts\\:hms}}':fontcolor={tc}"
+            f":fontsize=22:x=20:y=20:borderw=1:bordercolor=black@0.6,"
+            f"drawtext=fontfile='{fp_esc}':text='{cam_name}':fontcolor={tc}"
+            f":fontsize=22:x=w-text_w-20:y=20:borderw=1:bordercolor=black@0.6"
+        )
+    elif preset == "breaking_news":
+        # 하단 빨간 띠 + BREAKING NEWS + 사용자 텍스트
+        headline = custom_text or "BREAKING NEWS"
+        headline_esc = headline.replace(":", r"\:").replace("'", r"'\''")
+        return (
+            # 우상단 LIVE 배경 박스 → LIVE 텍스트
+            f"drawbox=y=12:x=iw-100:w=85:h=30:color=red@0.9:t=fill,"
+            f"drawtext=fontfile='{fp_esc}':text='LIVE':fontcolor=white:fontsize=20"
+            f":x=w-92:y=16:borderw=0,"
+            # 하단 빨간 띠 배경
+            f"drawbox=y=ih-70:x=0:w=iw:h=70:color=0xCC0000@0.9:t=fill,"
+            # 하단 BREAKING 라벨 (흰 배경)
+            f"drawbox=y=ih-60:x=10:w=140:h=30:color=white@0.95:t=fill,"
+            f"drawtext=fontfile='{fp_esc}':text='BREAKING':fontcolor=red"
+            f":fontsize=20:x=18:y=h-56:borderw=0,"
+            # 하단 헤드라인 텍스트
+            f"drawtext=fontfile='{fp_esc}':text='{headline_esc}':fontcolor={tc}"
+            f":fontsize=22:x=165:y=h-56:borderw=0,"
+            # 하단 타임코드
+            f"drawtext=fontfile='{fp_esc}':text='%{{pts\\:hms}}':fontcolor={tc}@0.7"
+            f":fontsize=14:x=10:y=h-22:borderw=0"
+        )
+    elif preset == "old_tv":
+        # 스캔라인 + 색 번짐 + 비네팅 + 노이즈 + 채도 낮춤
+        return (
+            f"noise=c0s=20:c0f=t+u,"
+            f"eq=saturation=0.6:contrast=1.2:brightness=0.03,"
+            f"vignette=PI/3,"
+            f"colorbalance=rs=0.05:gs=-0.03:bs=-0.05,"
+            f"unsharp=3:3:-1.5:3:3:-1.5"
+        )
+    elif preset == "drone_view":
+        # 위치좌표 + 고도 + 배터리 + 날짜
+        lat = params.get("lat", "37.5665° N")
+        lng = params.get("lng", "126.9780° E")
+        alt = params.get("alt", "120m")
+        return (
+            f"drawtext=fontfile='{fp_esc}':text='{lat}  {lng}':fontcolor={tc}"
+            f":fontsize=18:x=20:y=h-70:borderw=1:bordercolor=black@0.5,"
+            f"drawtext=fontfile='{fp_esc}':text='ALT {alt}':fontcolor={tc}"
+            f":fontsize=18:x=20:y=h-45:borderw=1:bordercolor=black@0.5,"
+            f"drawtext=fontfile='{fp_esc}':text='BAT 87%%':fontcolor=#00ff00"
+            f":fontsize=16:x=w-120:y=20:borderw=1:bordercolor=black@0.5,"
+            f"drawtext=fontfile='{fp_esc}':text='%{{pts\\:hms}}':fontcolor={tc}"
+            f":fontsize=18:x=w-text_w-20:y=h-45:borderw=1:bordercolor=black@0.5,"
+            f"drawtext=fontfile='{fp_esc}':text='{date_text}':fontcolor={tc}@0.7"
+            f":fontsize=16:x=w-text_w-20:y=h-70:borderw=1:bordercolor=black@0.5"
+        )
+    elif preset == "countdown":
+        # 3-2-1 카운트다운: 각 숫자 1초 표시 + 필름 리더 스타일
+        return (
+            f"noise=c0s=10:c0f=t,"
+            f"eq=saturation=0.5:contrast=1.3,"
+            f"vignette=PI/3,"
+            f"drawtext=fontfile='{fp_esc}':text='3':fontcolor=white:fontsize=120"
+            f":x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t\\,0\\,1)',"
+            f"drawtext=fontfile='{fp_esc}':text='2':fontcolor=white:fontsize=120"
+            f":x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t\\,1\\,2)',"
+            f"drawtext=fontfile='{fp_esc}':text='1':fontcolor=white:fontsize=120"
+            f":x=(w-text_w)/2:y=(h-text_h)/2:enable='between(t\\,2\\,3)'"
+        )
+    elif preset == "film_credits":
+        # 엔딩 크레딧: 아래→위 스크롤 텍스트 + 페이드
+        credit_text = custom_text or "Directed by\\nStudio Wit"
+        credit_esc = credit_text.replace(":", r"\:").replace("'", r"'\''")
+        return (
+            f"fade=t=in:st=0:d=1,"
+            f"drawtext=fontfile='{fp_esc}':text='{credit_esc}':fontcolor={tc}"
+            f":fontsize=36:x=(w-text_w)/2:y=h-50*t:line_spacing=20"
+            f":borderw=0,"
+            f"fade=t=out:st=4:d=2"
+        )
+    elif preset == "vintage_cam":
+        # 옛날 핸디캠: REC + 배터리 + 줌 표시 + 날짜 + 비네팅 + 노이즈
+        return (
+            f"noise=c0s=15:c0f=t+u,"
+            f"eq=saturation=0.75:contrast=1.15:brightness=0.03,"
+            f"vignette=PI/3.5,"
+            f"colorbalance=rs=0.08:gs=0.02:bs=-0.06,"
+            f"drawtext=fontfile='{fp_esc}':text='● REC':fontcolor=red:fontsize=24:x=25:y=20"
+            f":enable='lt(mod(t\\,2)\\,1.5)',"
+            f"drawtext=fontfile='{fp_esc}':text='%{{pts\\:hms}}':fontcolor=white:fontsize=20"
+            f":x=w-text_w-25:y=20:borderw=1:bordercolor=black@0.4,"
+            f"drawtext=fontfile='{fp_esc}':text='SP':fontcolor=yellow:fontsize=16"
+            f":x=w-50:y=50:borderw=1:bordercolor=black@0.4,"
+            f"drawtext=fontfile='{fp_esc}':text='{date_text}':fontcolor=orange@0.9:fontsize=22"
+            f":x=25:y=h-45:borderw=1:bordercolor=black@0.4"
+        )
+    else:
+        raise ValueError(f"지원하지 않는 프리셋: {preset}")
+
+
+async def apply_creative_preset(
+    source_url: str,
+    preset: str,
+    params: Optional[dict] = None,
+) -> str:
+    """크리에이티브 프리셋을 적용하여 S3에 업로드하고 CDN URL을 반환한다."""
+    input_path: Optional[str] = None
+    output_path: Optional[str] = None
+    try:
+        font_path = _find_font()
+        vf = _build_creative_vf(preset, params, font_path)
+
+        input_path = await _download_to_temp(source_url)
+        output_path = os.path.join(
+            tempfile.gettempdir(), f"preset_{uuid.uuid4().hex}.mp4"
+        )
+
+        import subprocess
+        cmd = [
+            "ffmpeg", "-y", "-i", input_path,
+            "-vf", vf,
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart",
+            output_path,
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.error("creative preset ffmpeg stderr: %s", result.stderr)
+            raise RuntimeError(f"ffmpeg 오류: {result.stderr[-500:]}")
+
+        with open(output_path, "rb") as f:
+            video_data = f.read()
+
+        edit_id = uuid.uuid4().hex
+        cdn_url = await upload_generation_video(f"preset_{edit_id}", video_data, "mp4")
+        if not cdn_url:
+            raise RuntimeError("S3 업로드 실패")
+        return cdn_url
+    finally:
+        if input_path and os.path.exists(input_path):
+            os.unlink(input_path)
+        if output_path and os.path.exists(output_path):
+            os.unlink(output_path)
+
+
+# ──────────────────────────────────────
+# 쇼츠/릴스 자동 변환 (16:9 → 9:16)
+# ──────────────────────────────────────
+async def shorts_convert(
+    video_url: str,
+    crop_x: str = "center",
+) -> str:
+    """16:9 영상을 9:16으로 중앙 크롭하여 쇼츠/릴스용으로 변환한다."""
+    input_path = None
+    output_path = None
+    try:
+        input_path = await _download_to_temp(video_url)
+        output_path = os.path.join(
+            tempfile.gettempdir(), f"shorts_{uuid.uuid4().hex}.mp4"
+        )
+
+        # 원본 해상도 확인
+        probe = ffmpeg.probe(input_path)
+        v_stream = next(s for s in probe["streams"] if s["codec_type"] == "video")
+        w = int(v_stream["width"])
+        h = int(v_stream["height"])
+
+        # 9:16 비율로 크롭 영역 계산
+        target_w = int(h * 9 / 16)
+        target_h = h
+        if target_w > w:
+            target_w = w
+            target_h = int(w * 16 / 9)
+
+        # crop_x 위치
+        if crop_x == "left":
+            x_expr = "0"
+        elif crop_x == "right":
+            x_expr = f"{w - target_w}"
+        else:  # center
+            x_expr = f"(in_w-{target_w})/2"
+
+        y_expr = f"(in_h-{target_h})/2"
+
+        inp = ffmpeg.input(input_path)
+        video = inp.video.filter("crop", target_w, target_h, x_expr, y_expr)
+
+        # 오디오 스트림 존재 여부 확인
+        has_audio = any(s["codec_type"] == "audio" for s in probe["streams"])
+        if has_audio:
+            audio = inp.audio
+            out = ffmpeg.output(
+                video, audio, output_path,
+                vcodec="libx264", acodec="aac",
+                pix_fmt="yuv420p", preset="fast", crf="23",
+                movflags="+faststart",
+            )
+        else:
+            out = ffmpeg.output(
+                video, output_path,
+                vcodec="libx264",
+                pix_fmt="yuv420p", preset="fast", crf="23",
+                movflags="+faststart",
+            )
+
+        out.overwrite_output().run(quiet=True)
+
+        with open(output_path, "rb") as f:
+            video_data = f.read()
+
+        edit_id = uuid.uuid4().hex
+        cdn_url = await upload_generation_video(f"shorts_{edit_id}", video_data, "mp4")
+        if not cdn_url:
+            raise RuntimeError("S3 업로드 실패")
+        return cdn_url
+    finally:
+        if input_path and os.path.exists(input_path):
+            os.unlink(input_path)
+        if output_path and os.path.exists(output_path):
+            os.unlink(output_path)
+
+
+# ──────────────────────────────────────
+# 영상 콜라주 (2~4개 그리드 배치)
+# ──────────────────────────────────────
+async def video_collage(
+    video_urls: list,
+    layout: str = "2x1",
+    output_width: int = 1280,
+    output_height: int = 720,
+) -> str:
+    """여러 영상을 한 화면에 그리드로 배치한다."""
+    input_paths = []
+    output_path = None
+    try:
+        # 다운로드
+        for url in video_urls:
+            input_paths.append(await _download_to_temp(url))
+
+        output_path = os.path.join(
+            tempfile.gettempdir(), f"collage_{uuid.uuid4().hex}.mp4"
+        )
+
+        n = len(input_paths)
+        if layout == "2x2" and n >= 4:
+            cols, rows = 2, 2
+        elif layout == "1x2" and n >= 2:
+            cols, rows = 1, 2  # 세로 2개
+        elif layout == "2x1" and n >= 2:
+            cols, rows = 2, 1  # 가로 2개
+        elif layout == "3x1" and n >= 3:
+            cols, rows = 3, 1
+        elif layout == "1x3" and n >= 3:
+            cols, rows = 1, 3
+        else:
+            cols, rows = 2, 1
+
+        cell_w = output_width // cols
+        cell_h = output_height // rows
+
+        inputs = []
+        scaled = []
+        for i in range(cols * rows):
+            idx = i % len(input_paths)
+            inp = ffmpeg.input(input_paths[idx])
+            v = inp.video.filter("scale", cell_w, cell_h).filter("setsar", 1)
+            inputs.append(inp)
+            scaled.append(v)
+
+        # xstack 필터로 그리드 배치
+        # layout 문자열: "0_0|w0_0|0_h0|w0_h0" 형식
+        layout_parts = []
+        for r in range(rows):
+            for c in range(cols):
+                x = f"{c}*{cell_w}" if c > 0 else "0"
+                y = f"{r}*{cell_h}" if r > 0 else "0"
+                # xstack은 _로 x,y 구분
+                layout_parts.append(f"{x}_{y}")
+
+        xstack_layout = "|".join(layout_parts)
+
+        stacked = ffmpeg.filter(
+            scaled, "xstack",
+            inputs=cols * rows,
+            layout=xstack_layout,
+        )
+
+        out = ffmpeg.output(
+            stacked, output_path,
+            vcodec="libx264",
+            pix_fmt="yuv420p", preset="fast", crf="23",
+            movflags="+faststart",
+            t=10,  # 최대 10초
+        )
+        out.overwrite_output().run(quiet=True)
+
+        with open(output_path, "rb") as f:
+            video_data = f.read()
+
+        edit_id = uuid.uuid4().hex
+        cdn_url = await upload_generation_video(f"collage_{edit_id}", video_data, "mp4")
+        if not cdn_url:
+            raise RuntimeError("S3 업로드 실패")
+        return cdn_url
+    finally:
+        for p in input_paths:
+            if p and os.path.exists(p):
+                os.unlink(p)
+        if output_path and os.path.exists(output_path):
+            os.unlink(output_path)
+
+
+# ──────────────────────────────────────
+# 비포/애프터 비교 영상
+# ──────────────────────────────────────
+async def before_after_video(
+    before_url: str,
+    after_url: str,
+    mode: str = "side_by_side",
+    output_width: int = 1280,
+    output_height: int = 720,
+) -> str:
+    """두 영상을 나란히 또는 슬라이더 방식으로 비교 영상을 생성한다."""
+    before_path = None
+    after_path = None
+    output_path = None
+    try:
+        before_path = await _download_to_temp(before_url)
+        after_path = await _download_to_temp(after_url)
+        output_path = os.path.join(
+            tempfile.gettempdir(), f"ba_{uuid.uuid4().hex}.mp4"
+        )
+
+        half_w = output_width // 2
+
+        before_inp = ffmpeg.input(before_path)
+        after_inp = ffmpeg.input(after_path)
+
+        if mode == "slide":
+            # 슬라이더 효과: 왼쪽 반은 before, 오른쪽 반은 after
+            # 시간에 따라 경계가 왼→오로 이동
+            before_scaled = before_inp.video.filter("scale", output_width, output_height).filter("setsar", 1)
+            after_scaled = after_inp.video.filter("scale", output_width, output_height).filter("setsar", 1)
+
+            # overlay로 슬라이더 효과 구현
+            # after 위에 before를 crop해서 overlay
+            # crop 너비가 시간에 따라 줄어듦
+            before_cropped = before_scaled.filter(
+                "crop",
+                f"max(0,{output_width}-({output_width}*t/5))",  # 5초에 걸쳐 이동
+                output_height, 0, 0,
+            )
+
+            merged = ffmpeg.overlay(after_scaled, before_cropped, x=0, y=0)
+
+            # 구분선 추가 (흰색 세로선)
+            merged = merged.filter(
+                "drawbox",
+                x=f"max(0,{output_width}-({output_width}*t/5))-2",
+                y=0, w=4, h=output_height,
+                color="white", t="fill",
+            )
+
+            out = ffmpeg.output(
+                merged, output_path,
+                vcodec="libx264",
+                pix_fmt="yuv420p", preset="fast", crf="23",
+                movflags="+faststart",
+            )
+        else:
+            # side_by_side: 좌우 나란히
+            before_scaled = before_inp.video.filter("scale", half_w, output_height).filter("setsar", 1)
+            after_scaled = after_inp.video.filter("scale", half_w, output_height).filter("setsar", 1)
+
+            merged = ffmpeg.filter(
+                [before_scaled, after_scaled], "hstack",
+            )
+
+            # BEFORE / AFTER 라벨 추가
+            font_path = _find_font()
+            if font_path:
+                merged = merged.filter(
+                    "drawtext", text="BEFORE",
+                    x=f"({half_w}-text_w)/2", y=30,
+                    fontsize=28, fontcolor="white",
+                    borderw=2, bordercolor="black@0.6",
+                    fontfile=font_path,
+                )
+                merged = merged.filter(
+                    "drawtext", text="AFTER",
+                    x=f"{half_w}+({half_w}-text_w)/2", y=30,
+                    fontsize=28, fontcolor="white",
+                    borderw=2, bordercolor="black@0.6",
+                    fontfile=font_path,
+                )
+
+            out = ffmpeg.output(
+                merged, output_path,
+                vcodec="libx264",
+                pix_fmt="yuv420p", preset="fast", crf="23",
+                movflags="+faststart",
+            )
+
+        out.overwrite_output().run(quiet=True)
+
+        with open(output_path, "rb") as f:
+            video_data = f.read()
+
+        edit_id = uuid.uuid4().hex
+        cdn_url = await upload_generation_video(f"ba_{edit_id}", video_data, "mp4")
+        if not cdn_url:
+            raise RuntimeError("S3 업로드 실패")
+        return cdn_url
+    finally:
+        if before_path and os.path.exists(before_path):
+            os.unlink(before_path)
+        if after_path and os.path.exists(after_path):
+            os.unlink(after_path)
+        if output_path and os.path.exists(output_path):
+            os.unlink(output_path)
+
+
+# ──────────────────────────────────────
+# A/B 투표 오버레이
+# ──────────────────────────────────────
+async def add_poll_overlay(
+    video_url: str,
+    questions: list,
+    text_color: str = "white",
+    accent_color: str = "#4A90D9",
+) -> str:
+    """영상에 다중 A/B 투표 오버레이를 추가한다.
+
+    questions: [{"question": str, "option_a": str, "option_b": str, "start": float, "end": float}, ...]
+    """
+    input_path = None
+    output_path = None
+    try:
+        input_path = await _download_to_temp(video_url)
+        output_path = os.path.join(
+            tempfile.gettempdir(), f"poll_{uuid.uuid4().hex}.mp4"
+        )
+
+        probe = ffmpeg.probe(input_path)
+        v_stream = next(s for s in probe["streams"] if s["codec_type"] == "video")
+        w = int(v_stream["width"])
+        h = int(v_stream["height"])
+        has_audio = any(s["codec_type"] == "audio" for s in probe["streams"])
+
+        font_path = _find_font()
+        font_opt = f":fontfile={font_path}" if font_path else ""
+
+        # 절대 좌표 계산
+        bg_y = int(h * 0.55)
+        bg_h = h - bg_y
+        q_y = int(h * 0.58)
+        box_a_x = int(w * 0.08)
+        box_b_x = int(w * 0.54)
+        box_y = int(h * 0.70)
+        box_w = int(w * 0.38)
+        box_h = int(h * 0.12)
+        txt_a_x = int(w * 0.12)
+        txt_b_x = int(w * 0.58)
+        txt_y = int(h * 0.73)
+        hint_y = int(h * 0.88)
+
+        accent_hex = accent_color.replace("#", "0x")
+
+        # 모든 질문 세트를 filter_complex 문자열로 조합
+        filters = []
+        for q in questions:
+            start = q.get("start", 0)
+            end = q.get("end", 10)
+            question_text = q["question"].replace("'", "\\'").replace(":", "\\:")
+            opt_a = q["option_a"].replace("'", "\\'").replace(":", "\\:")
+            opt_b = q["option_b"].replace("'", "\\'").replace(":", "\\:")
+            enable = f"between(t\\,{start}\\,{end})"
+
+            # 반투명 배경
+            filters.append(
+                f"drawbox=x=0:y={bg_y}:w={w}:h={bg_h}:color=black@0.6:t=fill:enable='{enable}'"
+            )
+            # 질문
+            filters.append(
+                f"drawtext=text='{question_text}':x=(w-text_w)/2:y={q_y}"
+                f":fontsize=32:fontcolor={text_color}:borderw=2:bordercolor=black@0.5"
+                f":enable='{enable}'{font_opt}"
+            )
+            # A 박스
+            filters.append(
+                f"drawbox=x={box_a_x}:y={box_y}:w={box_w}:h={box_h}"
+                f":color={accent_hex}@0.8:t=fill:enable='{enable}'"
+            )
+            # A 텍스트
+            filters.append(
+                f"drawtext=text='A. {opt_a}':x={txt_a_x}:y={txt_y}"
+                f":fontsize=26:fontcolor=white:borderw=1:bordercolor=black@0.3"
+                f":enable='{enable}'{font_opt}"
+            )
+            # B 박스
+            filters.append(
+                f"drawbox=x={box_b_x}:y={box_y}:w={box_w}:h={box_h}"
+                f":color=0xE74C3C@0.8:t=fill:enable='{enable}'"
+            )
+            # B 텍스트
+            filters.append(
+                f"drawtext=text='B. {opt_b}':x={txt_b_x}:y={txt_y}"
+                f":fontsize=26:fontcolor=white:borderw=1:bordercolor=black@0.3"
+                f":enable='{enable}'{font_opt}"
+            )
+            # 안내
+            hint_text = "댓글로 투표하세요!".replace(":", "\\:")
+            filters.append(
+                f"drawtext=text='{hint_text}':x=(w-text_w)/2:y={hint_y}"
+                f":fontsize=18:fontcolor=white@0.7"
+                f":enable='{enable}'{font_opt}"
+            )
+
+        filter_chain = ",".join(filters)
+
+        # subprocess로 실행 (filter_complex 문자열 사용)
+        cmd = ["ffmpeg", "-y", "-i", input_path]
+        if has_audio:
+            cmd += ["-vf", filter_chain, "-c:a", "aac"]
+        else:
+            cmd += ["-vf", filter_chain]
+        cmd += [
+            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-preset", "fast", "-crf", "23",
+            "-movflags", "+faststart", output_path,
+        ]
+
+        import subprocess
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.error("poll overlay ffmpeg stderr: %s", result.stderr)
+            raise RuntimeError(f"ffmpeg 오류: {result.stderr[-500:]}")
+
+        with open(output_path, "rb") as f:
+            video_data = f.read()
+
+        edit_id = uuid.uuid4().hex
+        cdn_url = await upload_generation_video(f"poll_{edit_id}", video_data, "mp4")
+        if not cdn_url:
+            raise RuntimeError("S3 업로드 실패")
+        return cdn_url
+    finally:
+        if input_path and os.path.exists(input_path):
+            os.unlink(input_path)
+        if output_path and os.path.exists(output_path):
+            os.unlink(output_path)
+
+
+# ──────────────────────────────────────
+# 퀴즈 오버레이 (4지선다 + 정답 공개)
+# ──────────────────────────────────────
+async def add_quiz_overlay(
+    video_url: str,
+    questions: list,
+    text_color: str = "white",
+) -> str:
+    """영상에 다중 퀴즈 오버레이를 추가한다.
+
+    questions: [{
+        "question": str, "choices": [str], "answer_index": int,
+        "start": float, "end": float, "reveal_after": float
+    }, ...]
+    """
+    input_path = None
+    output_path = None
+    try:
+        input_path = await _download_to_temp(video_url)
+        output_path = os.path.join(
+            tempfile.gettempdir(), f"quiz_{uuid.uuid4().hex}.mp4"
+        )
+
+        probe = ffmpeg.probe(input_path)
+        v_stream = next(s for s in probe["streams"] if s["codec_type"] == "video")
+        w = int(v_stream["width"])
+        h = int(v_stream["height"])
+        has_audio = any(s["codec_type"] == "audio" for s in probe["streams"])
+
+        font_path = _find_font()
+        font_opt = f":fontfile={font_path}" if font_path else ""
+
+        labels = ["A", "B", "C", "D"]
+
+        # 좌표 계산
+        bg_y = int(h * 0.40)
+        bg_h = h - bg_y
+        q_y = int(h * 0.43)
+        countdown_y = int(h * 0.90)
+        answer_y = int(h * 0.90)
+        box_w = int(w * 0.40)
+        box_h = int(h * 0.12)
+
+        filters = []
+
+        for q in questions:
+            start = q.get("start", 0)
+            end = q.get("end", 10)
+            reveal_after = q.get("reveal_after", 5)
+            reveal_at = start + reveal_after
+            question_text = q["question"].replace("'", "\\'").replace(":", "\\:")
+            choices = q.get("choices", [])
+            answer_index = q.get("answer_index", 0)
+            num_choices = min(len(choices), 4)
+
+            enable_all = f"between(t\\,{start}\\,{end})"
+            enable_before = f"between(t\\,{start}\\,{min(reveal_at, end)})"
+            enable_after = f"between(t\\,{reveal_at}\\,{end})"
+
+            # 반투명 배경
+            filters.append(
+                f"drawbox=x=0:y={bg_y}:w={w}:h={bg_h}:color=black@0.6:t=fill:enable='{enable_all}'"
+            )
+            # 질문
+            filters.append(
+                f"drawtext=text='{question_text}':x=(w-text_w)/2:y={q_y}"
+                f":fontsize=30:fontcolor={text_color}:borderw=2:bordercolor=black@0.5"
+                f":enable='{enable_all}'{font_opt}"
+            )
+            # 카운트다운
+            hint = f"{int(reveal_after)}초 후 정답 공개".replace(":", "\\:")
+            filters.append(
+                f"drawtext=text='{hint}':x=(w-text_w)/2:y={countdown_y}"
+                f":fontsize=18:fontcolor=yellow@0.9"
+                f":enable='{enable_before}'{font_opt}"
+            )
+
+            # 보기 (2x2 그리드)
+            for i in range(num_choices):
+                col = i % 2
+                row = i // 2
+                bx = int(w * (0.08 + col * 0.46))
+                by = int(h * (0.55 + row * 0.17))
+                tx = int(w * (0.12 + col * 0.46))
+                ty = int(h * (0.58 + row * 0.17))
+                is_answer = (i == answer_index)
+
+                # 정답 공개 전 박스
+                filters.append(
+                    f"drawbox=x={bx}:y={by}:w={box_w}:h={box_h}"
+                    f":color=0x555555@0.8:t=fill:enable='{enable_before}'"
+                )
+                # 정답 공개 후 박스
+                if is_answer:
+                    filters.append(
+                        f"drawbox=x={bx}:y={by}:w={box_w}:h={box_h}"
+                        f":color=0x27AE60@0.9:t=fill:enable='{enable_after}'"
+                    )
+                else:
+                    filters.append(
+                        f"drawbox=x={bx}:y={by}:w={box_w}:h={box_h}"
+                        f":color=0x333333@0.6:t=fill:enable='{enable_after}'"
+                    )
+
+                # 보기 텍스트
+                choice_text = f"{labels[i]}. {choices[i]}".replace("'", "\\'").replace(":", "\\:")
+                filters.append(
+                    f"drawtext=text='{choice_text}':x={tx}:y={ty}"
+                    f":fontsize=22:fontcolor={text_color}:borderw=1:bordercolor=black@0.3"
+                    f":enable='{enable_all}'{font_opt}"
+                )
+
+            # 정답 공개 텍스트
+            ans_text = f"정답\\: {labels[answer_index]}. {choices[answer_index]}".replace("'", "\\'")
+            filters.append(
+                f"drawtext=text='{ans_text}':x=(w-text_w)/2:y={answer_y}"
+                f":fontsize=22:fontcolor=0x2ECC71:borderw=2:bordercolor=black@0.5"
+                f":enable='{enable_after}'{font_opt}"
+            )
+
+        filter_chain = ",".join(filters)
+
+        import subprocess
+        cmd = ["ffmpeg", "-y", "-i", input_path]
+        if has_audio:
+            cmd += ["-vf", filter_chain, "-c:a", "aac"]
+        else:
+            cmd += ["-vf", filter_chain]
+        cmd += [
+            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-preset", "fast", "-crf", "23",
+            "-movflags", "+faststart", output_path,
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.error("quiz overlay ffmpeg stderr: %s", result.stderr)
+            raise RuntimeError(f"ffmpeg 오류: {result.stderr[-500:]}")
+
+        with open(output_path, "rb") as f:
+            video_data = f.read()
+
+        edit_id = uuid.uuid4().hex
+        cdn_url = await upload_generation_video(f"quiz_{edit_id}", video_data, "mp4")
         if not cdn_url:
             raise RuntimeError("S3 업로드 실패")
         return cdn_url

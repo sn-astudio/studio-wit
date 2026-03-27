@@ -327,66 +327,27 @@ export function AIEditPanel({
         </div>
       )}
 
-      {/* 생성 완료 결과 */}
+      {/* 생성 완료: 다운로드 버튼 (자동 저장됨) */}
       {aiIsCompleted && aiGeneration?.result_url && (
-        <div className="mb-2 flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-2">
-          <video
-            src={aiGeneration.result_url}
-            className="h-20 rounded-md"
-            controls
-            muted
-            loop
-          />
-          <div className="flex flex-1 flex-col gap-1.5 py-0.5">
-            <div className="flex items-center gap-1.5">
-              <Play className="size-3 text-primary" />
-              <span className="text-xs font-medium text-primary">
-                {t("aiGenerateComplete")}
-              </span>
-            </div>
-            <div className="flex gap-1.5">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 gap-1.5 text-xs"
-                onClick={() =>
-                  downloadVideo(
-                    aiGeneration.result_url!,
-                    `ai_edit_${Date.now()}.mp4`,
-                  )
-                }
-              >
-                <Download className="size-3" />
-                {t("download")}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 gap-1.5 text-xs"
-                disabled={saveEditMutation.isPending}
-                onClick={async () => {
-                  try {
-                    await saveEditMutation.mutateAsync({
-                      result_url: aiGeneration.result_url!,
-                      edit_type: "ai",
-                      prompt: aiGeneration.prompt || "AI edited video",
-                      is_public: isPublic,
-                    });
-                    toast.success(t("saveSuccess"));
-                  } catch {
-                    toast.error(t("saveError"));
-                  }
-                }}
-              >
-                {saveEditMutation.isPending ? (
-                  <Loader2 className="size-3 animate-spin" />
-                ) : (
-                  <Save className="size-3" />
-                )}
-                {t("save")}
-              </Button>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+          <Sparkles className="size-3.5 text-primary" />
+          <span className="flex-1 text-xs font-medium text-primary">
+            {t("aiGenerateComplete")}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1.5 text-xs"
+            onClick={() =>
+              downloadVideo(
+                aiGeneration.result_url!,
+                `ai_edit_${Date.now()}.mp4`,
+              )
+            }
+          >
+            <Download className="size-3" />
+            {t("download")}
+          </Button>
         </div>
       )}
     </div>

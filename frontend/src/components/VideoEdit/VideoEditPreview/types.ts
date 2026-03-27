@@ -36,4 +36,6 @@ export interface VideoEditPreviewProps {
   watermark?: WatermarkPreview | null;
   subtitles?: SubtitlePreviewItem[];
   playbackRate?: number;
+  creativeOverlay?: React.ReactNode;
+  onClickEmpty?: () => void;
 }

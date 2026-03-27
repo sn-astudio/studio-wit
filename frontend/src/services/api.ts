@@ -68,6 +68,18 @@ import type {
   SplitSceneRequest,
   SplitSceneResponse,
   BulkDownloadRequest,
+  CreativePresetRequest,
+  CreativePresetResponse,
+  ShortsConvertRequest,
+  ShortsConvertResponse,
+  CollageRequest,
+  CollageResponse,
+  BeforeAfterRequest,
+  BeforeAfterResponse,
+  PollOverlayRequest,
+  PollOverlayResponse,
+  QuizOverlayRequest,
+  QuizOverlayResponse,
 } from "@/types/api";
 
 // ── 설정 ──
@@ -84,6 +96,62 @@ export function setAccessToken(token: string | null) {
 
 export function getAccessToken(): string | null {
   return accessToken;
+}
+
+// ── 토큰 자동 갱신 ──
+
+/** 갱신 중복 방지: 진행 중인 갱신 Promise */
+let refreshPromise: Promise<boolean> | null = null;
+
+/**
+ * NextAuth 세션에서 idToken을 가져와 백엔드 JWT를 재발급받는다.
+ * 동시에 여러 요청이 401을 받아도 갱신은 1번만 수행된다.
+ */
+async function tryRefreshToken(): Promise<boolean> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      // NextAuth 세션에서 idToken 가져오기
+      const sessionRes = await fetch("/api/auth/session");
+      if (!sessionRes.ok) return false;
+      const session = await sessionRes.json();
+      const idToken = session?.idToken;
+      if (!idToken) return false;
+
+      // 백엔드에 JWT 재발급 요청
+      const verifyRes = await fetch(`${BASE_URL}/api/auth/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_token: idToken }),
+      });
+      if (!verifyRes.ok) return false;
+
+      const data = await verifyRes.json();
+      accessToken = data.access_token;
+
+      // localStorage + auth store 갱신 (이벤트로 전달)
+      try {
+        localStorage.setItem(
+          "wit_auth",
+          JSON.stringify({ token: data.access_token, user: data.user }),
+        );
+      } catch {}
+      window.dispatchEvent(
+        new CustomEvent("auth:refreshed", {
+          detail: { token: data.access_token, user: data.user },
+        }),
+      );
+
+      return true;
+    } catch {
+      return false;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 // ── 공통 fetch 래퍼 ──
@@ -105,6 +173,7 @@ class ApiError extends Error {
 async function request<T>(
   path: string,
   options: RequestInit = {},
+  _isRetry = false,
 ): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -121,6 +190,21 @@ async function request<T>(
   });
 
   if (!res.ok) {
+    // 401 → 토큰 만료: 자동 갱신 시도
+    if (res.status === 401 && accessToken && !_isRetry) {
+      const refreshed = await tryRefreshToken();
+      if (refreshed) {
+        // 새 토큰으로 원래 요청 재시도 (1회만)
+        return request<T>(path, options, true);
+      }
+      // 갱신 실패 → 로그아웃
+      accessToken = null;
+      try {
+        localStorage.removeItem("wit_auth");
+      } catch {}
+      window.dispatchEvent(new CustomEvent("auth:expired"));
+    }
+
     const body = (await res.json().catch(() => null)) as ErrorResponse | null;
     throw new ApiError(
       res.status,
@@ -459,6 +543,54 @@ export const videoEditApi = {
     return res.blob();
   },
 
+  /** 크리에이티브 프리셋 적용 */
+  creativePreset(body: CreativePresetRequest) {
+    return request<CreativePresetResponse>("/api/video/creative-preset", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 쇼츠/릴스 변환 */
+  shortsConvert(body: ShortsConvertRequest) {
+    return request<ShortsConvertResponse>("/api/video/shorts-convert", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 영상 콜라주 */
+  collage(body: CollageRequest) {
+    return request<CollageResponse>("/api/video/collage", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 비포/애프터 비교 영상 */
+  beforeAfter(body: BeforeAfterRequest) {
+    return request<BeforeAfterResponse>("/api/video/before-after", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 투표 오버레이 */
+  pollOverlay(body: PollOverlayRequest) {
+    return request<PollOverlayResponse>("/api/video/poll-overlay", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  /** 퀴즈 오버레이 */
+  quizOverlay(body: QuizOverlayRequest) {
+    return request<QuizOverlayResponse>("/api/video/quiz-overlay", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
   /** 편집 결과 저장 (merge 등 자동 저장되지 않은 결과를 히스토리에 저장) */
   saveEdit(body: SaveEditRequest) {
     return request<SaveEditResponse>("/api/video/save-edit", {
@@ -467,12 +599,6 @@ export const videoEditApi = {
     });
   },
 
-  creativePreset(body: { source_url: string; preset: string; params?: Record<string, string> }) {
-    return request<{ result_url: string }>("/api/video/creative-preset", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-  },
 };
 
 export { ApiError };
