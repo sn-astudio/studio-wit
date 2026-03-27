@@ -235,6 +235,7 @@ export interface WatermarkRequest {
   opacity?: number;
   font_size?: number;
   color?: string;
+  image_scale?: number;
 }
 
 export interface WatermarkResponse {
