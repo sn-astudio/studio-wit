@@ -614,7 +614,6 @@ export function VideoEditWorkspace() {
         <Select
           value={activeTab}
           onValueChange={(value) => switchTab(value)}
-          className="flex-1"
         >
           <SelectTrigger className="h-9 w-full gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium dark:border-zinc-700 dark:bg-zinc-900">
             {activeTab === "trim" && <Scissors className="size-4" />}
