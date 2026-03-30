@@ -3,13 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Globe, Image, Lock, Minus, Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/Tooltip";
 import { usePromptStore } from "@/stores/promptStore";
 
 import { getModelsForMode, getOptionsForParam } from "../const";
@@ -23,30 +17,21 @@ function VisibilityToggle() {
   const setIsPublic = usePromptStore((s) => s.setIsPublic);
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 w-[4.5rem] gap-1 rounded-lg bg-zinc-200/60 px-2 hover:bg-zinc-300 sm:h-7 dark:bg-zinc-800/60 dark:hover:bg-zinc-700"
-            onClick={(e) => { e.preventDefault(); setIsPublic(!isPublic); }}
-          />
-        }
-      >
-        {isPublic ? (
-          <Globe className="size-3.5" />
-        ) : (
-          <Lock className="size-3.5" />
-        )}
-        <span className="min-w-[2.5rem] text-center text-xs text-zinc-600 dark:text-zinc-300">
-          {isPublic ? t("public") : t("private")}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>
-        {isPublic ? t("publicTooltip") : t("privateTooltip")}
-      </TooltipContent>
-    </Tooltip>
+    <button
+      type="button"
+      className="flex h-9 w-[4.5rem] items-center justify-center gap-1 rounded-lg bg-zinc-200/60 px-2 text-zinc-600 transition-colors hover:bg-zinc-300 sm:h-7 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+      onClick={() => setIsPublic(!isPublic)}
+      title={isPublic ? t("publicTooltip") : t("privateTooltip")}
+    >
+      {isPublic ? (
+        <Globe className="size-3.5" />
+      ) : (
+        <Lock className="size-3.5" />
+      )}
+      <span className="text-xs">
+        {isPublic ? t("public") : t("private")}
+      </span>
+    </button>
   );
 }
 
