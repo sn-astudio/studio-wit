@@ -8,6 +8,7 @@ export function toGenerateParams(
   if (params.aspectRatio) result.aspect_ratio = params.aspectRatio as AspectRatio;
   if (params.duration) result.duration = Number(params.duration);
   if (params.cfgScale) result.cfg_scale = Number(params.cfgScale);
+  if (params.inputImageUrl) result.input_image_url = params.inputImageUrl as string;
   return result;
 }
 

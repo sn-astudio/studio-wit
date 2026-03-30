@@ -9,4 +9,5 @@ export interface ImageEditPreviewProps {
   cropRect: CropRect | null;
   onCropChange: (rect: CropRect | null) => void;
   onExport: () => void;
+  onGenerateVideo: () => void;
 }

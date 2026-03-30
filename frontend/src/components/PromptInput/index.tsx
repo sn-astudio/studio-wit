@@ -184,7 +184,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
 
               {/* Attached image thumbnails */}
               {attachedImages.length > 0 && (
-                <div className="mt-2 flex gap-2 overflow-x-auto pl-10">
+                <div className="mt-2 flex gap-2 overflow-x-auto pl-10 pt-2">
                   {attachedImages.map((file, index) => (
                     <div key={index} className="group relative shrink-0">
                       <Image

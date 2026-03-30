@@ -15,7 +15,9 @@ import {
   useGeneration,
   useGenerationHistory,
 } from "@/hooks/queries/useGeneration";
+import { useUploadImage } from "@/hooks/queries/useImageUpload";
 import { queryKeys } from "@/hooks/queries/keys";
+import { doesModelSupportImageInput } from "@/components/PromptInput/const";
 
 import { VideoPreview } from "../VideoPreview";
 import { GenerationHistory } from "../GenerationHistory";
@@ -34,6 +36,7 @@ export function VideoCreateWorkspace() {
   const [historyExpanded, setHistoryExpanded] = useState(false);
 
   const createMutation = useCreateGeneration();
+  const uploadImageMutation = useUploadImage();
 
   // 히스토리에서 진행중인 생성 감지 (새로고침 시 폴링 재개용)
   const { data: historyPages } = useGenerationHistory(
@@ -96,15 +99,32 @@ export function VideoCreateWorkspace() {
   }, [currentGen, t, queryClient, notify]);
 
   const handleSubmit = useCallback(
-    (state: PromptInputState) => {
+    async (state: PromptInputState) => {
       if (!token) {
         toast.error(t("loginRequired"));
         return;
       }
-      if (createMutation.isPending || isGenerating) return;
+      if (createMutation.isPending || uploadImageMutation.isPending || isGenerating) return;
 
       const params = toGenerateParams(state.params);
       const negative_prompt = extractNegativePrompt(state.params);
+
+      // 비지원 모델에 이미지 첨부 시 차단
+      if (state.attachedImages.length > 0 && !doesModelSupportImageInput(state.selectedModel)) {
+        toast.error(t("imageNotSupported"));
+        return;
+      }
+
+      // 첨부 이미지가 있으면 업로드 → input_image_url 설정
+      if (state.attachedImages.length > 0) {
+        try {
+          const { url } = await uploadImageMutation.mutateAsync(state.attachedImages[0]);
+          params.input_image_url = url;
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : t("generateFailed"));
+          return;
+        }
+      }
 
       createMutation.mutate(
         {
@@ -127,7 +147,7 @@ export function VideoCreateWorkspace() {
         },
       );
     },
-    [token, createMutation, isGenerating, t],
+    [token, createMutation, uploadImageMutation, isGenerating, t],
   );
 
   const restoreFromGeneration = usePromptStore((s) => s.restoreFromGeneration);
@@ -163,7 +183,7 @@ export function VideoCreateWorkspace() {
       {/* PromptInput — 전체 보기 모드에서 숨김 */}
       {!historyExpanded && (
         <div className="px-3 pb-2 sm:px-4 sm:pb-3">
-          <PromptInput mode="video" disabled={isGenerating || createMutation.isPending} onSubmit={handleSubmit} />
+          <PromptInput mode="video" disabled={isGenerating || createMutation.isPending || uploadImageMutation.isPending} onSubmit={handleSubmit} />
         </div>
       )}
 

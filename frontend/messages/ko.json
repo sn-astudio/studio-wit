@@ -190,7 +190,8 @@
       "4k": "4K"
     },
     "draw": "Draw",
-    "extraFreeGens": "Extra free gens"
+    "extraFreeGens": "Extra free gens",
+    "img2vidMode": "Image to Video"
   },
   "VideoCreate": {
     "settings": "설정",
@@ -216,7 +217,8 @@
     "createDesc": "프롬프트를 입력하면 AI가 영상을 만들어 드립니다",
     "loginRequired": "로그인이 필요합니다",
     "generateSuccess": "영상 생성이 완료되었습니다!",
-    "generateFailed": "영상 생성에 실패했습니다"
+    "generateFailed": "영상 생성에 실패했습니다",
+    "imageNotSupported": "현재 선택된 모델은 이미지 입력을 지원하지 않습니다"
   },
   "ImageCreate": {
     "generating": "이미지 생성 중...",
@@ -274,7 +276,8 @@
     "elapsed": "경과",
     "modelLabel": "모델",
     "aspectRatio": "비율",
-    "loginRequired": "로그인이 필요합니다"
+    "loginRequired": "로그인이 필요합니다",
+    "generateVideo": "비디오 생성"
   },
   "VideoEdit": {
     "title": "비디오 편집",

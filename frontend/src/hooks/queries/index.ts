@@ -6,3 +6,4 @@ export {
   useCreateGeneration,
   useGenerationHistory,
 } from "./useGeneration";
+export { useUploadImage } from "./useImageUpload";

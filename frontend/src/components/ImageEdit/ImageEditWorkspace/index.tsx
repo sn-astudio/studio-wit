@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Scissors, Palette, Sparkles } from "lucide-react";
 
+import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
+import { usePromptStore } from "@/stores/promptStore";
 import type { EditorCanvasHandle } from "@/components/ImageCreate/ImageEditor/EditorCanvas/types";
 import type { CropRect, FilterValues } from "@/components/ImageCreate/ImageEditor/types";
 import { DEFAULT_FILTER_VALUES } from "@/components/ImageCreate/ImageEditor/const";
@@ -30,6 +32,7 @@ const TABS: { id: EditTab; labelKey: string; icon: typeof Scissors }[] = [
 
 export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps) {
   const t = useTranslations("ImageEdit");
+  const router = useRouter();
 
   const [source, setSource] = useState<ImageSource | null>(
     initialImageUrl ? { url: initialImageUrl } : null,
@@ -76,6 +79,34 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
     toast.success(t("exportSuccess"));
   }, [filterValues, t]);
 
+  const handleGenerateVideo = useCallback(() => {
+    const canvas = canvasRef.current?.getMainCanvas();
+    if (!canvas) return;
+
+    const needsBake =
+      filterValues.brightness !== DEFAULT_FILTER_VALUES.brightness ||
+      filterValues.contrast !== DEFAULT_FILTER_VALUES.contrast ||
+      filterValues.saturate !== DEFAULT_FILTER_VALUES.saturate;
+
+    let exportSource = canvas;
+    if (needsBake) {
+      exportSource = applyFilterToCanvas(canvas, filterValues);
+    }
+
+    exportSource.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `edited-${Date.now()}.png`, {
+        type: "image/png",
+      });
+
+      const store = usePromptStore.getState();
+      store.setMode("video");
+      store.addImage(file);
+
+      router.push("/video");
+    }, "image/png");
+  }, [filterValues, router]);
+
   const handleUseAsSource = useCallback(
     (url: string) => {
       reset();
@@ -117,6 +148,7 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
             cropRect={cropRect}
             onCropChange={setCropRect}
             onExport={handleExport}
+            onGenerateVideo={handleGenerateVideo}
           />
         </div>
 

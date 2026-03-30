@@ -23,6 +23,7 @@ export interface ModelDefinition {
   nameKey: string;
   icon: IconComponent;
   supportedParams: ParamType[];
+  supportsImageInput?: boolean;
 }
 
 export interface SelectOption {

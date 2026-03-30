@@ -189,7 +189,8 @@
       "4k": "4K"
     },
     "draw": "Draw",
-    "extraFreeGens": "Extra free gens"
+    "extraFreeGens": "Extra free gens",
+    "img2vidMode": "Image to Video"
   },
   "VideoCreate": {
     "settings": "Settings",
@@ -215,7 +216,8 @@
     "createDesc": "Enter a prompt and AI will create a video for you",
     "loginRequired": "Please sign in to generate videos",
     "generateSuccess": "Video generation complete!",
-    "generateFailed": "Video generation failed"
+    "generateFailed": "Video generation failed",
+    "imageNotSupported": "The selected model does not support image input"
   },
   "VideoEdit": {
     "title": "Video Edit",
@@ -370,7 +372,8 @@
     "elapsed": "elapsed",
     "modelLabel": "Model",
     "aspectRatio": "Aspect Ratio",
-    "loginRequired": "Please sign in"
+    "loginRequired": "Please sign in",
+    "generateVideo": "Generate Video"
   },
   "VideoEdit": {
     "title": "Video Edit",

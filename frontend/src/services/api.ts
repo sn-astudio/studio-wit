@@ -14,6 +14,7 @@ import type {
   GenerateResponse,
   GenerationListResponse,
   GenerationStatus,
+  ImageUploadResponse,
   LikeToggleResponse,
   ModelListResponse,
   ModelType,
@@ -217,6 +218,37 @@ export const galleryApi = {
       `/api/gallery/${generationId}/like`,
       { method: "POST" },
     );
+  },
+};
+
+// ── Image Upload API ──
+
+export const imageApi = {
+  /** 이미지 파일 업로드 (multipart) → CDN URL */
+  async upload(file: File): Promise<ImageUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const headers: Record<string, string> = {};
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    const res = await fetch(`${BASE_URL}/api/upload-image`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as ErrorResponse | null;
+      throw new ApiError(
+        res.status,
+        body?.error ?? { code: "UNKNOWN", message: res.statusText },
+      );
+    }
+
+    return res.json() as Promise<ImageUploadResponse>;
   },
 };
 
