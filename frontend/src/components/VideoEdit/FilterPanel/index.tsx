@@ -143,7 +143,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
   const t = useTranslations("VideoEdit");
   const notify = useNotifyOnComplete();
 
-  const selectedFilter = useVideoEditStore((s) => s.effects.filter);
+  const selectedFilter = useVideoEditStore((s) => s.effects.selectedFilter);
   const brightness = useVideoEditStore((s) => s.effects.brightness);
   const contrast = useVideoEditStore((s) => s.effects.contrast);
   const saturation = useVideoEditStore((s) => s.effects.saturation);
@@ -252,7 +252,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
             {COLOR_FILTERS.map((f) => (
               <button
                 key={f.id}
-                onClick={() => { setEffect("filter", f.id); onDirty?.(); }}
+                onClick={() => { setEffect("selectedFilter", f.id); onDirty?.(); }}
                 className={`rounded-md border px-2.5 py-1 text-xs transition-colors ${
                   selectedFilter === f.id
                     ? "border-primary bg-primary/10 text-primary"
@@ -280,7 +280,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
             {cat.filters.map((f) => (
               <button
                 key={f.id}
-                onClick={() => { setEffect("filter", f.id); onDirty?.(); }}
+                onClick={() => { setEffect("selectedFilter", f.id); onDirty?.(); }}
                 className={`rounded-md border px-2.5 py-1 text-xs transition-colors ${
                   selectedFilter === f.id
                     ? "border-primary bg-primary/10 text-primary"
