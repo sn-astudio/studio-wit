@@ -36,6 +36,7 @@ export function EditorToolbar({
   onRedo,
   canUndo,
   canRedo,
+  hideFilter = false,
 }: EditorToolbarProps) {
   const t = useTranslations("ImageEditor");
 
@@ -183,18 +184,20 @@ export function EditorToolbar({
         <div className="mx-1 h-5 w-px bg-zinc-700" />
 
         {/* 보정/뷰 그룹 */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onToolChange("filter")}
-          className={cn(
-            "cursor-pointer gap-1.5",
-            activeTool === "filter" && "bg-primary/20 text-primary",
-          )}
-        >
-          <SlidersHorizontal className="size-4" />
-          <span className="text-xs">{t("filter")}</span>
-        </Button>
+        {!hideFilter && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onToolChange("filter")}
+            className={cn(
+              "cursor-pointer gap-1.5",
+              activeTool === "filter" && "bg-primary/20 text-primary",
+            )}
+          >
+            <SlidersHorizontal className="size-4" />
+            <span className="text-xs">{t("filter")}</span>
+          </Button>
+        )}
 
         <Button
           variant="ghost"

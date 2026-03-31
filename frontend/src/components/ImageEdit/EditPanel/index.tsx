@@ -166,6 +166,7 @@ export function EditPanel({
         onRedo={() => canvasRef.current?.redo()}
         canUndo={canUndo}
         canRedo={canRedo}
+        hideFilter
       />
 
       {activeTool === "crop" && (
