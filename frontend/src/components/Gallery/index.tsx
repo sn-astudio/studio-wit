@@ -7,8 +7,8 @@ export function Gallery() {
   const t = useTranslations("Gallery");
 
   return (
-    <section id="gallery" className="border-t border-border/60 py-24">
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="gallery" className="border-t border-border/60 pt-24 pb-32">
+      <div className="mx-auto max-w-7xl px-5 md:px-6">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="mb-2 text-3xl font-bold tracking-tight sm:text-4xl">

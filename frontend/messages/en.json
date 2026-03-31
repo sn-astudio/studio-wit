@@ -6,13 +6,18 @@
   "Header": {
     "image": "Image",
     "imageGenerate": "Generate",
+    "imageGenerateDesc": "Create images from text prompts",
     "imageEdit": "Edit",
+    "imageEditDesc": "Modify images with AI",
     "video": "Video",
     "videoGenerate": "Generate",
+    "videoGenerateDesc": "Create videos from text prompts",
     "videoEdit": "Edit",
+    "videoEditDesc": "Modify videos with AI",
     "gallery": "Gallery",
     "signOut": "Sign out",
     "signInWithGoogle": "Sign in with Google",
+    "signIn": "Sign in",
     "darkMode": "Dark mode",
     "lightMode": "Light mode"
   },

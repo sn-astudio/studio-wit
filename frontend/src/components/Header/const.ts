@@ -1,3 +1,11 @@
+import {
+  Image,
+  Pencil,
+  Video,
+  Film,
+  Scissors,
+  LayoutGrid,
+} from "lucide-react";
 import type { NavItem } from "./types";
 
 export const NAV_ITEMS: NavItem[] = [
@@ -5,17 +13,17 @@ export const NAV_ITEMS: NavItem[] = [
     labelKey: "image",
     href: "/image",
     children: [
-      { labelKey: "imageGenerate", href: "/image" },
-      { labelKey: "imageEdit", href: "/image-edit" },
+      { labelKey: "imageGenerate", descKey: "imageGenerateDesc", href: "/image", icon: Image },
+      { labelKey: "imageEdit", descKey: "imageEditDesc", href: "/image-edit", icon: Pencil },
     ],
   },
   {
     labelKey: "video",
     href: "/video",
     children: [
-      { labelKey: "videoGenerate", href: "/video" },
-      { labelKey: "videoEdit", href: "/video-edit" },
+      { labelKey: "videoGenerate", descKey: "videoGenerateDesc", href: "/video", icon: Film },
+      { labelKey: "videoEdit", descKey: "videoEditDesc", href: "/video-edit", icon: Scissors },
     ],
   },
-  { labelKey: "gallery", href: "/gallery" },
+  { labelKey: "gallery", href: "/gallery", icon: LayoutGrid },
 ];

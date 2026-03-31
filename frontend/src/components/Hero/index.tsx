@@ -9,6 +9,7 @@ import {
   ArrowRight,
   ChevronDown,
   ImageIcon,
+  Bot,
   Sparkles,
   Video,
 } from "lucide-react";
@@ -30,29 +31,25 @@ export function Hero() {
   }, []);
 
   return (
-    <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden pt-16">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-0 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]" />
-        <div className="absolute bottom-0 left-1/4 h-[400px] w-[600px] rounded-full bg-primary/10 blur-[100px]" />
-      </div>
+    <section className="relative flex min-h-[90vh] items-center justify-center">
 
-      <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/80 bg-secondary/80 px-4 py-1.5 text-sm text-muted-foreground">
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-5 text-center md:px-6">
+        <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-secondary/80 px-4 py-1.5 text-sm font-bold text-muted-foreground dark:border-white dark:bg-white dark:text-black">
+          <Bot className="size-5 text-primary" strokeWidth={2.5} />
           <span>{t("poweredByAI")}</span>
         </div>
 
-        <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+        <h1 className="mb-6 min-h-[2.4em] text-[clamp(3.5rem,6.5vw,7.75rem)] font-bold leading-tight tracking-tight">
           {t("whatWillYou")}
           <br />
           <RotatingText
             words={ROTATING_WORDS}
-            className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent"
+            className="text-primary"
             interval={3000}
           />
         </h1>
 
-        <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+        <p className="mx-auto mb-10 max-w-[50vw] text-lg leading-relaxed text-muted-foreground sm:text-xl">
           {t("description")}
         </p>
 
@@ -61,7 +58,7 @@ export function Hero() {
           <div className="relative" ref={menuRef}>
             <Button
               size="lg"
-              className="gap-2 px-8 text-base"
+              className="h-12 gap-2 px-8 text-base"
               onClick={() => setMenuOpen((prev) => !prev)}
             >
               {t("exploreAllTools")}
@@ -98,7 +95,7 @@ export function Hero() {
             <Button
               variant="outline"
               size="lg"
-              className="gap-2 px-8 text-base"
+              className="h-12 gap-2 px-8 text-base"
             >
               {t("viewGallery")}
             </Button>
