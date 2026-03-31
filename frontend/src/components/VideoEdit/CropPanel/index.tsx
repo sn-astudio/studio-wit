@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { ChevronDown, Crop, Download, Globe, Loader2, Lock, RectangleHorizontal, Save } from "lucide-react";
+import { ChevronDown, Crop, Download, Globe, Loader2, Lock, RectangleHorizontal, Save, Smartphone } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import { useCropVideo, useLetterbox } from "@/hooks/queries/useVideoEdit";
+import { videoEditApi } from "@/services/api";
 
 import type { CropPanelProps } from "./types";
 
@@ -32,7 +33,10 @@ export function CropPanel({
   const cropMutation = useCropVideo();
   const letterboxMutation = useLetterbox();
 
-  const isPending = cropMutation.isPending || letterboxMutation.isPending;
+  const [shortsLoading, setShortsLoading] = useState(false);
+  const [shortsCropX, setShortsCropX] = useState("center");
+
+  const isPending = cropMutation.isPending || letterboxMutation.isPending || shortsLoading;
 
   // 크롭 좌표
   const [cropX, setCropX] = useState(0);
@@ -106,6 +110,26 @@ export function CropPanel({
       toast.error(t("cropError"));
     }
   }, [sourceUrl, targetRatio, padColor, letterboxMutation, onCropApplied, t, notify]);
+
+  // 쇼츠 변환 (16:9 → 9:16)
+  const handleShortsConvert = useCallback(async () => {
+    if (!sourceUrl) return;
+    setShortsLoading(true);
+    try {
+      const res = await videoEditApi.shortsConvert({
+        source_url: sourceUrl,
+        crop_x: shortsCropX,
+      });
+      setPendingResult(res.result_url);
+      onCropApplied?.(res.result_url);
+      toast.success(t("shortsSuccess"));
+      notify(t("shortsSuccess"));
+    } catch {
+      toast.error(t("shortsError"));
+    } finally {
+      setShortsLoading(false);
+    }
+  }, [sourceUrl, shortsCropX, onCropApplied, t, notify]);
 
   // DB 저장
   const handleSave = useCallback(async () => {
@@ -301,6 +325,45 @@ export function CropPanel({
             <RectangleHorizontal className="size-3.5" />
           )}
           {t("applyLetterbox")}
+        </Button>
+      </AccordionSection>
+
+      {/* 쇼츠/릴스 변환 */}
+      <AccordionSection
+        id="shorts"
+        icon={<Smartphone className="size-3.5" />}
+        label={t("shortsConvertBtn")}
+        open={openSection === "shorts"}
+        onToggle={() => toggle("shorts")}
+      >
+        <p className="mb-2 text-[11px] text-zinc-500">{t("shortsDesc")}</p>
+        <div className="space-y-2">
+          <label className="text-xs font-medium">{t("shortsCropPosition")}</label>
+          <div className="flex gap-2">
+            {(["left", "center", "right"] as const).map((pos) => (
+              <Button
+                key={pos}
+                size="sm"
+                variant={shortsCropX === pos ? "default" : "outline"}
+                className="flex-1 text-xs"
+                onClick={() => setShortsCropX(pos)}
+              >
+                {t(pos === "left" ? "shortsCropLeft" : pos === "center" ? "shortsCropCenter" : "shortsCropRight")}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <Button
+          className="mt-2 w-full gap-1.5"
+          onClick={handleShortsConvert}
+          disabled={!sourceUrl || isPending}
+        >
+          {shortsLoading ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Smartphone className="size-3.5" />
+          )}
+          {t("shortsConvertBtn")}
         </Button>
       </AccordionSection>
 

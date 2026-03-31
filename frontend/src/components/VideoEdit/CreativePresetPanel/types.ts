@@ -15,6 +15,7 @@ export interface PresetDefinition {
   icon: string;
   fields: PresetField[];
   cssFilter?: string;
+  customUI?: boolean;
 }
 
 export interface PresetField {

@@ -17,6 +17,8 @@ export function VideoEditPreview({
   watermark,
   subtitles,
   playbackRate,
+  creativeOverlay,
+  onClickEmpty,
 }: VideoEditPreviewProps) {
   const t = useTranslations("VideoEdit");
 
@@ -41,7 +43,10 @@ export function VideoEditPreview({
 
   if (!videoUrl) {
     return (
-      <div className="flex aspect-video max-h-[280px] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-400 bg-zinc-100/40 dark:border-zinc-700 dark:bg-zinc-900/40">
+      <div
+        onClick={onClickEmpty}
+        className={`flex aspect-video min-h-[200px] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-400 bg-zinc-100/40 sm:min-h-[280px] dark:border-zinc-700 dark:bg-zinc-900/40 ${onClickEmpty ? "cursor-pointer transition-colors hover:border-primary/50 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60" : ""}`}
+      >
         <Film className="mb-3 size-12 text-zinc-600 dark:text-zinc-600" />
         <p className="text-sm text-zinc-600 dark:text-zinc-500">{t("selectVideo")}</p>
       </div>
@@ -73,6 +78,8 @@ export function VideoEditPreview({
           if (currentTime < sub.startTime || currentTime > sub.endTime) return null;
           return <SubtitleLayer key={i} subtitle={sub} />;
         })}
+        {/* 크리에이티브 프리셋 오버레이 */}
+        {creativeOverlay}
       </div>
     </div>
   );

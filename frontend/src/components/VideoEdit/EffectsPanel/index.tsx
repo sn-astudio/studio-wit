@@ -73,6 +73,33 @@ const FILTER_PRESETS = [
   { id: "none", labelKey: "filterNone" },
   { id: "grayscale", labelKey: "filterGrayscale" },
   { id: "sepia", labelKey: "filterSepia" },
+  { id: "vhs", labelKey: "filterVhs" },
+  { id: "8mm", labelKey: "filter8mm" },
+  { id: "bw_film", labelKey: "filterBwFilm" },
+  { id: "retro70", labelKey: "filterRetro70" },
+  { id: "instagram", labelKey: "filterInstagram" },
+  { id: "cool", labelKey: "filterCool" },
+  { id: "warm", labelKey: "filterWarm" },
+  { id: "cinematic", labelKey: "filterCinematic" },
+  { id: "faded", labelKey: "filterFaded" },
+  { id: "noir", labelKey: "filterNoir" },
+  { id: "oversaturated", labelKey: "filterOversaturated" },
+  { id: "bleach", labelKey: "filterBleach" },
+  // ── 재미 필터 ──
+  { id: "glitch", labelKey: "filterGlitch" },
+  { id: "mirror", labelKey: "filterMirror" },
+  { id: "kaleidoscope", labelKey: "filterKaleidoscope" },
+  { id: "cartoon", labelKey: "filterCartoon" },
+  { id: "emboss", labelKey: "filterEmboss" },
+  { id: "edge_glow", labelKey: "filterEdgeGlow" },
+  { id: "pixelize", labelKey: "filterPixelize" },
+  { id: "thermal", labelKey: "filterThermal" },
+  { id: "negative", labelKey: "filterNegative" },
+  { id: "posterize", labelKey: "filterPosterize" },
+  { id: "sharpen", labelKey: "filterSharpen" },
+  { id: "blur", labelKey: "filterBlur" },
+  { id: "boomerang", labelKey: "filterBoomerang" },
+  { id: "timelapse", labelKey: "filterTimelapse" },
 ] as const;
 
 interface TextStylePreset {
@@ -207,9 +234,36 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
     parts.push(`contrast(${contrast})`);
     // saturation → CSS saturate
     parts.push(`saturate(${saturation})`);
-    // 프리셋 필터
+    // 프리셋 필터 — CSS 근사 프리뷰
     if (selectedFilter === "grayscale") parts.push("grayscale(1)");
-    if (selectedFilter === "sepia") parts.push("sepia(1)");
+    else if (selectedFilter === "sepia") parts.push("sepia(1)");
+    else if (selectedFilter === "vhs") { parts.push("saturate(0.7) contrast(1.2) brightness(1.05)"); }
+    else if (selectedFilter === "8mm") { parts.push("saturate(0.8) contrast(1.3) brightness(1.08) sepia(0.2)"); }
+    else if (selectedFilter === "bw_film") { parts.push("grayscale(1) contrast(1.4) brightness(1.02)"); }
+    else if (selectedFilter === "retro70") { parts.push("saturate(0.6) contrast(1.1) brightness(1.05) sepia(0.15)"); }
+    else if (selectedFilter === "instagram") { parts.push("saturate(1.3) contrast(1.25) brightness(1.03)"); }
+    else if (selectedFilter === "cool") { parts.push("saturate(0.85) contrast(1.1) hue-rotate(10deg)"); }
+    else if (selectedFilter === "warm") { parts.push("saturate(1.1) contrast(1.05) brightness(1.03) sepia(0.1)"); }
+    else if (selectedFilter === "cinematic") { parts.push("saturate(0.9) contrast(1.2) brightness(0.98)"); }
+    else if (selectedFilter === "faded") { parts.push("saturate(0.7) contrast(0.9) brightness(1.1)"); }
+    else if (selectedFilter === "noir") { parts.push("grayscale(1) contrast(1.6) brightness(0.97)"); }
+    else if (selectedFilter === "oversaturated") { parts.push("saturate(1.8) contrast(1.15)"); }
+    else if (selectedFilter === "bleach") { parts.push("saturate(0.4) contrast(1.5) brightness(0.98)"); }
+    // 재미 필터 CSS 근사
+    else if (selectedFilter === "glitch") { parts.push("saturate(1.2) contrast(1.3) hue-rotate(90deg)"); }
+    else if (selectedFilter === "mirror") { /* no CSS preview */ }
+    else if (selectedFilter === "kaleidoscope") { /* no CSS preview */ }
+    else if (selectedFilter === "cartoon") { parts.push("saturate(1.5) contrast(1.3)"); }
+    else if (selectedFilter === "emboss") { parts.push("contrast(2) brightness(1.2) grayscale(0.5)"); }
+    else if (selectedFilter === "edge_glow") { parts.push("saturate(2) brightness(1.1) contrast(1.5)"); }
+    else if (selectedFilter === "pixelize") { /* handled by backend only */ }
+    else if (selectedFilter === "thermal") { parts.push("hue-rotate(180deg) saturate(1.5) contrast(1.3)"); }
+    else if (selectedFilter === "negative") { parts.push("invert(1)"); }
+    else if (selectedFilter === "posterize") { parts.push("saturate(1.3) contrast(1.2)"); }
+    else if (selectedFilter === "sharpen") { parts.push("contrast(1.1)"); }
+    else if (selectedFilter === "blur") { parts.push("blur(5px)"); }
+    else if (selectedFilter === "boomerang") { /* no CSS preview */ }
+    else if (selectedFilter === "timelapse") { /* no CSS preview */ }
 
     const cssFilter = parts.join(" ");
     onPreviewFilter?.(cssFilter === "brightness(1) contrast(1) saturate(1)" ? "" : cssFilter);
@@ -634,13 +688,13 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
         id="filter"
         icon={<Palette className="size-3.5" />}
         label={t("effectFilter")}
-        badge={selectedFilter !== "none" ? t(`filter${selectedFilter.charAt(0).toUpperCase()}${selectedFilter.slice(1)}` as "filterGrayscale" | "filterSepia") : undefined}
+        badge={selectedFilter !== "none" ? t(FILTER_PRESETS.find((f) => f.id === selectedFilter)?.labelKey ?? "filterNone") : undefined}
         open={openSection === "filter"}
         onToggle={() => toggle("filter")}
         checked={!!batchChecked.filter}
         onCheckedChange={() => toggleBatch("filter")}
       >
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {FILTER_PRESETS.map((f) => (
             <button
               key={f.id}
