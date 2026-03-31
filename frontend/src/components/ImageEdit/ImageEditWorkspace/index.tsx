@@ -9,11 +9,16 @@ import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
 import { usePromptStore } from "@/stores/promptStore";
 import type { EditorCanvasHandle } from "@/components/ImageCreate/ImageEditor/EditorCanvas/types";
-import type { CropRect, FilterValues } from "@/components/ImageCreate/ImageEditor/types";
-import { DEFAULT_FILTER_VALUES } from "@/components/ImageCreate/ImageEditor/const";
+import type { CropRect } from "@/components/ImageCreate/ImageEditor/types";
+import {
+  DEFAULT_DRAWING_SETTINGS,
+  DEFAULT_SHAPE_SETTINGS,
+  DEFAULT_TEXT_SETTINGS,
+} from "@/components/ImageCreate/ImageEditor/const";
 import {
   exportCanvas,
   applyFilterToCanvas,
+  hasFilterChanges,
 } from "@/components/ImageCreate/ImageEditor/utils";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +48,9 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
 
   const filterValues = useImageEditorStore((s) => s.filterValues);
   const activeTool = useImageEditorStore((s) => s.activeTool);
+  const drawingSettings = useImageEditorStore((s) => s.drawingSettings);
+  const shapeSettings = useImageEditorStore((s) => s.shapeSettings);
+  const textSettings = useImageEditorStore((s) => s.textSettings);
   const reset = useImageEditorStore((s) => s.reset);
 
   const handleSourceSelected = useCallback(
@@ -59,10 +67,7 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
     const canvas = canvasRef.current?.getMainCanvas();
     if (!canvas) return;
 
-    const needsBake =
-      filterValues.brightness !== DEFAULT_FILTER_VALUES.brightness ||
-      filterValues.contrast !== DEFAULT_FILTER_VALUES.contrast ||
-      filterValues.saturate !== DEFAULT_FILTER_VALUES.saturate;
+    const needsBake = hasFilterChanges(filterValues);
 
     let exportSource = canvas;
     if (needsBake) {
@@ -83,10 +88,7 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
     const canvas = canvasRef.current?.getMainCanvas();
     if (!canvas) return;
 
-    const needsBake =
-      filterValues.brightness !== DEFAULT_FILTER_VALUES.brightness ||
-      filterValues.contrast !== DEFAULT_FILTER_VALUES.contrast ||
-      filterValues.saturate !== DEFAULT_FILTER_VALUES.saturate;
+    const needsBake = hasFilterChanges(filterValues);
 
     let exportSource = canvas;
     if (needsBake) {
@@ -144,9 +146,12 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
             imageUrl={source?.url ?? null}
             canvasRef={canvasRef}
             filterValues={filterValues}
-            isCropping={activeTool === "crop"}
+            activeTool={activeTool}
             cropRect={cropRect}
             onCropChange={setCropRect}
+            drawingSettings={drawingSettings}
+            shapeSettings={shapeSettings}
+            textSettings={textSettings}
             onExport={handleExport}
             onGenerateVideo={handleGenerateVideo}
           />

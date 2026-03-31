@@ -12,9 +12,13 @@ export function ImageEditPreview({
   imageUrl,
   canvasRef,
   filterValues,
-  isCropping,
+  activeTool,
   cropRect,
   onCropChange,
+  drawingSettings,
+  shapeSettings,
+  textSettings,
+  onEyedropperPick,
   onExport,
   onGenerateVideo,
 }: ImageEditPreviewProps) {
@@ -35,9 +39,13 @@ export function ImageEditPreview({
         ref={canvasRef}
         imageUrl={imageUrl}
         filterValues={filterValues}
-        isCropping={isCropping}
+        activeTool={activeTool}
         cropRect={cropRect}
         onCropChange={onCropChange}
+        drawingSettings={drawingSettings}
+        shapeSettings={shapeSettings}
+        textSettings={textSettings}
+        onEyedropperPick={onEyedropperPick}
       />
       <div className="flex items-center justify-end gap-1 border-t border-zinc-800 px-3 py-2">
         <Button

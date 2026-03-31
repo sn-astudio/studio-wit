@@ -8,6 +8,16 @@ import {
   SlidersHorizontal,
   Undo2,
   Redo2,
+  Scaling,
+  Pencil,
+  Eraser,
+  Pipette,
+  Shapes,
+  Type,
+  RotateCcw,
+  ZoomIn,
+  Sparkles,
+  Grid3x3,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -31,7 +41,8 @@ export function EditorToolbar({
 
   return (
     <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-1">
+        {/* 변환 그룹 */}
         <Button
           variant="ghost"
           size="sm"
@@ -58,6 +69,19 @@ export function EditorToolbar({
         <Button
           variant="ghost"
           size="sm"
+          onClick={() => onToolChange("freeRotate")}
+          className={cn(
+            "cursor-pointer gap-1.5",
+            activeTool === "freeRotate" && "bg-primary/20 text-primary",
+          )}
+        >
+          <RotateCcw className="size-4" />
+          <span className="text-xs">{t("freeRotate")}</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onFlipH}
           className="cursor-pointer gap-1.5"
         >
@@ -75,8 +99,90 @@ export function EditorToolbar({
           <span className="text-xs">{t("flipV")}</span>
         </Button>
 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onToolChange("resize")}
+          className={cn(
+            "cursor-pointer gap-1.5",
+            activeTool === "resize" && "bg-primary/20 text-primary",
+          )}
+        >
+          <Scaling className="size-4" />
+          <span className="text-xs">{t("resize")}</span>
+        </Button>
+
         <div className="mx-1 h-5 w-px bg-zinc-700" />
 
+        {/* 그리기 그룹 */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onToolChange("draw")}
+          className={cn(
+            "cursor-pointer gap-1.5",
+            activeTool === "draw" && "bg-primary/20 text-primary",
+          )}
+        >
+          <Pencil className="size-4" />
+          <span className="text-xs">{t("draw")}</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onToolChange("eraser")}
+          className={cn(
+            "cursor-pointer gap-1.5",
+            activeTool === "eraser" && "bg-primary/20 text-primary",
+          )}
+        >
+          <Eraser className="size-4" />
+          <span className="text-xs">{t("eraser")}</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onToolChange("shape")}
+          className={cn(
+            "cursor-pointer gap-1.5",
+            activeTool === "shape" && "bg-primary/20 text-primary",
+          )}
+        >
+          <Shapes className="size-4" />
+          <span className="text-xs">{t("shape")}</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onToolChange("text")}
+          className={cn(
+            "cursor-pointer gap-1.5",
+            activeTool === "text" && "bg-primary/20 text-primary",
+          )}
+        >
+          <Type className="size-4" />
+          <span className="text-xs">{t("text")}</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onToolChange("eyedropper")}
+          className={cn(
+            "cursor-pointer gap-1.5",
+            activeTool === "eyedropper" && "bg-primary/20 text-primary",
+          )}
+        >
+          <Pipette className="size-4" />
+          <span className="text-xs">{t("eyedropper")}</span>
+        </Button>
+
+        <div className="mx-1 h-5 w-px bg-zinc-700" />
+
+        {/* 보정/뷰 그룹 */}
         <Button
           variant="ghost"
           size="sm"
@@ -88,6 +194,47 @@ export function EditorToolbar({
         >
           <SlidersHorizontal className="size-4" />
           <span className="text-xs">{t("filter")}</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onToolChange("effects")}
+          className={cn(
+            "cursor-pointer gap-1.5",
+            activeTool === "effects" && "bg-primary/20 text-primary",
+          )}
+        >
+          <Sparkles className="size-4" />
+          <span className="text-xs">{t("effects")}</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onToolChange("mosaic")}
+          className={cn(
+            "cursor-pointer gap-1.5",
+            activeTool === "mosaic" && "bg-primary/20 text-primary",
+          )}
+        >
+          <Grid3x3 className="size-4" />
+          <span className="text-xs">{t("mosaic")}</span>
+        </Button>
+
+        <div className="mx-1 h-5 w-px bg-zinc-700" />
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onToolChange("zoom")}
+          className={cn(
+            "cursor-pointer gap-1.5",
+            activeTool === "zoom" && "bg-primary/20 text-primary",
+          )}
+        >
+          <ZoomIn className="size-4" />
+          <span className="text-xs">{t("zoom")}</span>
         </Button>
       </div>
 
