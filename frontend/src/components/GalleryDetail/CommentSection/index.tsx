@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MessageCircle, Send } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useComments, useCreateComment } from "@/hooks/queries/useGallery";
 import { useAuthStore } from "@/stores/auth";
@@ -11,8 +10,8 @@ import type { CommentSectionProps } from "./types";
 
 export function CommentSection({ generationId }: CommentSectionProps) {
   const t = useTranslations("GalleryDetail");
-  const { data: session } = useSession();
   const token = useAuthStore((s) => s.token);
+  const currentUser = useAuthStore((s) => s.user);
   const [content, setContent] = useState("");
 
   const {
@@ -52,7 +51,7 @@ export function CommentSection({ generationId }: CommentSectionProps) {
   };
 
   const allComments = data?.pages.flatMap((p) => p.comments) ?? [];
-  const currentUserId = (session?.user as { id?: string })?.id;
+  const currentUserId = currentUser?.id;
 
   return (
     <div className="mt-6">

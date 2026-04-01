@@ -11,7 +11,10 @@ export function getAspectStyle(aspectRatio: string | null): string {
 }
 
 export function formatTimeAgo(dateStr: string): string {
-  const date = new Date(dateStr);
+  const normalized = dateStr.endsWith("Z") || dateStr.includes("+")
+    ? dateStr
+    : dateStr + "Z";
+  const date = new Date(normalized);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMin = Math.floor(diffMs / 60000);
