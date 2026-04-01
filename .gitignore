@@ -36,3 +36,6 @@ out/
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+
+# Guide docs
+git-branch-merge-guide.md
