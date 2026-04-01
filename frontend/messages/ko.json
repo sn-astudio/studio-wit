@@ -73,7 +73,22 @@
     "comic": "만화",
     "pixelArt": "픽셀 아트",
     "cinematic": "시네마틱",
-    "fantasy": "판타지"
+    "fantasy": "판타지",
+    "publicWorks": "공개 작품",
+    "noPublicWorks": "아직 공개된 작품이 없습니다"
+  },
+  "GalleryDetail": {
+    "notFound": "작품을 찾을 수 없습니다",
+    "goBack": "뒤로 가기",
+    "backToGallery": "갤러리로 돌아가기",
+    "like": "좋아요",
+    "loginToLike": "좋아요를 누르려면 로그인이 필요합니다",
+    "comments": "댓글",
+    "commentPlaceholder": "댓글을 입력하세요...",
+    "loginToComment": "댓글을 작성하려면 로그인이 필요합니다",
+    "noComments": "첫 번째 댓글을 남겨보세요!",
+    "deleteComment": "댓글 삭제",
+    "deleteCommentConfirm": "이 댓글을 삭제하시겠습니까?"
   },
   "Footer": {
     "description": "AI 기반 이미지 및 영상 생성 도구.",

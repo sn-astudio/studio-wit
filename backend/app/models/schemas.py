@@ -178,9 +178,11 @@ class GalleryItem(BaseModel):
     prompt: str = Field(..., description="프롬프트")
     result_url: str = Field(..., description="결과물 URL")
     thumbnail_url: Optional[str] = Field(None, description="썸네일 URL")
+    aspect_ratio: Optional[str] = Field(None, description="가로세로 비율")
     created_at: datetime = Field(..., description="생성 완료 시각")
     user: GalleryUser
     like_count: int = Field(..., description="좋아요 수", ge=0, examples=[12])
+    comment_count: int = Field(0, description="댓글 수", ge=0)
     is_liked: bool = Field(..., description="현재 유저의 좋아요 여부")
 
 
@@ -190,6 +192,32 @@ class GalleryListResponse(BaseModel):
     has_more: bool = Field(..., description="추가 페이지 존재 여부")
 
 
+class GalleryItemDetail(GalleryItem):
+    """단일 아이템 상세 조회용 (GalleryItem 확장)"""
+    pass
+
+
 class LikeToggleResponse(BaseModel):
     is_liked: bool = Field(..., description="토글 후 좋아요 상태")
     like_count: int = Field(..., description="토글 후 총 좋아요 수", examples=[13])
+
+
+# ──────────────────────────────────────
+# Comments
+# ──────────────────────────────────────
+
+class CommentCreate(BaseModel):
+    content: str = Field(..., description="댓글 내용", min_length=1, max_length=500)
+
+
+class CommentItem(BaseModel):
+    id: int = Field(..., description="댓글 ID")
+    content: str = Field(..., description="댓글 내용")
+    created_at: datetime = Field(..., description="작성 시각")
+    user: GalleryUser
+
+
+class CommentListResponse(BaseModel):
+    comments: list[CommentItem]
+    next_cursor: Optional[str] = Field(None, description="다음 페이지 커서")
+    has_more: bool = Field(..., description="추가 페이지 존재 여부")

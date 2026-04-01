@@ -73,7 +73,22 @@
     "comic": "Comic",
     "pixelArt": "Pixel Art",
     "cinematic": "Cinematic",
-    "fantasy": "Fantasy"
+    "fantasy": "Fantasy",
+    "publicWorks": "Public Works",
+    "noPublicWorks": "No public works yet"
+  },
+  "GalleryDetail": {
+    "notFound": "Work not found",
+    "goBack": "Go back",
+    "backToGallery": "Back to Gallery",
+    "like": "Like",
+    "loginToLike": "Sign in to like",
+    "comments": "Comments",
+    "commentPlaceholder": "Write a comment...",
+    "loginToComment": "Sign in to comment",
+    "noComments": "Be the first to comment!",
+    "deleteComment": "Delete comment",
+    "deleteCommentConfirm": "Are you sure you want to delete this comment?"
   },
   "Footer": {
     "description": "AI-powered image and video generation tools.",

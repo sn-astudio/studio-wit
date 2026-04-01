@@ -1,10 +1,41 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { useTranslations } from "next-intl";
-import { Eye, Heart } from "lucide-react";
-import { GALLERY_ITEMS, SIZE_CLASSES, STYLE_TAG_KEYS } from "./const";
+import { Loader2 } from "lucide-react";
+import { useGalleryList } from "@/hooks/queries/useGallery";
+import { STYLE_TAG_KEYS } from "./const";
+import { GalleryCard } from "./GalleryCard";
 
 export function Gallery() {
   const t = useTranslations("Gallery");
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useGalleryList({ sort: "recent", limit: 20 });
+
+  const observerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = observerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const allItems = data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <section id="gallery" className="border-t border-border/60 pt-24 pb-32">
@@ -30,40 +61,38 @@ export function Gallery() {
           ))}
         </div>
 
-        <div className="grid auto-rows-[220px] gap-3 sm:grid-cols-2 lg:grid-cols-3 [grid-auto-flow:dense]">
-          {GALLERY_ITEMS.map((item) => (
-            <div
-              key={item.titleKey}
-              className={`group relative cursor-pointer overflow-hidden rounded-xl bg-gradient-to-br ${item.gradient} transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 ${SIZE_CLASSES[item.size]}`}
-            >
-              {/* 장식 원 */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="h-20 w-20 rounded-full bg-white/10 backdrop-blur-sm transition-transform duration-500 group-hover:scale-110" />
-              </div>
+        {isLoading && (
+          <div className="flex min-h-[30vh] items-center justify-center">
+            <Loader2 className="size-6 animate-spin text-muted-foreground" />
+          </div>
+        )}
 
-              {/* 호버 오버레이 */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        {!isLoading && allItems.length === 0 && (
+          <div className="flex min-h-[20vh] items-center justify-center">
+            <p className="text-sm text-muted-foreground">
+              {t("noPublicWorks")}
+            </p>
+          </div>
+        )}
 
-              {/* 호버 시 정보 */}
-              <div className="absolute inset-x-0 bottom-0 translate-y-2 p-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                <h3 className="text-base font-semibold text-white">
-                  {t(item.titleKey)}
-                </h3>
-                <p className="mt-0.5 text-sm text-white/70">@{item.author}</p>
-                <div className="mt-2 flex gap-3">
-                  <span className="flex items-center gap-1 text-xs text-white/60">
-                    <Eye className="h-3.5 w-3.5" />
-                    {item.views}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs text-white/60">
-                    <Heart className="h-3.5 w-3.5" />
-                    {item.likes}
-                  </span>
+        {!isLoading && allItems.length > 0 && (
+          <>
+            <div className="columns-2 gap-3 sm:columns-3 lg:columns-4">
+              {allItems.map((item) => (
+                <div key={item.id} className="mb-3 break-inside-avoid">
+                  <GalleryCard item={item} />
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+
+            <div ref={observerRef} className="h-1" />
+            {isFetchingNextPage && (
+              <div className="flex justify-center py-6">
+                <Loader2 className="size-5 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </>
+        )}
       </div>
     </section>
   );

@@ -59,6 +59,7 @@ class User(Base):
 
     generations: Mapped[List["Generation"]] = relationship(back_populates="user")
     likes: Mapped[List["Like"]] = relationship(back_populates="user")
+    comments: Mapped[List["Comment"]] = relationship(back_populates="user")
 
 
 # ── Generations 테이블 ──
@@ -91,6 +92,7 @@ class Generation(Base):
 
     user: Mapped["User"] = relationship(back_populates="generations")
     likes: Mapped[List["Like"]] = relationship(back_populates="generation")
+    comments: Mapped[List["Comment"]] = relationship(back_populates="generation")
 
 
 # ── Likes 테이블 ──
@@ -110,6 +112,23 @@ class Like(Base):
 
     user: Mapped["User"] = relationship(back_populates="likes")
     generation: Mapped["Generation"] = relationship(back_populates="likes")
+
+
+# ── Comments 테이블 ──
+
+class Comment(Base):
+    __tablename__ = "comments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(String(32), ForeignKey("users.id"), index=True)
+    generation_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("generations.id"), index=True
+    )
+    content: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    user: Mapped["User"] = relationship(back_populates="comments")
+    generation: Mapped["Generation"] = relationship(back_populates="comments")
 
 
 # ── 테이블 생성 (개발용, 프로덕션은 Alembic 사용) ──
