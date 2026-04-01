@@ -36,3 +36,23 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_CDN_URL: ${{ secrets.NEXT_PUBLIC_CDN_URL }}
         run: yarn build
+
+      - name: Notify Slack on Build Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "<!here> ❌ 프론트엔드 빌드 실패!",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<!here> ❌ *프론트엔드 빌드 실패*\n*PR:* <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>\n*브랜치:* `${{ github.head_ref }}` → `${{ github.base_ref }}`\n*작성자:* ${{ github.actor }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|빌드 로그 보기>"
+                  }
+                }
+              ]
+            }
