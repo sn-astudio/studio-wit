@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <>
       <Header />
-      <main className="relative z-0 pt-16">
+      <main className="pt-16">
         <Hero />
         <Features />
         <Gallery />

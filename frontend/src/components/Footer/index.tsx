@@ -28,7 +28,7 @@ export function Footer() {
         </div>
 
         {/* 모바일: 링크 가로 배치 */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:hidden">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 pb-2 md:hidden">
           {LINK_GROUPS.map((group) => (
             <div key={group.categoryKey}>
               <h3 className="mb-2 text-[13px] font-semibold">
@@ -84,24 +84,24 @@ export function Footer() {
           </div>
         </div>
 
-        <Separator className="my-6 bg-border/60 md:my-10" />
+        <Separator className="my-6 bg-border/60 md:mt-10 md:mb-6" />
 
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground md:text-sm">
+        <div className="flex flex-wrap-reverse items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} {t("allRightsReserved")}
           </p>
           <div className="flex items-center gap-3">
-            <Globe className="size-3.5 text-muted-foreground md:size-4" />
+            <Globe className="size-4 text-muted-foreground" />
             <button
               onClick={() => locale !== "ko" && router.replace(pathname, { locale: "ko" })}
-              className={`cursor-pointer text-xs transition-colors md:text-sm ${locale === "ko" ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`cursor-pointer text-sm transition-colors ${locale === "ko" ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               한국어
             </button>
-            <span className="text-xs text-border md:text-sm">|</span>
+            <span className="text-sm text-border">|</span>
             <button
               onClick={() => locale !== "en" && router.replace(pathname, { locale: "en" })}
-              className={`cursor-pointer text-xs transition-colors md:text-sm ${locale === "en" ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`cursor-pointer text-sm transition-colors ${locale === "en" ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               English
             </button>

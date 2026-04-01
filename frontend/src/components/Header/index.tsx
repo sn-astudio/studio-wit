@@ -9,6 +9,7 @@ import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import {
+  ChevronDown,
   ChevronDownCircle,
   Globe,
   LogOut,
@@ -40,8 +41,25 @@ export function Header() {
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+      window.scrollTo(0, parseInt(scrollY || "0") * -1);
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    };
   }, [mobileOpen]);
 
   const toggleTheme = () => {
@@ -77,8 +95,9 @@ export function Header() {
   }, [navDropdown]);
 
   return (
-    <header className="fixed top-0 z-50 w-full bg-background">
-      <div className="relative z-10 mx-auto flex h-16 max-w-7xl items-center justify-between bg-background px-4 md:px-6">
+    <>
+    <header className={`fixed top-0 z-50 w-full ${mobileOpen ? "bg-background" : "bg-background/80 backdrop-blur-xl"}`}>
+      <div className="relative z-10 mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -107,6 +126,7 @@ export function Header() {
                   className={`flex cursor-pointer items-center gap-1 rounded-[12px] px-2.5 py-1.5 text-base font-medium transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] ${pathname.startsWith(item.href) ? "text-white" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   {t(item.labelKey)}
+                  <ChevronDown className={`size-3.5 transition-transform ${navDropdown === item.labelKey ? "rotate-180" : ""}`} />
                 </button>
 
                 {navDropdown === item.labelKey && (
@@ -155,7 +175,7 @@ export function Header() {
         </nav>
 
         {/* 데스크탑: 프로필 드롭다운 */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           {session ? (
             <div className="relative" ref={profileRef}>
               <button
@@ -265,18 +285,9 @@ export function Header() {
         </div>
       </div>
 
-      {/* 딤드 */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 md:hidden"
-          style={{ zIndex: -1 }}
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
       {/* 모바일 메뉴 */}
       {mobileOpen && (
-        <div className="relative border-b border-border/50 bg-background px-5 pb-6 md:hidden">
+        <div className="relative z-10 border-b border-transparent bg-background px-5 pb-6 dark:border-border/50 md:hidden">
           <nav className="flex flex-col gap-1 pt-1">
             {NAV_ITEMS.map((item) =>
               item.children ? (
@@ -358,5 +369,12 @@ export function Header() {
         </div>
       )}
     </header>
+    {mobileOpen && (
+      <div
+        className="fixed inset-0 z-[49] bg-black/50 md:hidden"
+        onClick={() => setMobileOpen(false)}
+      />
+    )}
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import {
   Image,
-  Pencil,
+  Wand2,
   Video,
   Film,
   Scissors,
@@ -14,14 +14,14 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/image",
     children: [
       { labelKey: "imageGenerate", descKey: "imageGenerateDesc", href: "/image", icon: Image },
-      { labelKey: "imageEdit", descKey: "imageEditDesc", href: "/image-edit", icon: Pencil },
+      { labelKey: "imageEdit", descKey: "imageEditDesc", href: "/image-edit", icon: Wand2 },
     ],
   },
   {
     labelKey: "video",
     href: "/video",
     children: [
-      { labelKey: "videoGenerate", descKey: "videoGenerateDesc", href: "/video", icon: Film },
+      { labelKey: "videoGenerate", descKey: "videoGenerateDesc", href: "/video", icon: Video },
       { labelKey: "videoEdit", descKey: "videoEditDesc", href: "/video-edit", icon: Scissors },
     ],
   },
