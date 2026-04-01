@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronDownCircle,
   Globe,
+  LayoutGrid,
   LogOut,
   Menu,
   Moon,
@@ -207,6 +208,16 @@ export function Header() {
                     </p>
                   </div>
                   <Separator className="my-1" />
+                  {/* 마이페이지 */}
+                  <Link
+                    href="/mypage"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex w-full items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                    {t("myPage")}
+                  </Link>
+                  <Separator className="my-1" />
                   {/* 테마 변경 */}
                   <button
                     onClick={toggleTheme}
@@ -342,6 +353,14 @@ export function Header() {
                     </p>
                   </div>
                 </div>
+                <Link
+                  href="/mypage"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  {t("myPage")}
+                </Link>
                 <button
                   onClick={toggleTheme}
                   className="flex items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"

@@ -15,6 +15,7 @@
     "videoEdit": "Edit",
     "videoEditDesc": "Modify videos with AI",
     "gallery": "Gallery",
+    "myPage": "My Page",
     "signOut": "Sign out",
     "signInWithGoogle": "Sign in with Google",
     "signIn": "Sign in",
@@ -806,6 +807,25 @@
     "audioResultReady": "Audio edit result is ready",
     "saveToGallery": "Save",
     "download": "Download"
+  },
+  "MyPage": {
+    "title": "My Page",
+    "myWorks": "My Works",
+    "allTypes": "All",
+    "images": "Images",
+    "videos": "Videos",
+    "allStatus": "All Status",
+    "completed": "Completed",
+    "processing": "Processing",
+    "failed": "Failed",
+    "noGenerations": "No works yet",
+    "noGenerationsDesc": "Your generated images and videos will appear here",
+    "totalCount": "{count} total",
+    "download": "Download",
+    "edit": "Edit",
+    "loginRequired": "Sign in required",
+    "loginRequiredDesc": "Please sign in to access My Page",
+    "signIn": "Sign in"
   },
   "LanguageSwitcher": {
     "ko": "한국어",

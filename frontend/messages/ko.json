@@ -15,6 +15,7 @@
     "videoEdit": "비디오 편집",
     "videoEditDesc": "AI로 영상을 수정하세요",
     "gallery": "Gallery",
+    "myPage": "마이페이지",
     "signOut": "로그아웃",
     "signInWithGoogle": "Google로 로그인",
     "signIn": "로그인",
@@ -675,6 +676,25 @@
     "audioResultReady": "오디오 편집 결과가 준비되었습니다",
     "saveToGallery": "저장",
     "download": "다운로드"
+  },
+  "MyPage": {
+    "title": "마이페이지",
+    "myWorks": "내 작업물",
+    "allTypes": "전체",
+    "images": "이미지",
+    "videos": "비디오",
+    "allStatus": "전체 상태",
+    "completed": "완료",
+    "processing": "진행중",
+    "failed": "실패",
+    "noGenerations": "아직 생성한 작업물이 없습니다",
+    "noGenerationsDesc": "이미지나 비디오를 생성하면 여기에 표시됩니다",
+    "totalCount": "총 {count}개",
+    "download": "다운로드",
+    "edit": "편집",
+    "loginRequired": "로그인이 필요합니다",
+    "loginRequiredDesc": "마이페이지를 이용하려면 로그인해주세요",
+    "signIn": "로그인"
   },
   "LanguageSwitcher": {
     "ko": "한국어",
