@@ -123,11 +123,15 @@ export interface GalleryItem {
   prompt: string;
   result_url: string;
   thumbnail_url: string | null;
+  aspect_ratio: string | null;
   created_at: string;
   user: GalleryUser;
   like_count: number;
+  comment_count: number;
   is_liked: boolean;
 }
+
+export type GalleryItemDetail = GalleryItem;
 
 export interface GalleryListResponse {
   items: GalleryItem[];
@@ -138,6 +142,21 @@ export interface GalleryListResponse {
 export interface LikeToggleResponse {
   is_liked: boolean;
   like_count: number;
+}
+
+// ── Comments ──
+
+export interface CommentItem {
+  id: number;
+  content: string;
+  created_at: string;
+  user: GalleryUser;
+}
+
+export interface CommentListResponse {
+  comments: CommentItem[];
+  next_cursor: string | null;
+  has_more: boolean;
 }
 
 // ── Image Upload ──
