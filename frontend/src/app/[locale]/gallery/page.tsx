@@ -6,7 +6,7 @@ export default function GalleryPage() {
     <div className="min-h-screen">
       <Header />
       <main className="pt-16">
-        <Gallery />
+        <Gallery variant="page" />
       </main>
     </div>
   );

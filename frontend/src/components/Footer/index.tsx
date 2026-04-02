@@ -15,14 +15,14 @@ export function Footer() {
   const nextLocale = locale === "ko" ? "en" : "ko";
 
   return (
-    <footer className="border-t border-border/60 bg-background">
+    <footer className="border-t border-white/10 bg-[#0d0d0d] text-white dark:border-border/60 dark:bg-background dark:text-foreground">
       <div className="mx-auto max-w-7xl px-5 py-8 md:px-6">
         {/* 모바일: 로고 + 설명 */}
         <div className="mb-6 md:hidden">
           <Link href="/" className="flex items-center">
             <span className="text-2xl font-bold tracking-tight">Wit</span>
           </Link>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 text-sm leading-relaxed text-white/50 dark:text-muted-foreground">
             {t("description")}
           </p>
         </div>
@@ -39,7 +39,7 @@ export function Footer() {
                   <li key={linkKey}>
                     <Link
                       href="#"
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      className="text-sm text-white/50 transition-colors hover:text-white dark:text-muted-foreground dark:hover:text-foreground"
                     >
                       {t(linkKey)}
                     </Link>
@@ -56,7 +56,7 @@ export function Footer() {
             <Link href="/" className="flex items-center">
               <span className="text-2xl font-bold tracking-tight">Wit</span>
             </Link>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-sm leading-relaxed text-white/50 dark:text-muted-foreground">
               {t("description")}
             </p>
           </div>
@@ -72,7 +72,7 @@ export function Footer() {
                     <li key={linkKey}>
                       <Link
                         href="#"
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        className="text-sm text-white/50 transition-colors hover:text-white dark:text-muted-foreground dark:hover:text-foreground"
                       >
                         {t(linkKey)}
                       </Link>
@@ -84,24 +84,24 @@ export function Footer() {
           </div>
         </div>
 
-        <Separator className="my-6 bg-border/60 md:mt-10 md:mb-6" />
+        <Separator className="my-6 bg-white/10 dark:bg-border/60 md:mt-10 md:mb-6" />
 
         <div className="flex flex-wrap-reverse items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-white/50 dark:text-muted-foreground">
             &copy; {new Date().getFullYear()} {t("allRightsReserved")}
           </p>
           <div className="flex items-center gap-3">
-            <Globe className="size-4 text-muted-foreground" />
+            <Globe className="size-4 text-white/50 dark:text-muted-foreground" />
             <button
               onClick={() => locale !== "ko" && router.replace(pathname, { locale: "ko" })}
-              className={`cursor-pointer text-sm transition-colors ${locale === "ko" ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`cursor-pointer text-sm transition-colors ${locale === "ko" ? "font-medium text-white dark:text-foreground" : "text-white/50 hover:text-white dark:text-muted-foreground dark:hover:text-foreground"}`}
             >
               한국어
             </button>
-            <span className="text-sm text-border">|</span>
+            <span className="text-sm text-white/20 dark:text-border">|</span>
             <button
               onClick={() => locale !== "en" && router.replace(pathname, { locale: "en" })}
-              className={`cursor-pointer text-sm transition-colors ${locale === "en" ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`cursor-pointer text-sm transition-colors ${locale === "en" ? "font-medium text-white dark:text-foreground" : "text-white/50 hover:text-white dark:text-muted-foreground dark:hover:text-foreground"}`}
             >
               English
             </button>
