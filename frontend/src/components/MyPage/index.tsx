@@ -26,6 +26,7 @@ const TYPE_FILTER_KEYS: Record<TypeFilter, string> = {
 
 const STATUS_FILTER_KEYS: Record<StatusFilter, string> = {
   all: "allStatus",
+  pending: "processing",
   completed: "completed",
   processing: "processing",
   failed: "failed",
