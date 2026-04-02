@@ -11,8 +11,6 @@ import {
   Scaling,
   Pencil,
   Eraser,
-  Pipette,
-  Shapes,
   Type,
   RotateCcw,
   ZoomIn,
@@ -145,19 +143,6 @@ export function EditorToolbar({
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => onToolChange("shape")}
-          className={cn(
-            "cursor-pointer gap-1.5",
-            activeTool === "shape" && "bg-primary/20 text-primary",
-          )}
-        >
-          <Shapes className="size-4" />
-          <span className="text-xs">{t("shape")}</span>
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
           onClick={() => onToolChange("text")}
           className={cn(
             "cursor-pointer gap-1.5",
@@ -166,19 +151,6 @@ export function EditorToolbar({
         >
           <Type className="size-4" />
           <span className="text-xs">{t("text")}</span>
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onToolChange("eyedropper")}
-          className={cn(
-            "cursor-pointer gap-1.5",
-            activeTool === "eyedropper" && "bg-primary/20 text-primary",
-          )}
-        >
-          <Pipette className="size-4" />
-          <span className="text-xs">{t("eyedropper")}</span>
         </Button>
 
         <div className="mx-1 h-5 w-px bg-zinc-700" />

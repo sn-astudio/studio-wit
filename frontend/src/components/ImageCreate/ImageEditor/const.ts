@@ -2,7 +2,6 @@ import type {
   DrawingSettings,
   EditorTool,
   FilterValues,
-  ShapeSettings,
   TextSettings,
 } from "./types";
 
@@ -14,7 +13,6 @@ export const EDITOR_TOOLS: { id: EditorTool; labelKey: string }[] = [
   { id: "filter", labelKey: "filter" },
   { id: "resize", labelKey: "resize" },
   { id: "draw", labelKey: "draw" },
-  { id: "shape", labelKey: "shape" },
   { id: "text", labelKey: "text" },
 ];
 
@@ -48,13 +46,6 @@ export const DEFAULT_DRAWING_SETTINGS: DrawingSettings = {
   opacity: 100,
 };
 
-export const DEFAULT_SHAPE_SETTINGS: ShapeSettings = {
-  type: "rect",
-  color: "#ff0000",
-  strokeWidth: 2,
-  fill: false,
-};
-
 export const DEFAULT_TEXT_SETTINGS: TextSettings = {
   text: "",
   fontFamily: "sans-serif",
@@ -62,6 +53,8 @@ export const DEFAULT_TEXT_SETTINGS: TextSettings = {
   color: "#ffffff",
   bold: false,
   italic: false,
+  placedX: null,
+  placedY: null,
 };
 
 export const RESIZE_PRESETS = [

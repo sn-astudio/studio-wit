@@ -13,6 +13,7 @@ export function DrawingPanel({
   onApply,
   onClear,
   isEraser = false,
+  isMosaic = false,
 }: DrawingPanelProps) {
   const t = useTranslations("ImageEditor");
 
@@ -26,7 +27,7 @@ export function DrawingPanel({
   return (
     <div className="border-t border-zinc-800 px-4 py-3">
       <div className="space-y-3">
-        {!isEraser && (
+        {!isEraser && !isMosaic && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-zinc-400">{t("color")}</span>
             <input
@@ -59,23 +60,25 @@ export function DrawingPanel({
           />
         </div>
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-400">{t("opacity")}</span>
-            <span className="text-xs font-medium text-zinc-300">
-              {settings.opacity}%
-            </span>
+        {!isMosaic && (
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-zinc-400">{t("opacity")}</span>
+              <span className="text-xs font-medium text-zinc-300">
+                {settings.opacity}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={100}
+              step={1}
+              value={settings.opacity}
+              onChange={(e) => handleChange("opacity", Number(e.target.value))}
+              className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-zinc-800 accent-primary"
+            />
           </div>
-          <input
-            type="range"
-            min={1}
-            max={100}
-            step={1}
-            value={settings.opacity}
-            onChange={(e) => handleChange("opacity", Number(e.target.value))}
-            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-zinc-800 accent-primary"
-          />
-        </div>
+        )}
       </div>
 
       <div className="mt-3 flex items-center justify-end gap-2">

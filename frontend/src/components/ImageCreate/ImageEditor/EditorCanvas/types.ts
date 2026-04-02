@@ -3,7 +3,6 @@ import type {
   DrawingSettings,
   EditorTool,
   FilterValues,
-  ShapeSettings,
   TextSettings,
 } from "../types";
 
@@ -14,9 +13,10 @@ export interface EditorCanvasProps {
   cropRect: CropRect | null;
   onCropChange: (rect: CropRect | null) => void;
   drawingSettings: DrawingSettings;
-  shapeSettings: ShapeSettings;
   textSettings: TextSettings;
-  onEyedropperPick?: (color: string) => void;
+  onTextPlace?: (x: number, y: number) => void;
+  freeRotateDegrees?: number;
+  resizePreviewScale?: { scaleX: number; scaleY: number };
 }
 
 export interface EditorCanvasHandle {

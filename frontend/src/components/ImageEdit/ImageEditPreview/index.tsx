@@ -16,9 +16,10 @@ export function ImageEditPreview({
   cropRect,
   onCropChange,
   drawingSettings,
-  shapeSettings,
   textSettings,
-  onEyedropperPick,
+  onTextPlace,
+  freeRotateDegrees,
+  resizePreviewScale,
   onExport,
   onGenerateVideo,
 }: ImageEditPreviewProps) {
@@ -43,9 +44,10 @@ export function ImageEditPreview({
         cropRect={cropRect}
         onCropChange={onCropChange}
         drawingSettings={drawingSettings}
-        shapeSettings={shapeSettings}
         textSettings={textSettings}
-        onEyedropperPick={onEyedropperPick}
+        onTextPlace={onTextPlace}
+        freeRotateDegrees={freeRotateDegrees}
+        resizePreviewScale={resizePreviewScale}
       />
       <div className="flex items-center justify-end gap-1 border-t border-zinc-800 px-3 py-2">
         <Button

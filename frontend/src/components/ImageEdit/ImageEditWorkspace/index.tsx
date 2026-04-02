@@ -12,7 +12,6 @@ import type { EditorCanvasHandle } from "@/components/ImageCreate/ImageEditor/Ed
 import type { CropRect } from "@/components/ImageCreate/ImageEditor/types";
 import {
   DEFAULT_DRAWING_SETTINGS,
-  DEFAULT_SHAPE_SETTINGS,
   DEFAULT_TEXT_SETTINGS,
 } from "@/components/ImageCreate/ImageEditor/const";
 import {
@@ -45,13 +44,36 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
   const [activeTab, setActiveTab] = useState<EditTab>("edit");
   const canvasRef = useRef<EditorCanvasHandle>(null);
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
+  const [freeRotateDegrees, setFreeRotateDegrees] = useState(0);
+  const [resizePreviewScale, setResizePreviewScale] = useState<
+    { scaleX: number; scaleY: number } | undefined
+  >();
 
   const filterValues = useImageEditorStore((s) => s.filterValues);
   const activeTool = useImageEditorStore((s) => s.activeTool);
   const drawingSettings = useImageEditorStore((s) => s.drawingSettings);
-  const shapeSettings = useImageEditorStore((s) => s.shapeSettings);
   const textSettings = useImageEditorStore((s) => s.textSettings);
+  const setTextSettings = useImageEditorStore((s) => s.setTextSettings);
   const reset = useImageEditorStore((s) => s.reset);
+
+  const handleResizeChange = useCallback(
+    (w: number, h: number) => {
+      const canvas = canvasRef.current?.getMainCanvas();
+      if (!canvas) return;
+      setResizePreviewScale({
+        scaleX: w / canvas.width,
+        scaleY: h / canvas.height,
+      });
+    },
+    [],
+  );
+
+  const handleTextPlace = useCallback(
+    (x: number, y: number) => {
+      setTextSettings({ ...textSettings, placedX: x, placedY: y });
+    },
+    [textSettings, setTextSettings],
+  );
 
   const handleSourceSelected = useCallback(
     (newSource: ImageSource) => {
@@ -150,8 +172,10 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
             cropRect={cropRect}
             onCropChange={setCropRect}
             drawingSettings={drawingSettings}
-            shapeSettings={shapeSettings}
             textSettings={textSettings}
+            onTextPlace={handleTextPlace}
+            freeRotateDegrees={freeRotateDegrees}
+            resizePreviewScale={resizePreviewScale}
             onExport={handleExport}
             onGenerateVideo={handleGenerateVideo}
           />
@@ -188,6 +212,8 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
                 canvasRef={canvasRef}
                 cropRect={cropRect}
                 setCropRect={setCropRect}
+                onFreeRotateChange={setFreeRotateDegrees}
+                onResizeChange={handleResizeChange}
               />
             )}
             {activeTab === "filter" && (

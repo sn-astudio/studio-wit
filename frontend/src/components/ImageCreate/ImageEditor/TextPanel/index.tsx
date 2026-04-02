@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { Bold, Italic } from "lucide-react";
+import { Bold, Italic, MousePointerClick } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/Button";
@@ -23,6 +23,8 @@ export function TextPanel({
 }: TextPanelProps) {
   const t = useTranslations("ImageEditor");
 
+  const isPlaced = settings.placedX !== null && settings.placedY !== null;
+
   const handleChange = useCallback(
     <K extends keyof typeof settings>(key: K, val: (typeof settings)[K]) => {
       onChange({ ...settings, [key]: val });
@@ -33,6 +35,25 @@ export function TextPanel({
   return (
     <div className="border-t border-zinc-800 px-4 py-3">
       <div className="space-y-3">
+        {/* 안내 문구 */}
+        <div
+          className={cn(
+            "flex items-center gap-2 rounded-lg px-3 py-2 text-xs",
+            isPlaced
+              ? "bg-primary/10 text-primary"
+              : "bg-zinc-800 text-zinc-400",
+          )}
+        >
+          <MousePointerClick className="size-4 shrink-0" />
+          <span>
+            {!settings.text.trim()
+              ? t("textStepInput")
+              : isPlaced
+                ? t("textStepPlaced")
+                : t("textStepClick")}
+          </span>
+        </div>
+
         <div className="space-y-1">
           <label className="text-xs text-zinc-400">{t("textContent")}</label>
           <input
@@ -40,6 +61,7 @@ export function TextPanel({
             value={settings.text}
             onChange={(e) => handleChange("text", e.target.value)}
             placeholder={t("textPlaceholder")}
+            autoFocus
             className="w-full rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-zinc-200 outline-none focus:border-primary"
           />
         </div>
@@ -120,7 +142,7 @@ export function TextPanel({
         <Button
           size="sm"
           onClick={onApply}
-          disabled={!settings.text.trim()}
+          disabled={!settings.text.trim() || !isPlaced}
           className="cursor-pointer"
         >
           {t("applyText")}

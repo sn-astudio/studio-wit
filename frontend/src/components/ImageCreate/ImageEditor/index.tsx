@@ -29,7 +29,6 @@ import { CropOverlay } from "./CropOverlay";
 import { FilterPanel } from "./FilterPanel";
 import { ResizePanel } from "./ResizePanel";
 import { DrawingPanel } from "./DrawingPanel";
-import { ShapePanel } from "./ShapePanel";
 import { TextPanel } from "./TextPanel";
 import { FreeRotatePanel } from "./FreeRotatePanel";
 import { EffectsPanel } from "./EffectsPanel";
@@ -47,17 +46,15 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
   const historyLength = useImageEditorStore((s) => s.historyLength);
   const drawingSettings = useImageEditorStore((s) => s.drawingSettings);
   const setDrawingSettings = useImageEditorStore((s) => s.setDrawingSettings);
-  const shapeSettings = useImageEditorStore((s) => s.shapeSettings);
-  const setShapeSettings = useImageEditorStore((s) => s.setShapeSettings);
   const textSettings = useImageEditorStore((s) => s.textSettings);
   const setTextSettings = useImageEditorStore((s) => s.setTextSettings);
-  const setEyedropperColor = useImageEditorStore(
-    (s) => s.setEyedropperColor,
-  );
-  const eyedropperColor = useImageEditorStore((s) => s.eyedropperColor);
   const reset = useImageEditorStore((s) => s.reset);
 
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
+  const [freeRotateDegrees, setFreeRotateDegrees] = useState(0);
+  const [resizePreviewScale, setResizePreviewScale] = useState<
+    { scaleX: number; scaleY: number } | undefined
+  >();
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < historyLength - 1;
@@ -123,6 +120,19 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
     resetFilterValues();
   }, [resetFilterValues]);
 
+  // 리사이즈 미리보기
+  const handleResizeChange = useCallback(
+    (w: number, h: number) => {
+      const canvas = canvasRef.current?.getMainCanvas();
+      if (!canvas) return;
+      setResizePreviewScale({
+        scaleX: w / canvas.width,
+        scaleY: h / canvas.height,
+      });
+    },
+    [],
+  );
+
   // 리사이즈 적용
   const handleApplyResize = useCallback(
     (width: number, height: number) => {
@@ -131,10 +141,17 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
       canvasRef.current?.pushSnapshot();
       const resized = resizeCanvas(canvas, width, height);
       canvasRef.current?.replaceMainCanvas(resized);
+      setResizePreviewScale(undefined);
       setActiveTool(null);
     },
     [setActiveTool],
   );
+
+  // 리사이즈 취소
+  const handleCancelResize = useCallback(() => {
+    setResizePreviewScale(undefined);
+    setActiveTool(null);
+  }, [setActiveTool]);
 
   // 그리기/도형 적용 (overlay → main bake)
   const handleApplyDrawing = useCallback(() => {
@@ -147,6 +164,20 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
     canvasRef.current?.clearOverlay();
   }, []);
 
+  // 텍스트 배치 콜백
+  const handleTextPlace = useCallback(
+    (x: number, y: number) => {
+      setTextSettings({ ...textSettings, placedX: x, placedY: y });
+    },
+    [textSettings, setTextSettings],
+  );
+
+  // 텍스트 클리어 (위치 리셋 + overlay 클리어)
+  const handleClearText = useCallback(() => {
+    setTextSettings({ ...textSettings, placedX: null, placedY: null });
+    canvasRef.current?.clearOverlay();
+  }, [textSettings, setTextSettings]);
+
   // 자유 회전 적용
   const handleApplyFreeRotate = useCallback(
     (degrees: number) => {
@@ -155,10 +186,22 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
       canvasRef.current?.pushSnapshot();
       const rotated = rotateCanvasFree(canvas, degrees);
       canvasRef.current?.replaceMainCanvas(rotated);
+      setFreeRotateDegrees(0);
       setActiveTool(null);
     },
     [setActiveTool],
   );
+
+  // 자유 회전 미리보기
+  const handleFreeRotateChange = useCallback((degrees: number) => {
+    setFreeRotateDegrees(degrees);
+  }, []);
+
+  // 자유 회전 취소
+  const handleCancelFreeRotate = useCallback(() => {
+    setFreeRotateDegrees(0);
+    setActiveTool(null);
+  }, [setActiveTool]);
 
   // 효과 적용 (Sharpen/Vignette/Noise)
   const handleApplySharpen = useCallback(
@@ -192,26 +235,6 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
       canvasRef.current?.replaceMainCanvas(result);
     },
     [],
-  );
-
-  // 스포이드 색상 추출
-  const handleEyedropperPick = useCallback(
-    (color: string) => {
-      setEyedropperColor(color);
-      // 그리기 설정에도 반영
-      setDrawingSettings({ ...drawingSettings, color });
-      setShapeSettings({ ...shapeSettings, color });
-      setTextSettings({ ...textSettings, color });
-    },
-    [
-      drawingSettings,
-      shapeSettings,
-      textSettings,
-      setDrawingSettings,
-      setShapeSettings,
-      setTextSettings,
-      setEyedropperColor,
-    ],
   );
 
   // 저장
@@ -254,17 +277,6 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
         canRedo={canRedo}
       />
 
-      {/* 스포이드 색상 표시 */}
-      {activeTool === "eyedropper" && eyedropperColor && (
-        <div className="flex items-center gap-2 border-b border-zinc-800 px-3 py-1">
-          <div
-            className="size-5 rounded border border-zinc-600"
-            style={{ backgroundColor: eyedropperColor }}
-          />
-          <span className="text-xs text-zinc-300">{eyedropperColor}</span>
-        </div>
-      )}
-
       <EditorCanvas
         ref={canvasRef}
         imageUrl={imageUrl}
@@ -273,9 +285,10 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
         cropRect={cropRect}
         onCropChange={setCropRect}
         drawingSettings={drawingSettings}
-        shapeSettings={shapeSettings}
         textSettings={textSettings}
-        onEyedropperPick={handleEyedropperPick}
+        onTextPlace={handleTextPlace}
+        freeRotateDegrees={freeRotateDegrees}
+        resizePreviewScale={resizePreviewScale}
       />
 
       {activeTool === "crop" && (
@@ -300,7 +313,8 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
           currentWidth={canvasWidth}
           currentHeight={canvasHeight}
           onApply={handleApplyResize}
-          onCancel={() => setActiveTool(null)}
+          onCancel={handleCancelResize}
+          onChange={handleResizeChange}
         />
       )}
 
@@ -314,21 +328,12 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
         />
       )}
 
-      {activeTool === "shape" && (
-        <ShapePanel
-          settings={shapeSettings}
-          onChange={setShapeSettings}
-          onApply={handleApplyDrawing}
-          onClear={handleClearDrawing}
-        />
-      )}
-
       {activeTool === "text" && (
         <TextPanel
           settings={textSettings}
           onChange={setTextSettings}
           onApply={handleApplyDrawing}
-          onClear={handleClearDrawing}
+          onClear={handleClearText}
         />
       )}
 
@@ -350,13 +355,15 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
             canvasRef.current?.undo();
           }}
           isEraser={false}
+          isMosaic
         />
       )}
 
       {activeTool === "freeRotate" && (
         <FreeRotatePanel
           onApply={handleApplyFreeRotate}
-          onCancel={() => setActiveTool(null)}
+          onCancel={handleCancelFreeRotate}
+          onChange={handleFreeRotateChange}
         />
       )}
 

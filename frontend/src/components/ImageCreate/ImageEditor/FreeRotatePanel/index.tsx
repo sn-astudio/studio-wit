@@ -7,9 +7,18 @@ import { Button } from "@/components/ui/Button";
 
 import type { FreeRotatePanelProps } from "./types";
 
-export function FreeRotatePanel({ onApply, onCancel }: FreeRotatePanelProps) {
+export function FreeRotatePanel({
+  onApply,
+  onCancel,
+  onChange,
+}: FreeRotatePanelProps) {
   const t = useTranslations("ImageEditor");
   const [degrees, setDegrees] = useState(0);
+
+  const updateDegrees = (d: number) => {
+    setDegrees(d);
+    onChange?.(d);
+  };
 
   return (
     <div className="border-t border-zinc-800 px-4 py-3">
@@ -27,7 +36,7 @@ export function FreeRotatePanel({ onApply, onCancel }: FreeRotatePanelProps) {
             max={180}
             step={1}
             value={degrees}
-            onChange={(e) => setDegrees(Number(e.target.value))}
+            onChange={(e) => updateDegrees(Number(e.target.value))}
             className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-zinc-800 accent-primary"
           />
         </div>
@@ -38,7 +47,7 @@ export function FreeRotatePanel({ onApply, onCancel }: FreeRotatePanelProps) {
               key={d}
               variant="ghost"
               size="sm"
-              onClick={() => setDegrees(d)}
+              onClick={() => updateDegrees(d)}
               className="cursor-pointer text-xs"
             >
               {d}°

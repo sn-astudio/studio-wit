@@ -7,7 +7,6 @@ import { EditorToolbar } from "@/components/ImageCreate/ImageEditor/EditorToolba
 import { CropOverlay } from "@/components/ImageCreate/ImageEditor/CropOverlay";
 import { ResizePanel } from "@/components/ImageCreate/ImageEditor/ResizePanel";
 import { DrawingPanel } from "@/components/ImageCreate/ImageEditor/DrawingPanel";
-import { ShapePanel } from "@/components/ImageCreate/ImageEditor/ShapePanel";
 import { TextPanel } from "@/components/ImageCreate/ImageEditor/TextPanel";
 import { FreeRotatePanel } from "@/components/ImageCreate/ImageEditor/FreeRotatePanel";
 import { EffectsPanel } from "@/components/ImageCreate/ImageEditor/EffectsPanel";
@@ -29,6 +28,8 @@ export function EditPanel({
   canvasRef,
   cropRect,
   setCropRect,
+  onFreeRotateChange,
+  onResizeChange,
 }: EditPanelProps) {
   const activeTool = useImageEditorStore((s) => s.activeTool);
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
@@ -36,8 +37,6 @@ export function EditPanel({
   const historyLength = useImageEditorStore((s) => s.historyLength);
   const drawingSettings = useImageEditorStore((s) => s.drawingSettings);
   const setDrawingSettings = useImageEditorStore((s) => s.setDrawingSettings);
-  const shapeSettings = useImageEditorStore((s) => s.shapeSettings);
-  const setShapeSettings = useImageEditorStore((s) => s.setShapeSettings);
   const textSettings = useImageEditorStore((s) => s.textSettings);
   const setTextSettings = useImageEditorStore((s) => s.setTextSettings);
 
@@ -91,10 +90,19 @@ export function EditPanel({
       canvasRef.current?.pushSnapshot();
       const resized = resizeCanvas(canvas, width, height);
       canvasRef.current?.replaceMainCanvas(resized);
+      onResizeChange?.(width, height);
       setActiveTool(null);
     },
-    [canvasRef, setActiveTool],
+    [canvasRef, setActiveTool, onResizeChange],
   );
+
+  const handleCancelResize = useCallback(() => {
+    const canvas = canvasRef.current?.getMainCanvas();
+    if (canvas) {
+      onResizeChange?.(canvas.width, canvas.height);
+    }
+    setActiveTool(null);
+  }, [canvasRef, setActiveTool, onResizeChange]);
 
   const handleApplyDrawing = useCallback(() => {
     canvasRef.current?.bakeOverlay();
@@ -105,6 +113,18 @@ export function EditPanel({
     canvasRef.current?.clearOverlay();
   }, [canvasRef]);
 
+  const handleTextPlace = useCallback(
+    (x: number, y: number) => {
+      setTextSettings({ ...textSettings, placedX: x, placedY: y });
+    },
+    [textSettings, setTextSettings],
+  );
+
+  const handleClearText = useCallback(() => {
+    setTextSettings({ ...textSettings, placedX: null, placedY: null });
+    canvasRef.current?.clearOverlay();
+  }, [textSettings, setTextSettings, canvasRef]);
+
   const handleApplyFreeRotate = useCallback(
     (degrees: number) => {
       const canvas = canvasRef.current?.getMainCanvas();
@@ -112,10 +132,16 @@ export function EditPanel({
       canvasRef.current?.pushSnapshot();
       const rotated = rotateCanvasFree(canvas, degrees);
       canvasRef.current?.replaceMainCanvas(rotated);
+      onFreeRotateChange?.(0);
       setActiveTool(null);
     },
-    [canvasRef, setActiveTool],
+    [canvasRef, setActiveTool, onFreeRotateChange],
   );
+
+  const handleCancelFreeRotate = useCallback(() => {
+    onFreeRotateChange?.(0);
+    setActiveTool(null);
+  }, [setActiveTool, onFreeRotateChange]);
 
   const handleApplySharpen = useCallback(
     (amount: number) => {
@@ -182,7 +208,8 @@ export function EditPanel({
           currentWidth={canvasWidth}
           currentHeight={canvasHeight}
           onApply={handleApplyResize}
-          onCancel={() => setActiveTool(null)}
+          onCancel={handleCancelResize}
+          onChange={onResizeChange}
         />
       )}
 
@@ -196,28 +223,20 @@ export function EditPanel({
         />
       )}
 
-      {activeTool === "shape" && (
-        <ShapePanel
-          settings={shapeSettings}
-          onChange={setShapeSettings}
-          onApply={handleApplyDrawing}
-          onClear={handleClearDrawing}
-        />
-      )}
-
       {activeTool === "text" && (
         <TextPanel
           settings={textSettings}
           onChange={setTextSettings}
           onApply={handleApplyDrawing}
-          onClear={handleClearDrawing}
+          onClear={handleClearText}
         />
       )}
 
       {activeTool === "freeRotate" && (
         <FreeRotatePanel
           onApply={handleApplyFreeRotate}
-          onCancel={() => setActiveTool(null)}
+          onCancel={handleCancelFreeRotate}
+          onChange={onFreeRotateChange}
         />
       )}
 
@@ -235,6 +254,7 @@ export function EditPanel({
           settings={drawingSettings}
           onChange={setDrawingSettings}
           onApply={() => setActiveTool(null)}
+          isMosaic
           onClear={() => {
             canvasRef.current?.undo();
           }}

@@ -5,15 +5,11 @@ export type EditorTool =
   | "resize"
   | "draw"
   | "eraser"
-  | "eyedropper"
-  | "shape"
   | "text"
   | "freeRotate"
   | "zoom"
   | "effects"
   | "mosaic";
-
-export type ShapeType = "rect" | "circle" | "line" | "arrow";
 
 export interface ZoomPanState {
   scale: number;
@@ -34,13 +30,9 @@ export interface TextSettings {
   color: string;
   bold: boolean;
   italic: boolean;
-}
-
-export interface ShapeSettings {
-  type: ShapeType;
-  color: string;
-  strokeWidth: number;
-  fill: boolean;
+  /** 배치된 위치 (null이면 아직 미배치) */
+  placedX: number | null;
+  placedY: number | null;
 }
 
 export interface FilterValues {

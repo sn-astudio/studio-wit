@@ -14,6 +14,7 @@ export function ResizePanel({
   currentHeight,
   onApply,
   onCancel,
+  onChange,
 }: ResizePanelProps) {
   const t = useTranslations("ImageEditor");
   const [width, setWidth] = useState(currentWidth);
@@ -21,36 +22,40 @@ export function ResizePanel({
   const [lockAspect, setLockAspect] = useState(true);
   const aspect = currentWidth / currentHeight;
 
+  const updateSize = useCallback(
+    (w: number, h: number) => {
+      setWidth(w);
+      setHeight(h);
+      onChange?.(w, h);
+    },
+    [onChange],
+  );
+
   const handleWidthChange = useCallback(
     (val: number) => {
       const w = Math.max(1, Math.round(val));
-      setWidth(w);
-      if (lockAspect) {
-        setHeight(Math.max(1, Math.round(w / aspect)));
-      }
+      const h = lockAspect ? Math.max(1, Math.round(w / aspect)) : height;
+      updateSize(w, h);
     },
-    [lockAspect, aspect],
+    [lockAspect, aspect, height, updateSize],
   );
 
   const handleHeightChange = useCallback(
     (val: number) => {
       const h = Math.max(1, Math.round(val));
-      setHeight(h);
-      if (lockAspect) {
-        setWidth(Math.max(1, Math.round(h * aspect)));
-      }
+      const w = lockAspect ? Math.max(1, Math.round(h * aspect)) : width;
+      updateSize(w, h);
     },
-    [lockAspect, aspect],
+    [lockAspect, aspect, width, updateSize],
   );
 
   const handlePreset = useCallback(
     (factor: number) => {
       const w = Math.max(1, Math.round(currentWidth * factor));
       const h = Math.max(1, Math.round(currentHeight * factor));
-      setWidth(w);
-      setHeight(h);
+      updateSize(w, h);
     },
-    [currentWidth, currentHeight],
+    [currentWidth, currentHeight, updateSize],
   );
 
   return (
