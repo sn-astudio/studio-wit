@@ -57,9 +57,11 @@ async def _run_generation(generation_id: str, model_id: str, request: GenerateRe
         # Provider API 호출
         try:
             if model_type == "image":
+                input_image_url = params.pop("input_image_url", None)
                 gen_result = await provider.generate_image(
                     prompt=request.prompt,
                     negative_prompt=request.negative_prompt,
+                    input_image_url=input_image_url,
                     **params,
                 )
             else:

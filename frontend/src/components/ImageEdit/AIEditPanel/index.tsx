@@ -12,6 +12,7 @@ import {
   useGeneration,
 } from "@/hooks/queries/useGeneration";
 import { useModels } from "@/hooks/queries/useModels";
+import { imageApi } from "@/services/api";
 import { cn } from "@/lib/utils";
 import type { AspectRatio } from "@/types/api";
 
@@ -81,12 +82,31 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
     }
   }, [currentGen, t]);
 
-  const handleGenerate = useCallback(() => {
+  const handleGenerate = useCallback(async () => {
     if (!token) {
       toast.error(t("loginRequired"));
       return;
     }
     if (!prompt.trim() || !selectedModel || createMutation.isPending) return;
+
+    let imageUrl = sourceUrl;
+    if (
+      imageUrl &&
+      (imageUrl.startsWith("blob:") || imageUrl.startsWith("data:"))
+    ) {
+      try {
+        const resp = await fetch(imageUrl);
+        const blob = await resp.blob();
+        const file = new File([blob], `input-${Date.now()}.png`, {
+          type: blob.type || "image/png",
+        });
+        const uploaded = await imageApi.upload(file);
+        imageUrl = uploaded.url;
+      } catch {
+        toast.error(t("aiGenerateError"));
+        return;
+      }
+    }
 
     createMutation.mutate(
       {
@@ -94,7 +114,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
         prompt: prompt.trim(),
         params: {
           aspect_ratio: aspectRatio,
-          ...(sourceUrl ? { input_image_url: sourceUrl } : {}),
+          ...(imageUrl ? { input_image_url: imageUrl } : {}),
         },
       },
       {
