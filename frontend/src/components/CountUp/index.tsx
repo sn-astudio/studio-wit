@@ -12,16 +12,37 @@ function parseValue(value: string): { num: number; suffix: string } {
 export function CountUp({ value, duration = 2000 }: CountUpProps) {
   const { num, suffix } = parseValue(value);
   const [display, setDisplay] = useState(0);
+  const [started, setStarted] = useState(false);
   const rafRef = useRef<number>(undefined);
   const startRef = useRef<number>(undefined);
+  const elRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
+    const el = elRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStarted(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!started) return;
+
     const animate = (timestamp: number) => {
       if (!startRef.current) startRef.current = timestamp;
       const elapsed = timestamp - startRef.current;
       const progress = Math.min(elapsed / duration, 1);
 
-      // ease-out
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplay(eased * num);
 
@@ -37,14 +58,20 @@ export function CountUp({ value, duration = 2000 }: CountUpProps) {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [num, duration]);
+  }, [started, num, duration]);
 
-  const formatted = num >= 1 ? Math.floor(display).toLocaleString() : display.toFixed(1);
+  const formatted =
+    num >= 1 ? Math.floor(display).toLocaleString() : display.toFixed(1);
+
+  const final = num >= 1 ? Math.floor(num).toLocaleString() : num.toFixed(1);
 
   return (
-    <span>
-      {formatted}
-      {suffix}
+    <span ref={elRef} className="relative inline-block">
+      <span className="invisible">{final}{suffix}</span>
+      <span className="absolute inset-0 text-center">
+        {formatted}
+        {suffix}
+      </span>
     </span>
   );
 }

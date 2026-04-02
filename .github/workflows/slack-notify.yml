@@ -23,12 +23,20 @@ jobs:
           webhook-type: incoming-webhook
           payload: |
             {
+              "text": "<!here> 🔔 새 PR이 올라왔습니다 - ${{ github.event.pull_request.title }}",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
                     "text": "🔔 새 PR이 올라왔습니다"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<!here> 리뷰 부탁드립니다 🙏"
                   }
                 },
                 {

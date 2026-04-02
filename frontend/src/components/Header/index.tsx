@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import {
   ChevronDown,
-  ChevronDownCircle,
   Globe,
   LayoutGrid,
   LogOut,
@@ -36,10 +35,7 @@ export function Header() {
   const pathname = usePathname();
 
   const nextLocale = locale === "ko" ? "en" : "ko";
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     if (mobileOpen) {
@@ -97,8 +93,8 @@ export function Header() {
 
   return (
     <>
-    <header className={`fixed top-0 z-50 w-full ${mobileOpen ? "bg-background" : "bg-background/80 backdrop-blur-xl"}`}>
-      <div className="relative z-10 mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
+    <header className={`fixed top-0 z-50 w-full ${mobileOpen ? "bg-[#0d0d0d] dark:bg-background" : "bg-[#0d0d0d] dark:bg-background/80 dark:backdrop-blur-xl"}`}>
+      <div className="relative z-10 mx-auto flex h-16 max-w-7xl items-center justify-between px-4 text-white dark:text-foreground md:px-6">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -124,7 +120,7 @@ export function Header() {
                 onMouseLeave={() => setNavDropdown(null)}
               >
                 <button
-                  className={`flex cursor-pointer items-center gap-1 rounded-[12px] px-2.5 py-1.5 text-base font-medium transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] ${pathname.startsWith(item.href) ? "text-white" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex cursor-pointer items-center gap-1 rounded-[12px] px-2.5 py-1.5 text-base font-medium transition-colors hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.05)] ${pathname.startsWith(item.href) ? "font-bold text-white dark:text-white" : "text-white/60 hover:text-white dark:text-muted-foreground dark:hover:text-foreground"}`}
                 >
                   {t(item.labelKey)}
                   <ChevronDown className={`size-3.5 transition-transform ${navDropdown === item.labelKey ? "rotate-180" : ""}`} />
@@ -167,7 +163,7 @@ export function Header() {
               <Link
                 key={item.labelKey}
                 href={item.href}
-                className={`rounded-[12px] px-2.5 py-1.5 text-base font-medium transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] ${pathname.startsWith(item.href) ? "text-white" : "text-muted-foreground hover:text-foreground"}`}
+                className={`rounded-[12px] px-2.5 py-1.5 text-base font-medium transition-colors hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.05)] ${pathname.startsWith(item.href) ? "font-bold text-white dark:text-white" : "text-white/60 hover:text-white dark:text-muted-foreground dark:hover:text-foreground"}`}
               >
                 {t(item.labelKey)}
               </Link>
@@ -254,7 +250,7 @@ export function Header() {
             <>
               <button
                 onClick={toggleTheme}
-                className="flex cursor-pointer items-center justify-center rounded-[12px] p-2 text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] hover:text-foreground dark:hover:bg-[rgba(255,255,255,0.05)]"
+                className="flex cursor-pointer items-center justify-center rounded-[12px] p-2 text-white/60 transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-white dark:text-muted-foreground dark:hover:bg-[rgba(255,255,255,0.05)] dark:hover:text-foreground"
               >
                 <Sun className="hidden size-5 dark:block" />
                 <Moon className="block size-5 dark:hidden" />
@@ -265,7 +261,7 @@ export function Header() {
                 onClick={() =>
                   signIn("google", { callbackUrl: window.location.href })
                 }
-                className="px-4 text-sm font-medium"
+                className="border-white/15 bg-transparent px-4 text-sm font-medium text-white hover:bg-white/[0.05] hover:text-white"
               >
                 {t("signIn")}
               </Button>
@@ -276,7 +272,7 @@ export function Header() {
         <div className="flex items-center gap-2 md:hidden">
           <button
             onClick={toggleTheme}
-            className="flex cursor-pointer items-center justify-center rounded-[12px] p-2 text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] hover:text-foreground dark:hover:bg-[rgba(255,255,255,0.05)]"
+            className="flex cursor-pointer items-center justify-center rounded-[12px] p-2 text-white/60 transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-white dark:text-muted-foreground dark:hover:bg-[rgba(255,255,255,0.05)] dark:hover:text-foreground"
           >
             <Sun className="hidden size-5 dark:block" />
             <Moon className="block size-5 dark:hidden" />
@@ -288,7 +284,7 @@ export function Header() {
               onClick={() =>
                 signIn("google", { callbackUrl: window.location.href })
               }
-              className="px-4 text-sm font-medium"
+              className="border-white/15 bg-transparent px-4 text-sm font-medium text-white hover:bg-white/[0.05] hover:text-white"
             >
               {t("signIn")}
             </Button>
