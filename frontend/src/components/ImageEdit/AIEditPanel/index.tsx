@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Download, Loader2, Sparkles } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/stores/auth";
@@ -12,6 +13,7 @@ import {
   useGeneration,
 } from "@/hooks/queries/useGeneration";
 import { useModels } from "@/hooks/queries/useModels";
+import { queryKeys } from "@/hooks/queries/keys";
 import { imageApi } from "@/services/api";
 import { cn } from "@/lib/utils";
 import type { AspectRatio } from "@/types/api";
@@ -24,6 +26,7 @@ const ASPECT_RATIOS: AspectRatio[] = ["1:1", "16:9", "9:16", "4:3", "3:4"];
 export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
   const t = useTranslations("ImageEdit");
   const token = useAuthStore((s) => s.token);
+  const queryClient = useQueryClient();
 
   const [prompt, setPrompt] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
@@ -74,6 +77,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
         setResultUrl(currentGen.result_url ?? null);
         setGenId(null);
         setStartTime(null);
+        queryClient.invalidateQueries({ queryKey: queryKeys.generation.all });
       } else if (currentGen.status === "failed") {
         toast.error(currentGen.error?.message ?? t("aiGenerateError"));
         setGenId(null);
