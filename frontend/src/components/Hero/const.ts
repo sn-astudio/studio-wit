@@ -9,9 +9,9 @@ export const STATS: Stat[] = [
 export const STAT_KEYS = ["stat1", "stat2", "stat3"] as const;
 
 export const ROTATING_WORDS = [
-  "create today?",
-  "imagine next?",
-  "design today?",
-  "build next?",
-  "generate now?",
+  { action: "create", suffix: " today?" },
+  { action: "imagine", suffix: " next?" },
+  { action: "design", suffix: " today?" },
+  { action: "build", suffix: " next?" },
+  { action: "generate", suffix: " now?" },
 ];
