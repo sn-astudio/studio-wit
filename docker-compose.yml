@@ -1,12 +1,9 @@
 services:
   backend:
-    build: ./backend
     image: ${DOCKER_USERNAME}/studio-wit-backend:latest
     container_name: studio-wit-backend
     restart: unless-stopped
     env_file: .env
-    ports:
-      - "8000:8000"
     networks: [app-network]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/hello"]
