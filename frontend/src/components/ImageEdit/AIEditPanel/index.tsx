@@ -30,6 +30,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
   const [genId, setGenId] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
 
   const { data: modelsData } = useModels("image");
   const models = modelsData?.models ?? [];
@@ -69,6 +70,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
     if (prev && prev !== currentGen.status) {
       if (currentGen.status === "completed") {
         toast.success(t("aiGenerateComplete"));
+        setResultUrl(currentGen.result_url ?? null);
         setGenId(null);
         setStartTime(null);
       } else if (currentGen.status === "failed") {
@@ -98,6 +100,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
       {
         onSuccess: (res) => {
           toast.success(t("aiGenerateStarted"));
+          setResultUrl(null);
           prevStatusRef.current = res.generation.status;
           setGenId(res.generation.id);
           setStartTime(Date.now());
@@ -117,8 +120,6 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
     createMutation,
     t,
   ]);
-
-  const resultUrl = isCompleted ? currentGen?.result_url : null;
 
   return (
     <div className="flex flex-col gap-4 p-4">
