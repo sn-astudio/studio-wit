@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 
 import { FILTER_RANGES } from "../const";
+import { FILTER_UNITS } from "../utils";
 import type { FilterValues } from "../types";
 import type { FilterPanelProps } from "./types";
 
@@ -36,7 +37,7 @@ export function FilterPanel({
               <div className="flex items-center justify-between">
                 <span className="text-xs text-zinc-400">{t(key)}</span>
                 <span className="text-xs font-medium text-zinc-300">
-                  {values[key]}%
+                  {values[key]}{FILTER_UNITS[key] ?? "%"}
                 </span>
               </div>
               <input

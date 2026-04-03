@@ -10,4 +10,5 @@ export interface EditorToolbarProps {
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  hideFilter?: boolean;
 }

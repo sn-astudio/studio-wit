@@ -1,11 +1,15 @@
 """Google Gemini Provider (이미지 생성 — generateContent API)"""
 
+import base64
+import logging
 from typing import Optional
 
 import httpx
 
 from app.config import settings
 from app.services.providers.base import BaseProvider, GenerationResult
+
+logger = logging.getLogger(__name__)
 
 
 class GeminiProvider(BaseProvider):
@@ -20,12 +24,33 @@ class GeminiProvider(BaseProvider):
         self,
         prompt: str,
         negative_prompt: Optional[str] = None,
+        input_image_url: Optional[str] = None,
         **params,
     ) -> GenerationResult:
-        """Gemini generateContent API로 이미지 생성 (동기 — 즉시 결과 반환)"""
+        """Gemini generateContent API로 이미지 생성/편집 (동기 — 즉시 결과 반환)"""
         aspect_ratio = params.get("aspect_ratio", "1:1")
+
+        # contents 구성: 소스 이미지가 있으면 multimodal 입력
+        parts = []
+        if input_image_url:
+            try:
+                async with httpx.AsyncClient(timeout=60, follow_redirects=True) as dl:
+                    img_resp = await dl.get(input_image_url)
+                    img_resp.raise_for_status()
+                img_b64 = base64.b64encode(img_resp.content).decode()
+                mime_type = img_resp.headers.get("content-type", "image/png")
+                parts.append({"inline_data": {"mime_type": mime_type, "data": img_b64}})
+            except Exception as e:
+                logger.error("Gemini img2img 이미지 다운로드 실패: %s", e)
+                return GenerationResult(
+                    status="failed",
+                    error_code="PROVIDER_ERROR",
+                    error_message=f"입력 이미지 다운로드 실패: {e}",
+                )
+        parts.append({"text": prompt})
+
         body = {
-            "contents": [{"parts": [{"text": prompt}]}],
+            "contents": [{"parts": parts}],
             "generationConfig": {
                 "responseModalities": ["IMAGE"],
                 "imageConfig": {"aspectRatio": aspect_ratio},

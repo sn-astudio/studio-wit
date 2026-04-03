@@ -22,6 +22,9 @@ async def upload_generation_image(
     generation_id: str, image_data: bytes, ext: str = "png"
 ) -> str:
     """이미지 바이트를 S3에 업로드하고 CloudFront URL을 반환한다."""
+    if not settings.AWS_S3_BUCKET or not settings.CLOUDFRONT_DOMAIN:
+        return ""
+
     key = f"generations/{generation_id}.{ext}"
     content_type = f"image/{ext}"
 
@@ -34,7 +37,9 @@ async def upload_generation_image(
         )
 
     domain = settings.CLOUDFRONT_DOMAIN.rstrip("/")
-    return f"{domain}/{key}"
+    cdn_url = f"{domain}/{key}"
+    logger.info("S3 이미지 업로드 성공: %s", cdn_url)
+    return cdn_url
 
 
 async def upload_generation_video(
@@ -69,6 +74,7 @@ async def download_and_upload(generation_id: str, result_url: str) -> str:
     업로드 실패 시 원본 result_url을 그대로 반환한다(fallback).
     """
     if not settings.AWS_S3_BUCKET or not settings.CLOUDFRONT_DOMAIN:
+        logger.warning("S3 설정 없음, 원본 URL 반환 (generation_id=%s)", generation_id)
         return result_url
 
     try:

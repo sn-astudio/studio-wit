@@ -5,4 +5,6 @@ export interface EditPanelProps {
   canvasRef: React.RefObject<EditorCanvasHandle | null>;
   cropRect: CropRect | null;
   setCropRect: (rect: CropRect | null) => void;
+  onFreeRotateChange?: (degrees: number) => void;
+  onResizeChange?: (width: number, height: number) => void;
 }

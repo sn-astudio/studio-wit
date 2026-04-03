@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Download, Loader2, Sparkles } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/stores/auth";
@@ -12,6 +13,8 @@ import {
   useGeneration,
 } from "@/hooks/queries/useGeneration";
 import { useModels } from "@/hooks/queries/useModels";
+import { queryKeys } from "@/hooks/queries/keys";
+import { imageApi } from "@/services/api";
 import { cn } from "@/lib/utils";
 import type { AspectRatio } from "@/types/api";
 
@@ -23,6 +26,7 @@ const ASPECT_RATIOS: AspectRatio[] = ["1:1", "16:9", "9:16", "4:3", "3:4"];
 export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
   const t = useTranslations("ImageEdit");
   const token = useAuthStore((s) => s.token);
+  const queryClient = useQueryClient();
 
   const [prompt, setPrompt] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
@@ -30,9 +34,18 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
   const [genId, setGenId] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
 
   const { data: modelsData } = useModels("image");
-  const models = modelsData?.models ?? [];
+  const allModels = modelsData?.models ?? [];
+  const img2imgModels = allModels.filter((m) =>
+    m.supported_params.includes("input_image_url"),
+  );
+  // 백엔드 미배포 시 폴백: imagen-4만 제외
+  const models =
+    img2imgModels.length > 0
+      ? img2imgModels
+      : allModels.filter((m) => m.id !== "imagen-4");
 
   // 기본 모델 설정
   useEffect(() => {
@@ -69,8 +82,10 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
     if (prev && prev !== currentGen.status) {
       if (currentGen.status === "completed") {
         toast.success(t("aiGenerateComplete"));
+        setResultUrl(currentGen.result_url ?? null);
         setGenId(null);
         setStartTime(null);
+        queryClient.invalidateQueries({ queryKey: queryKeys.generation.all });
       } else if (currentGen.status === "failed") {
         toast.error(currentGen.error?.message ?? t("aiGenerateError"));
         setGenId(null);
@@ -79,12 +94,31 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
     }
   }, [currentGen, t]);
 
-  const handleGenerate = useCallback(() => {
+  const handleGenerate = useCallback(async () => {
     if (!token) {
       toast.error(t("loginRequired"));
       return;
     }
     if (!prompt.trim() || !selectedModel || createMutation.isPending) return;
+
+    let imageUrl = sourceUrl;
+    if (
+      imageUrl &&
+      (imageUrl.startsWith("blob:") || imageUrl.startsWith("data:"))
+    ) {
+      try {
+        const resp = await fetch(imageUrl);
+        const blob = await resp.blob();
+        const file = new File([blob], `input-${Date.now()}.png`, {
+          type: blob.type || "image/png",
+        });
+        const uploaded = await imageApi.upload(file);
+        imageUrl = uploaded.url;
+      } catch {
+        toast.error(t("aiGenerateError"));
+        return;
+      }
+    }
 
     createMutation.mutate(
       {
@@ -92,12 +126,13 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
         prompt: prompt.trim(),
         params: {
           aspect_ratio: aspectRatio,
-          ...(sourceUrl ? { input_image_url: sourceUrl } : {}),
+          ...(imageUrl ? { input_image_url: imageUrl } : {}),
         },
       },
       {
         onSuccess: (res) => {
           toast.success(t("aiGenerateStarted"));
+          setResultUrl(null);
           prevStatusRef.current = res.generation.status;
           setGenId(res.generation.id);
           setStartTime(Date.now());
@@ -117,8 +152,6 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
     createMutation,
     t,
   ]);
-
-  const resultUrl = isCompleted ? currentGen?.result_url : null;
 
   return (
     <div className="flex flex-col gap-4 p-4">
