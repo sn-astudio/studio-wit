@@ -8,7 +8,10 @@
 import type {
   AuthVerifyRequest,
   AuthVerifyResponse,
+  CommentItem,
+  CommentListResponse,
   ErrorResponse,
+  GalleryItemDetail,
   GalleryListResponse,
   GenerateRequest,
   GenerateResponse,
@@ -296,11 +299,43 @@ export const galleryApi = {
     );
   },
 
+  /** 단일 아이템 상세 조회 */
+  get(generationId: string) {
+    return request<GalleryItemDetail>(`/api/gallery/${generationId}`);
+  },
+
   /** 좋아요 토글 */
   toggleLike(generationId: string) {
     return request<LikeToggleResponse>(
       `/api/gallery/${generationId}/like`,
       { method: "POST" },
+    );
+  },
+
+  /** 댓글 목록 조회 */
+  listComments(generationId: string, params?: { cursor?: string; limit?: number }) {
+    const searchParams = new URLSearchParams();
+    if (params?.cursor) searchParams.set("cursor", params.cursor);
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    const qs = searchParams.toString();
+    return request<CommentListResponse>(
+      `/api/gallery/${generationId}/comments${qs ? `?${qs}` : ""}`,
+    );
+  },
+
+  /** 댓글 작성 */
+  createComment(generationId: string, content: string) {
+    return request<CommentItem>(
+      `/api/gallery/${generationId}/comments`,
+      { method: "POST", body: JSON.stringify({ content }) },
+    );
+  },
+
+  /** 댓글 삭제 */
+  deleteComment(commentId: number) {
+    return request<{ ok: boolean }>(
+      `/api/gallery/comments/${commentId}`,
+      { method: "DELETE" },
     );
   },
 };

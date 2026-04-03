@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/Separator";
 import {
   ChevronDown,
   Globe,
+  LayoutGrid,
   LogOut,
   Menu,
   Moon,
@@ -202,7 +203,16 @@ export function Header() {
                       {session.user?.email}
                     </p>
                   </div>
-                  <div className="mx-2 mb-1.5 h-px bg-neutral-200 dark:bg-neutral-800" />
+                  {/* 마이페이지 */}
+                  <Link
+                    href="/mypage"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex h-10 w-full items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    <LayoutGrid className="size-4 opacity-50" />
+                    {t("myPage")}
+                  </Link>
+                  <div className="mx-2 my-1.5 h-px bg-neutral-200 dark:bg-neutral-800" />
                   {/* 테마 변경 */}
                   <button
                     onClick={toggleTheme}
@@ -338,6 +348,14 @@ export function Header() {
                     </p>
                   </div>
                 </div>
+                <Link
+                  href="/mypage"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex h-10 items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                >
+                  <LayoutGrid className="size-4 opacity-50" />
+                  {t("myPage")}
+                </Link>
                 <button
                   onClick={toggleTheme}
                   className="flex items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
