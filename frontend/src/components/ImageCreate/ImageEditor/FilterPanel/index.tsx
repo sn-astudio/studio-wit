@@ -3,8 +3,6 @@
 import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/Button";
-
 import { FILTER_RANGES } from "../const";
 import type { FilterValues } from "../types";
 import type { FilterPanelProps } from "./types";
@@ -25,17 +23,17 @@ export function FilterPanel({
   );
 
   return (
-    <div className="border-t border-zinc-800 px-4 py-3">
-      <div className="space-y-3">
+    <div>
+      <div className="space-y-5">
         {(
           Object.keys(FILTER_RANGES) as Array<keyof typeof FILTER_RANGES>
         ).map((key) => {
           const range = FILTER_RANGES[key];
           return (
-            <div key={key} className="space-y-1">
+            <div key={key} className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-400">{t(key)}</span>
-                <span className="text-xs font-medium text-zinc-300">
+                <span className="text-[13px] font-[500] text-muted-foreground">{t(key)}</span>
+                <span className="text-[13px] font-[500] tabular-nums text-foreground">
                   {values[key]}%
                 </span>
               </div>
@@ -46,24 +44,25 @@ export function FilterPanel({
                 step={range.step}
                 value={values[key]}
                 onChange={(e) => handleChange(key, Number(e.target.value))}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-zinc-800 accent-primary"
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-primary dark:bg-neutral-700"
               />
             </div>
           );
         })}
       </div>
-      <div className="mt-3 flex items-center justify-end gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
+      <div className="mt-6 flex items-center gap-2">
+        <button
           onClick={onReset}
-          className="cursor-pointer"
+          className="flex flex-1 cursor-pointer items-center justify-center rounded-xl bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
         >
           {t("reset")}
-        </Button>
-        <Button size="sm" onClick={onApply} className="cursor-pointer">
+        </button>
+        <button
+          onClick={onApply}
+          className="flex flex-1 cursor-pointer items-center justify-center rounded-xl bg-foreground py-2.5 text-[13px] font-[600] text-background transition-all hover:opacity-90 active:opacity-80"
+        >
           {t("applyFilter")}
-        </Button>
+        </button>
       </div>
     </div>
   );

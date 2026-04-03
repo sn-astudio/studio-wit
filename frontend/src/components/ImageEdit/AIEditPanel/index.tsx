@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Download, Loader2, Sparkles } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/stores/auth";
 import {
   useCreateGeneration,
@@ -121,29 +120,30 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
   const resultUrl = isCompleted ? currentGen?.result_url : null;
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-1 flex-col pt-3">
+      <div className="flex flex-col gap-6">
       {/* 프롬프트 */}
       <textarea
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         placeholder={t("aiPromptPlaceholder")}
         rows={3}
-        className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-primary focus:outline-none"
+        className="w-full resize-none rounded-xl bg-neutral-50 px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none dark:bg-neutral-800/60"
       />
 
       {/* 모델 선택 */}
-      <div className="space-y-1.5">
-        <span className="text-xs text-zinc-400">{t("modelLabel")}</span>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="space-y-3">
+        <p className="text-[13px] font-[600] text-foreground">{t("modelLabel")}</p>
+        <div className="grid grid-cols-2 gap-2.5">
           {models.map((m) => (
             <button
               key={m.id}
               onClick={() => setSelectedModel(m.id)}
               className={cn(
-                "cursor-pointer rounded-md border px-2.5 py-1 text-xs transition-colors",
+                "cursor-pointer rounded-lg py-3 text-center text-[13px] font-[500] transition-colors",
                 selectedModel === m.id
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white",
               )}
             >
               {m.name}
@@ -153,18 +153,18 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
       </div>
 
       {/* 비율 선택 */}
-      <div className="space-y-1.5">
-        <span className="text-xs text-zinc-400">{t("aspectRatio")}</span>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="space-y-3">
+        <p className="text-[13px] font-[600] text-foreground">{t("aspectRatio")}</p>
+        <div className="grid grid-cols-5 gap-2.5">
           {ASPECT_RATIOS.map((r) => (
             <button
               key={r}
               onClick={() => setAspectRatio(r)}
               className={cn(
-                "cursor-pointer rounded-md border px-2.5 py-1 text-xs transition-colors",
+                "cursor-pointer rounded-lg py-3 text-center text-[13px] font-[500] transition-colors",
                 aspectRatio === r
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-zinc-700 text-zinc-400 hover:border-zinc-500",
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white",
               )}
             >
               {r}
@@ -173,13 +173,16 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
         </div>
       </div>
 
-      {/* 생성 버튼 */}
-      <Button
+      </div>
+
+      {/* 생성 버튼 — 하단 고정 */}
+      <div className="mt-auto pt-4">
+      <button
         onClick={handleGenerate}
         disabled={
           !prompt.trim() || !selectedModel || isGenerating || createMutation.isPending
         }
-        className="cursor-pointer gap-2"
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-3 text-[14px] font-[600] text-white transition-colors hover:opacity-90 disabled:pointer-events-none disabled:opacity-30"
       >
         {isGenerating ? (
           <Loader2 className="size-4 animate-spin" />
@@ -187,18 +190,18 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
           <Sparkles className="size-4" />
         )}
         {isGenerating ? t("aiGenerating") : t("aiGenerate")}
-      </Button>
+      </button>
 
       {/* 프로그레스 */}
       {isGenerating && (
-        <div className="space-y-2">
-          <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800">
+        <div className="space-y-3">
+          <div className="h-1.5 overflow-hidden rounded-full bg-neutral-300 dark:bg-neutral-700">
             <div
-              className="h-full rounded-full bg-primary transition-all duration-500"
+              className="h-full rounded-full bg-foreground transition-all duration-500"
               style={{ width: `${progress ?? 0}%` }}
             />
           </div>
-          <p className="text-center text-xs text-zinc-500">
+          <p className="text-center text-[12px] tabular-nums text-muted-foreground/60">
             {t("elapsed")}: {elapsed}s
             {progress != null && ` · ${progress}%`}
           </p>
@@ -207,8 +210,8 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
 
       {/* 결과 */}
       {resultUrl && (
-        <div className="space-y-2">
-          <div className="overflow-hidden rounded-lg border border-zinc-700">
+        <div className="space-y-3">
+          <div className="overflow-hidden rounded-lg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={resultUrl}
@@ -216,26 +219,24 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
               className="w-full object-contain"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
+          <div className="flex items-center gap-1.5">
+            <button
               onClick={() => downloadImage(resultUrl)}
-              className="cursor-pointer gap-1.5"
+              className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-white py-2.5 text-[13px] font-[500] text-muted-foreground transition-colors hover:text-foreground dark:bg-neutral-800 dark:hover:text-white"
             >
               <Download className="size-4" />
               {t("download")}
-            </Button>
-            <Button
-              size="sm"
+            </button>
+            <button
               onClick={() => onUseAsSource(resultUrl)}
-              className="cursor-pointer"
+              className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-foreground py-2.5 text-[13px] font-[600] text-background transition-colors hover:opacity-90"
             >
               {t("useAsSource")}
-            </Button>
+            </button>
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

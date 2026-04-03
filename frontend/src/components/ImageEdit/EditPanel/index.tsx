@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useImageEditorStore } from "@/stores/imageEditor";
 import { EditorToolbar } from "@/components/ImageCreate/ImageEditor/EditorToolbar";
@@ -11,6 +11,7 @@ import {
   flipCanvasV,
 } from "@/components/ImageCreate/ImageEditor/utils";
 import { clampRect } from "@/components/ImageCreate/ImageEditor/CropOverlay/utils";
+import type { CropRatio } from "@/components/ImageCreate/ImageEditor/CropOverlay/types";
 
 import type { EditPanelProps } from "./types";
 
@@ -21,11 +22,8 @@ export function EditPanel({
 }: EditPanelProps) {
   const activeTool = useImageEditorStore((s) => s.activeTool);
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
-  const historyIndex = useImageEditorStore((s) => s.historyIndex);
-  const historyLength = useImageEditorStore((s) => s.historyLength);
-
-  const canUndo = historyIndex > 0;
-  const canRedo = historyIndex < historyLength - 1;
+  const [cropRatio, setCropRatio] = useState<CropRatio>("free");
+  const ratioFromPanelRef = useRef(false);
 
   const handleRotate = useCallback(() => {
     const canvas = canvasRef.current?.getMainCanvas();
@@ -67,26 +65,57 @@ export function EditPanel({
     setActiveTool(null);
   }, [setCropRect, setActiveTool]);
 
+  // crop 모드 진입 시 초기화
+  const prevToolRef = useRef(activeTool);
+  useEffect(() => {
+    if (activeTool === "crop" && prevToolRef.current !== "crop") {
+      setCropRect(null);
+      setCropRatio("free");
+    }
+    prevToolRef.current = activeTool;
+  }, [activeTool, setCropRect]);
+
+  // 캔버스에서 cropRect가 변경되면 (패널 비율 선택이 아닐 때) 자유로 리셋
+  useEffect(() => {
+    if (ratioFromPanelRef.current) {
+      // 패널에서 변경한 것 → 타이머 후 리셋
+      const id = setTimeout(() => { ratioFromPanelRef.current = false; }, 100);
+      return () => clearTimeout(id);
+    }
+    if (activeTool === "crop" && cropRect) {
+      setCropRatio("free");
+    }
+  }, [cropRect, activeTool]);
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-1 flex-col gap-4">
+      {/* 도구 */}
       <EditorToolbar
         activeTool={activeTool}
         onToolChange={setActiveTool}
         onRotate={handleRotate}
         onFlipH={handleFlipH}
         onFlipV={handleFlipV}
-        onUndo={() => canvasRef.current?.undo()}
-        onRedo={() => canvasRef.current?.redo()}
-        canUndo={canUndo}
-        canRedo={canRedo}
       />
 
+      {/* 자르기 옵션 — 구분선 + 비율 프리셋 */}
       {activeTool === "crop" && (
-        <CropOverlay
-          cropRect={cropRect}
-          onApply={handleApplyCrop}
-          onCancel={handleCancelCrop}
-        />
+        <>
+          <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+          <CropOverlay
+            cropRect={cropRect}
+            canvasWidth={canvasRef.current?.getMainCanvas()?.width ?? 0}
+            canvasHeight={canvasRef.current?.getMainCanvas()?.height ?? 0}
+            selectedRatio={cropRatio}
+            onRatioChange={(ratio) => {
+              ratioFromPanelRef.current = true;
+              setCropRatio(ratio);
+            }}
+            onCropChange={setCropRect}
+            onApply={handleApplyCrop}
+            onCancel={handleCancelCrop}
+          />
+        </>
       )}
     </div>
   );

@@ -18,6 +18,7 @@ import type { CropRect } from "./types";
 import type { ImageEditorProps } from "./types";
 import type { EditorCanvasHandle } from "./EditorCanvas/types";
 import { clampRect } from "./CropOverlay/utils";
+import type { CropRatio } from "./CropOverlay/types";
 import { EditorCanvas } from "./EditorCanvas";
 import { EditorToolbar } from "./EditorToolbar";
 import { CropOverlay } from "./CropOverlay";
@@ -37,6 +38,8 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
   const reset = useImageEditorStore((s) => s.reset);
 
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
+  const [cropRatio, setCropRatio] = useState<CropRatio>("free");
+  const ratioFromPanelRef = useRef(false);
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < historyLength - 1;
@@ -136,10 +139,6 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
         onRotate={handleRotate}
         onFlipH={handleFlipH}
         onFlipV={handleFlipV}
-        onUndo={() => canvasRef.current?.undo()}
-        onRedo={() => canvasRef.current?.redo()}
-        canUndo={canUndo}
-        canRedo={canRedo}
       />
 
       <EditorCanvas
@@ -154,6 +153,20 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
       {activeTool === "crop" && (
         <CropOverlay
           cropRect={cropRect}
+          canvasWidth={canvasRef.current?.getMainCanvas()?.width ?? 0}
+          canvasHeight={canvasRef.current?.getMainCanvas()?.height ?? 0}
+          selectedRatio={cropRatio}
+          onRatioChange={(ratio) => {
+            ratioFromPanelRef.current = true;
+            setCropRatio(ratio);
+          }}
+          onCropChange={(rect) => {
+            setCropRect(rect);
+            if (!ratioFromPanelRef.current) {
+              setCropRatio("free");
+            }
+            ratioFromPanelRef.current = false;
+          }}
           onApply={handleApplyCrop}
           onCancel={handleCancelCrop}
         />

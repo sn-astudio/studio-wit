@@ -53,6 +53,34 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       syncHistoryMeta();
     }, [syncHistoryMeta]);
 
+    // 캔버스 CSS 크기를 컨테이너에 맞춰 비율 유지
+    const fitCanvas = useCallback(() => {
+      const container = containerRef.current;
+      const main = mainRef.current;
+      const overlay = overlayRef.current;
+      if (!container || !main) return;
+
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const iw = main.width;
+      const ih = main.height;
+      if (!iw || !ih) return;
+
+      const scale = Math.min(cw / iw, ch / ih);
+      const displayW = Math.round(iw * scale);
+      const displayH = Math.round(ih * scale);
+
+      main.style.width = `${displayW}px`;
+      main.style.height = `${displayH}px`;
+
+      if (overlay) {
+        overlay.style.width = `${displayW}px`;
+        overlay.style.height = `${displayH}px`;
+        overlay.width = iw;
+        overlay.height = ih;
+      }
+    }, []);
+
     const undo = useCallback(() => {
       if (indexRef.current <= 0) return;
       indexRef.current--;
@@ -65,7 +93,8 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       canvas.height = snapshot.height;
       ctx.putImageData(snapshot, 0, 0);
       syncHistoryMeta();
-    }, [syncHistoryMeta]);
+      requestAnimationFrame(() => fitCanvas());
+    }, [syncHistoryMeta, fitCanvas]);
 
     const redo = useCallback(() => {
       if (indexRef.current >= snapshotsRef.current.length - 1) return;
@@ -79,7 +108,8 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       canvas.height = snapshot.height;
       ctx.putImageData(snapshot, 0, 0);
       syncHistoryMeta();
-    }, [syncHistoryMeta]);
+      requestAnimationFrame(() => fitCanvas());
+    }, [syncHistoryMeta, fitCanvas]);
 
     const replaceMainCanvas = useCallback(
       (source: HTMLCanvasElement) => {
@@ -91,8 +121,9 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         if (!ctx) return;
         ctx.drawImage(source, 0, 0);
         pushSnapshot();
+        requestAnimationFrame(() => fitCanvas());
       },
-      [pushSnapshot],
+      [pushSnapshot, fitCanvas],
     );
 
     const applyCrop = useCallback(
@@ -133,8 +164,9 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         }
         indexRef.current = snapshotsRef.current.length - 1;
         syncHistoryMeta();
+        requestAnimationFrame(() => fitCanvas());
       },
-      [pushSnapshot, syncHistoryMeta],
+      [pushSnapshot, syncHistoryMeta, fitCanvas],
     );
 
     useImperativeHandle(
@@ -169,11 +201,13 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         ];
         indexRef.current = 0;
         syncHistoryMeta();
+        // 비율 맞춤
+        requestAnimationFrame(() => fitCanvas());
       });
       return () => {
         cancelled = true;
       };
-    }, [imageUrl, syncHistoryMeta]);
+    }, [imageUrl, syncHistoryMeta, fitCanvas]);
 
     // 필터 CSS 프리뷰 적용
     useEffect(() => {
@@ -182,28 +216,107 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       canvas.style.filter = buildCssFilter(filterValues);
     }, [filterValues]);
 
-    // 오버레이 크기 동기화
+    // 오버레이 크기 동기화 + 리사이즈 대응
     useEffect(() => {
-      const main = mainRef.current;
-      const overlay = overlayRef.current;
-      if (!main || !overlay) return;
-      const observer = new ResizeObserver(() => {
-        const rect = main.getBoundingClientRect();
-        overlay.style.width = `${rect.width}px`;
-        overlay.style.height = `${rect.height}px`;
-        overlay.width = main.width;
-        overlay.height = main.height;
-      });
-      observer.observe(main);
+      const container = containerRef.current;
+      if (!container) return;
+      const observer = new ResizeObserver(() => fitCanvas());
+      observer.observe(container);
       return () => observer.disconnect();
-    }, []);
+    }, [fitCanvas]);
 
-    // 크롭 드래그
+    // 크롭 드래그 (그리기 + 이동 + 리사이즈)
+    type DragMode = "draw" | "move" | "resize";
+    type ResizeHandle = "nw" | "ne" | "sw" | "se" | "n" | "s" | "w" | "e";
     const dragRef = useRef<{
       startX: number;
       startY: number;
       dragging: boolean;
+      mode: DragMode;
+      handle?: ResizeHandle;
+      origRect?: CropRect;
     } | null>(null);
+
+    const EDGE = 14;
+
+    const getHandle = useCallback(
+      (x: number, y: number): ResizeHandle | null => {
+        if (!cropRect) return null;
+        const { x: cx, y: cy, width: cw, height: ch } = cropRect;
+        const nearL = Math.abs(x - cx) < EDGE;
+        const nearR = Math.abs(x - (cx + cw)) < EDGE;
+        const nearT = Math.abs(y - cy) < EDGE;
+        const nearB = Math.abs(y - (cy + ch)) < EDGE;
+        const inX = x >= cx - EDGE && x <= cx + cw + EDGE;
+        const inY = y >= cy - EDGE && y <= cy + ch + EDGE;
+
+        if (nearT && nearL) return "nw";
+        if (nearT && nearR) return "ne";
+        if (nearB && nearL) return "sw";
+        if (nearB && nearR) return "se";
+        if (nearT && inX) return "n";
+        if (nearB && inX) return "s";
+        if (nearL && inY) return "w";
+        if (nearR && inY) return "e";
+        return null;
+      },
+      [cropRect],
+    );
+
+    const cursorMap: Record<ResizeHandle, string> = {
+      nw: "nwse-resize", se: "nwse-resize",
+      ne: "nesw-resize", sw: "nesw-resize",
+      n: "ns-resize", s: "ns-resize",
+      w: "ew-resize", e: "ew-resize",
+    };
+
+    const drawCropOverlay = useCallback(
+      (rect: CropRect) => {
+        const overlay = overlayRef.current;
+        if (!overlay) return;
+        const ctx = overlay.getContext("2d");
+        if (!ctx) return;
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+        // 어두운 오버레이
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.fillRect(0, 0, overlay.width, overlay.height);
+        ctx.clearRect(rect.x, rect.y, rect.width, rect.height);
+
+        // 얇은 테두리
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+
+        // L자 모서리 핸들 + 가장자리 중앙 바
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+        const L = Math.min(24, rect.width / 4, rect.height / 4);
+        const bar = Math.min(32, rect.width / 4, rect.height / 4);
+        const { x: rx, y: ry, width: rw, height: rh } = rect;
+
+        ctx.beginPath();
+        // 좌상
+        ctx.moveTo(rx, ry + L); ctx.lineTo(rx, ry); ctx.lineTo(rx + L, ry);
+        // 우상
+        ctx.moveTo(rx + rw - L, ry); ctx.lineTo(rx + rw, ry); ctx.lineTo(rx + rw, ry + L);
+        // 좌하
+        ctx.moveTo(rx, ry + rh - L); ctx.lineTo(rx, ry + rh); ctx.lineTo(rx + L, ry + rh);
+        // 우하
+        ctx.moveTo(rx + rw - L, ry + rh); ctx.lineTo(rx + rw, ry + rh); ctx.lineTo(rx + rw, ry + rh - L);
+        // 상 중앙
+        ctx.moveTo(rx + rw / 2 - bar / 2, ry); ctx.lineTo(rx + rw / 2 + bar / 2, ry);
+        // 하 중앙
+        ctx.moveTo(rx + rw / 2 - bar / 2, ry + rh); ctx.lineTo(rx + rw / 2 + bar / 2, ry + rh);
+        // 좌 중앙
+        ctx.moveTo(rx, ry + rh / 2 - bar / 2); ctx.lineTo(rx, ry + rh / 2 + bar / 2);
+        // 우 중앙
+        ctx.moveTo(rx + rw, ry + rh / 2 - bar / 2); ctx.lineTo(rx + rw, ry + rh / 2 + bar / 2);
+        ctx.stroke();
+      },
+      [],
+    );
 
     const handlePointerDown = useCallback(
       (e: React.PointerEvent) => {
@@ -212,51 +325,91 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         if (!overlay) return;
         overlay.setPointerCapture(e.pointerId);
         const { x, y } = cssToCanvasCoords(overlay, e.clientX, e.clientY);
-        dragRef.current = { startX: x, startY: y, dragging: true };
+
+        // 1) 리사이즈 핸들
+        const handle = getHandle(x, y);
+        if (cropRect && handle) {
+          dragRef.current = { startX: x, startY: y, dragging: true, mode: "resize", handle, origRect: { ...cropRect } };
+          overlay.style.cursor = cursorMap[handle];
+          return;
+        }
+
+        // 2) 내부 → 이동
+        if (cropRect && x >= cropRect.x && x <= cropRect.x + cropRect.width && y >= cropRect.y && y <= cropRect.y + cropRect.height) {
+          dragRef.current = { startX: x, startY: y, dragging: true, mode: "move", origRect: { ...cropRect } };
+          overlay.style.cursor = "grabbing";
+          return;
+        }
+
+        // 3) 외부 → 새로 그리기
+        dragRef.current = { startX: x, startY: y, dragging: true, mode: "draw" };
         onCropChange(null);
       },
-      [isCropping, onCropChange],
+      [isCropping, onCropChange, cropRect, getHandle, cursorMap],
     );
 
     const handlePointerMove = useCallback(
       (e: React.PointerEvent) => {
-        if (!dragRef.current?.dragging || !isCropping) return;
+        if (!isCropping) return;
         const overlay = overlayRef.current;
-        if (!overlay) return;
+        const main = mainRef.current;
+        if (!overlay || !main) return;
         const { x, y } = cssToCanvasCoords(overlay, e.clientX, e.clientY);
-        const sx = dragRef.current.startX;
-        const sy = dragRef.current.startY;
-        const rx = Math.min(sx, x);
-        const ry = Math.min(sy, y);
-        const rw = Math.abs(x - sx);
-        const rh = Math.abs(y - sy);
+        const mw = main.width;
+        const mh = main.height;
 
-        onCropChange({ x: rx, y: ry, width: rw, height: rh });
+        // hover 커서
+        if (!dragRef.current?.dragging) {
+          const handle = getHandle(x, y);
+          if (handle) {
+            overlay.style.cursor = cursorMap[handle];
+          } else if (cropRect && x >= cropRect.x && x <= cropRect.x + cropRect.width && y >= cropRect.y && y <= cropRect.y + cropRect.height) {
+            overlay.style.cursor = "grab";
+          } else {
+            overlay.style.cursor = "crosshair";
+          }
+          return;
+        }
 
-        // 오버레이에 크롭 사각형 그리기
-        const ctx = overlay.getContext("2d");
-        if (!ctx) return;
-        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        if (dragRef.current.mode === "resize" && dragRef.current.origRect && dragRef.current.handle) {
+          const orig = dragRef.current.origRect;
+          const h = dragRef.current.handle;
+          let nx = orig.x, ny = orig.y, nw = orig.width, nh = orig.height;
 
-        // 어두운 오버레이
-        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        ctx.fillRect(0, 0, overlay.width, overlay.height);
+          if (h.includes("w")) { nw = orig.x + orig.width - Math.max(0, x); nx = Math.max(0, x); }
+          if (h.includes("e")) { nw = Math.min(mw, x) - orig.x; }
+          if (h.includes("n")) { nh = orig.y + orig.height - Math.max(0, y); ny = Math.max(0, y); }
+          if (h.includes("s")) { nh = Math.min(mh, y) - orig.y; }
+          if (nw < 10) nw = 10;
+          if (nh < 10) nh = 10;
 
-        // 크롭 영역 투명하게
-        ctx.clearRect(rx, ry, rw, rh);
-
-        // 크롭 테두리
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(rx, ry, rw, rh);
+          const newRect = { x: nx, y: ny, width: nw, height: nh };
+          onCropChange(newRect);
+          drawCropOverlay(newRect);
+        } else if (dragRef.current.mode === "move" && dragRef.current.origRect) {
+          const dx = x - dragRef.current.startX;
+          const dy = y - dragRef.current.startY;
+          const orig = dragRef.current.origRect;
+          const newX = Math.max(0, Math.min(orig.x + dx, mw - orig.width));
+          const newY = Math.max(0, Math.min(orig.y + dy, mh - orig.height));
+          const newRect = { x: newX, y: newY, width: orig.width, height: orig.height };
+          onCropChange(newRect);
+          drawCropOverlay(newRect);
+        } else {
+          const sx = dragRef.current.startX;
+          const sy = dragRef.current.startY;
+          const newRect = { x: Math.min(sx, x), y: Math.min(sy, y), width: Math.abs(x - sx), height: Math.abs(y - sy) };
+          onCropChange(newRect);
+          drawCropOverlay(newRect);
+        }
       },
-      [isCropping, onCropChange],
+      [isCropping, onCropChange, drawCropOverlay, cropRect, getHandle, cursorMap],
     );
 
     const handlePointerUp = useCallback(() => {
-      if (dragRef.current) {
-        dragRef.current.dragging = false;
-      }
+      if (dragRef.current) dragRef.current.dragging = false;
+      const overlay = overlayRef.current;
+      if (overlay) overlay.style.cursor = "crosshair";
     }, []);
 
     // 크롭 모드 해제 시 오버레이 클리어
@@ -273,23 +426,13 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
     // 크롭 모드 진입 시 cropRect가 있으면 오버레이에 그리기
     useEffect(() => {
       if (!isCropping || !cropRect) return;
-      const overlay = overlayRef.current;
-      if (!overlay) return;
-      const ctx = overlay.getContext("2d");
-      if (!ctx) return;
-      ctx.clearRect(0, 0, overlay.width, overlay.height);
-      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-      ctx.fillRect(0, 0, overlay.width, overlay.height);
-      ctx.clearRect(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
-    }, [isCropping, cropRect]);
+      drawCropOverlay(cropRect);
+    }, [isCropping, cropRect, drawCropOverlay]);
 
     return (
       <div
         ref={containerRef}
-        className="relative flex flex-1 items-center justify-center overflow-hidden"
+        className="relative flex size-full items-center justify-center overflow-hidden"
       >
         <canvas
           ref={mainRef}

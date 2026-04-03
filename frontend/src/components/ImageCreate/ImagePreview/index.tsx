@@ -22,6 +22,12 @@ import {
 import { useTranslations } from "next-intl";
 
 import { useRouter } from "@/i18n/routing";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/Tooltip";
 import type { Generation } from "@/types/api";
 
 import type { ImagePreviewProps } from "./types";
@@ -198,41 +204,64 @@ export function ImagePreview({
 
                   {/* 하단 액션 버튼 — 모바일 항상 표시, PC 호버 시 */}
                   <div className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 opacity-100 sm:bottom-2.5 sm:right-2.5 sm:gap-1.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onEdit) {
-                          onEdit(gen.result_url!);
-                        } else {
-                          router.push(
-                            `/image-edit?img=${encodeURIComponent(gen.result_url!)}`,
-                          );
+                    <TooltipProvider delay={0}>
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onEdit) {
+                                onEdit(gen.result_url!);
+                              } else {
+                                router.push(
+                                  `/image-edit?img=${encodeURIComponent(gen.result_url!)}`,
+                                );
+                              }
+                            }}
+                            className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                          >
+                            <Wand2 className="size-4" />
+                          </button>
                         }
-                      }}
-                      className="pointer-events-auto flex size-8 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 sm:size-9"
-                    >
-                      <Wand2 className="size-4" />
-                    </button>
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        if (gen.result_url) await downloadImage(gen.result_url);
-                      }}
-                      className="pointer-events-auto flex size-8 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 sm:size-9"
-                    >
-                      <Download className="size-4" />
-                    </button>
+                      />
+                      <TooltipContent>{t("edit")}</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (gen.result_url) await downloadImage(gen.result_url);
+                            }}
+                            className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                          >
+                            <Download className="size-4" />
+                          </button>
+                        }
+                      />
+                      <TooltipContent>{t("download")}</TooltipContent>
+                    </Tooltip>
                     {onDelete && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteTarget(gen);
-                        }}
-                        className="pointer-events-auto flex size-9 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm hover:bg-red-500/80"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget(gen);
+                              }}
+                              className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-red-500/80"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          }
+                        />
+                        <TooltipContent>{t("delete")}</TooltipContent>
+                      </Tooltip>
                     )}
+                    </TooltipProvider>
                   </div>
                 </>
               )}
@@ -285,7 +314,7 @@ export function ImagePreview({
 
           {/* 하단 중앙: 줌 컨트롤 */}
           <div
-            className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/50 px-1.5 py-1.5 backdrop-blur-md"
+            className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/50 px-1.5 py-1.5 backdrop-blur-md"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -365,7 +394,7 @@ export function ImagePreview({
             <img
               src={lightboxGen.result_url}
               alt={lightboxGen.prompt}
-              className="block max-h-[85vh] max-w-[90vw] object-contain transition-transform duration-100"
+              className="block max-h-[70vh] max-w-[90vw] object-contain transition-transform duration-100"
               style={{ transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`, cursor: zoom > 1 ? "grab" : "default" }}
               draggable={false}
             />
@@ -412,7 +441,7 @@ export function ImagePreview({
                       setLightboxGen(null);
                       setDeleteTarget(lightboxGen);
                     }}
-                    className="pointer-events-auto flex size-9 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm hover:bg-red-500/80"
+                    className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-red-500/80"
                   >
                     <Trash2 className="size-4" />
                   </button>

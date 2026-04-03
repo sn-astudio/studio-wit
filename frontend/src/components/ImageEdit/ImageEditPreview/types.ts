@@ -13,4 +13,5 @@ export interface ImageEditPreviewProps {
   onUpload?: () => void;
   onScrollToHistory?: () => void;
   onRemoveImage?: () => void;
+  onFileDrop?: (file: File) => void;
 }
