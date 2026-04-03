@@ -213,22 +213,28 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
     // 이미지 로드 → 캔버스에 그리기
     useEffect(() => {
       let cancelled = false;
-      loadImage(imageUrl).then((img) => {
-        if (cancelled) return;
-        const canvas = mainRef.current;
-        if (!canvas) return;
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-        ctx.drawImage(img, 0, 0);
+      loadImage(imageUrl)
+        .then((img) => {
+          if (cancelled) return;
+          const canvas = mainRef.current;
+          if (!canvas) return;
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+          ctx.drawImage(img, 0, 0);
 
-        snapshotsRef.current = [
-          ctx.getImageData(0, 0, canvas.width, canvas.height),
-        ];
-        indexRef.current = 0;
-        syncHistoryMeta();
-      });
+          snapshotsRef.current = [
+            ctx.getImageData(0, 0, canvas.width, canvas.height),
+          ];
+          indexRef.current = 0;
+          syncHistoryMeta();
+        })
+        .catch((err) => {
+          if (!cancelled) {
+            console.error("이미지 로드 실패:", err);
+          }
+        });
       return () => {
         cancelled = true;
       };

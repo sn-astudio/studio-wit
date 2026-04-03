@@ -5,10 +5,12 @@ import uuid
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, Response, UploadFile
+from fastapi.exceptions import HTTPException
 from pydantic import BaseModel
 from sqlalchemy import func, select
 
+from app.config import settings
 from app.core.exceptions import ForbiddenException, NotFoundException
 from app.dependencies import get_current_user, get_db
 from app.models.database import AsyncSession, Generation, User, utc_now
@@ -335,3 +337,29 @@ async def upload_image(
         raise AppException(status_code=500, code="UPLOAD_FAILED", message="S3 업로드 실패")
 
     return ImageUploadResponse(url=cdn_url)
+
+
+@router.get(
+    "/proxy-image",
+    summary="이미지 프록시",
+    description="CloudFront CDN 이미지를 프록시하여 canvas CORS 문제를 우회한다.",
+    responses={
+        400: {"model": ErrorResponse, "description": "허용되지 않는 URL"},
+    },
+)
+async def proxy_image(url: str = Query(..., description="프록시할 이미지 URL")):
+    """이미지 프록시 — canvas CORS 우회용"""
+    if not settings.CLOUDFRONT_DOMAIN or not url.startswith(
+        settings.CLOUDFRONT_DOMAIN.rstrip("/")
+    ):
+        raise HTTPException(status_code=400, detail="허용되지 않는 URL입니다.")
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
+
+    return Response(
+        content=resp.content,
+        media_type=resp.headers.get("content-type", "image/png"),
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )

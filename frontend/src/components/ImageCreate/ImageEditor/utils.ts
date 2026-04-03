@@ -4,10 +4,24 @@ import { DEFAULT_FILTER_VALUES } from "./const";
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
+
+    let url = src;
+    if (
+      src.startsWith("https://") &&
+      typeof window !== "undefined" &&
+      !src.startsWith(window.location.origin)
+    ) {
+      // 외부 CDN URL → 백엔드 프록시 경유 (canvas CORS 우회)
+      url = `/api/proxy-image?url=${encodeURIComponent(src)}`;
+      // crossOrigin 설정하지 않음 — 프록시 URL은 same-origin
+    } else if (src.startsWith("http")) {
+      img.crossOrigin = "anonymous";
+    }
+    // blob: / data: URL은 crossOrigin 불필요
+
     img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
+    img.onerror = () => reject(new Error(`Image load failed: ${src}`));
+    img.src = url;
   });
 }
 
