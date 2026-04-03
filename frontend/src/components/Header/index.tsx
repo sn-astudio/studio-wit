@@ -26,7 +26,7 @@ export function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [navDropdown, setNavDropdown] = useState<string | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const t = useTranslations("Header");
   const tLang = useTranslations("LanguageSwitcher");
   const locale = useLocale();
@@ -172,11 +172,11 @@ export function Header() {
 
         {/* 데스크탑: 프로필 드롭다운 */}
         <div className="hidden items-center gap-2 md:flex">
-          {session ? (
+          {status === "loading" ? null : session ? (
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setProfileOpen((prev) => !prev)}
-                className="flex cursor-pointer items-center gap-2 rounded-full p-1 transition-colors hover:bg-secondary"
+                className="flex cursor-pointer items-center gap-2 rounded-full p-1"
               >
                 {session.user?.image ? (
                   <NextImage
@@ -194,31 +194,31 @@ export function Header() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border/80 bg-popover p-2 shadow-lg">
+                <div className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-xl border border-neutral-200 bg-popover p-2.5 shadow-lg dark:border-neutral-800">
                   {/* 유저 정보 */}
-                  <div className="px-3 py-2">
-                    <p className="text-base font-medium">{session.user?.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="px-3 pt-1 pb-2.5">
+                    <p className="text-[14px] font-[500] text-foreground">{session.user?.name}</p>
+                    <p className="mt-0.5 text-[13px] text-muted-foreground">
                       {session.user?.email}
                     </p>
                   </div>
-                  <Separator className="my-1" />
+                  <div className="mx-2 mb-1.5 h-px bg-neutral-200 dark:bg-neutral-800" />
                   {/* 테마 변경 */}
                   <button
                     onClick={toggleTheme}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                    className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
-                    <Sun className="hidden h-4 w-4 dark:block" />
-                    <Moon className="block h-4 w-4 dark:hidden" />
+                    <Sun className="hidden size-4 opacity-50 dark:block" />
+                    <Moon className="block size-4 opacity-50 dark:hidden" />
                     <span className="hidden dark:inline">{t("lightMode")}</span>
                     <span className="inline dark:hidden">{t("darkMode")}</span>
                   </button>
                   {/* 언어 변경 */}
                   <button
                     onClick={switchLocale}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                    className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
-                    <Globe className="h-4 w-4" />
+                    <Globe className="size-4 opacity-50" />
                     {tLang(nextLocale)}
                   </button>
                   {/* 로그아웃 */}
@@ -227,9 +227,9 @@ export function Header() {
                       setProfileOpen(false);
                       signOut({ callbackUrl: window.location.href });
                     }}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                    className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="size-4 opacity-50" />
                     {t("signOut")}
                   </button>
                 </div>
@@ -315,7 +315,7 @@ export function Header() {
             )}
           </nav>
           <div className="flex flex-col gap-1">
-            {session ? (
+            {status === "loading" ? null : session ? (
               <>
                 <div className="flex items-center gap-2 px-3 py-2">
                   {session.user?.image ? (

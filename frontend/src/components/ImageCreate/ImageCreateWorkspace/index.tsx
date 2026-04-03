@@ -18,10 +18,13 @@ import {
 import { queryKeys } from "@/hooks/queries/keys";
 
 import { ImagePreview } from "../ImagePreview";
-import { GenerationHistory } from "../GenerationHistory";
 import { toImageGenerateParams } from "./utils";
 
-export function ImageCreateWorkspace() {
+interface ImageCreateWorkspaceProps {
+  onSwitchToEdit?: (imageUrl?: string) => void;
+}
+
+export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspaceProps) {
   const t = useTranslations("ImageCreate");
   const token = useAuthStore((s) => s.token);
   const setPrompt = usePromptStore((s) => s.setPrompt);
@@ -33,7 +36,22 @@ export function ImageCreateWorkspace() {
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(
     null,
   );
-  const [historyExpanded, setHistoryExpanded] = useState(false);
+
+  // ── Mock mode (API 비용 없이 UI 테스트) ──
+  const [mockMode, setMockMode] = useState(true);
+  const [mockGenerating, setMockGenerating] = useState(false);
+  const [mockProgress, setMockProgress] = useState<number | null>(null);
+  const [mockGenerations, setMockGenerations] = useState<Generation[]>([]);
+
+  // localStorage에서 mock 생성 이력 복원
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("mock-generations");
+      if (saved) setMockGenerations(JSON.parse(saved));
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const createMutation = useCreateGeneration();
 
@@ -65,12 +83,12 @@ export function ImageCreateWorkspace() {
   const currentGen = pollingData?.generation ?? null;
 
   const isGenerating =
-    currentGen?.status === "pending" || currentGen?.status === "processing";
+    mockGenerating || currentGen?.status === "pending" || currentGen?.status === "processing";
   const imageUrl =
     currentGen?.status === "completed"
       ? currentGen.result_url
       : selectedImageUrl;
-  const progress = currentGen?.progress ?? null;
+  const progress = mockProgress ?? currentGen?.progress ?? null;
 
   // 완료/실패 시 토스트
   const prevStatusRef = useRef<string | null>(null);
@@ -97,6 +115,48 @@ export function ImageCreateWorkspace() {
 
   const handleSubmit = useCallback(
     (state: PromptInputState) => {
+      // ── Mock mode: API 호출 없이 UI 플로우 시뮬레이션 ──
+      if (mockMode) {
+        if (mockGenerating) return;
+        setMockGenerating(true);
+        setMockProgress(0);
+        setSelectedImageUrl(null);
+        usePromptStore.getState().setPrompt("");
+
+        let p = 0;
+        const interval = setInterval(() => {
+          p += Math.floor(Math.random() * 15) + 5;
+          if (p >= 100) {
+            p = 100;
+            clearInterval(interval);
+            setTimeout(() => {
+              const mockUrl = `https://picsum.photos/seed/${Date.now()}/1024/1024`;
+              setMockGenerating(false);
+              setMockProgress(null);
+              setSelectedImageUrl(mockUrl);
+              setMockGenerations((prev) => {
+                const next = [
+                  {
+                    id: `mock-${Date.now()}`,
+                    prompt: state.prompt,
+                    model_id: state.selectedModel,
+                    status: "completed",
+                    result_url: mockUrl,
+                    created_at: new Date().toISOString(),
+                  } as Generation,
+                  ...prev,
+                ];
+                localStorage.setItem("mock-generations", JSON.stringify(next));
+                return next;
+              });
+              toast.success(t("generateSuccess"));
+            }, 500);
+          }
+          setMockProgress(p);
+        }, 400);
+        return;
+      }
+
       if (!token) {
         toast.error(t("loginRequired"));
         return;
@@ -127,7 +187,7 @@ export function ImageCreateWorkspace() {
         },
       );
     },
-    [token, createMutation, isGenerating, t],
+    [token, createMutation, isGenerating, t, mockGenerating, mockMode],
   );
 
   const handleSelectGeneration = useCallback(
@@ -145,47 +205,51 @@ export function ImageCreateWorkspace() {
     [setPrompt, setSelectedModel, setParam],
   );
 
-  const handleToggleHistory = useCallback(() => {
-    setHistoryExpanded((prev) => !prev);
-  }, []);
+  // 완료된 생성 이력만 추출 (mock + 실제)
+  const apiGenerations =
+    historyPages?.pages
+      .flatMap((p) => p.generations)
+      .filter((g) => g.status === "completed" && g.result_url) ?? [];
+  const completedGenerations = [...mockGenerations, ...apiGenerations];
 
   return (
-    <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden">
-      {/* Image preview / editor — 전체 보기 모드에서 숨김 */}
-      {!historyExpanded && (
-        <div className="min-h-[30vh] shrink-0 p-3 sm:min-h-[200px] sm:flex-1 sm:p-4">
+    <div className="relative flex h-[calc(100vh-64px-52px)] flex-col overflow-hidden bg-background">
+      {/* Mock mode 토글 */}
+      <button
+        onClick={() => setMockMode((v) => !v)}
+        className={`absolute top-3 right-3 z-20 flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium shadow-md transition-colors ${
+          mockMode
+            ? "bg-amber-500 text-white"
+            : "bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300"
+        }`}
+      >
+        <span className={`inline-block size-2 rounded-full ${mockMode ? "bg-white" : "bg-neutral-400"}`} />
+        {mockMode ? "Mock ON" : "Mock OFF"}
+      </button>
+
+      {/* 프리뷰 + 히스토리 영역 (하단 입력창 높이만큼 패딩) */}
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col overflow-auto px-4 md:px-6">
+        <div className="flex-1 py-5 sm:py-6">
           <ImagePreview
             imageUrl={imageUrl ?? undefined}
             isGenerating={isGenerating || createMutation.isPending}
             progress={progress}
+            generations={completedGenerations}
+            onSelectGeneration={handleSelectGeneration}
+            onEdit={onSwitchToEdit}
           />
         </div>
-      )}
+      </div>
 
-      {/* PromptInput — 전체 보기 모드에서 숨김 */}
-      {!historyExpanded && (
-        <div className="shrink-0 px-3 pb-2 sm:px-4 sm:pb-3">
+      {/* PromptInput — 하단 플로팅 */}
+      <div className="absolute inset-x-0 bottom-0 z-10 pt-6 pb-5 sm:pb-6">
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
           <PromptInput
             mode="image"
             disabled={isGenerating || createMutation.isPending}
             onSubmit={handleSubmit}
           />
         </div>
-      )}
-
-      {/* Generation history — 전체 보기 모드에서 전체 화면 차지 */}
-      <div
-        className={
-          historyExpanded
-            ? "flex min-h-0 flex-1 flex-col overflow-hidden"
-            : "min-h-0 shrink-0 overflow-y-auto sm:max-h-[40vh]"
-        }
-      >
-        <GenerationHistory
-          onSelect={handleSelectGeneration}
-          expanded={historyExpanded}
-          onToggleExpand={handleToggleHistory}
-        />
       </div>
     </div>
   );

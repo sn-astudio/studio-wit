@@ -33,29 +33,22 @@ export function ModelSelector({ models }: ModelSelectorProps) {
       value={selectedModel}
       onValueChange={(value) => setSelectedModel(value as string)}
     >
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <SelectTrigger
-              className="h-9 gap-1.5 rounded-lg border-none bg-zinc-200/60 px-2.5 hover:bg-zinc-300 sm:h-7 dark:bg-zinc-800/60 dark:hover:bg-zinc-700"
-              render={<Button variant="ghost" size="sm" />}
-            />
-          }
-        >
-          <Icon className="size-4" />
-          <span className="max-w-[100px] truncate text-xs">
-            {t(currentModel.nameKey)}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>{t("modelLabel")}</TooltipContent>
-      </Tooltip>
-      <SelectContent>
+      <SelectTrigger
+        className="h-10 gap-2 rounded-lg border-none bg-neutral-100 px-3 ring-0 hover:bg-neutral-200/60 active:bg-neutral-200 aria-expanded:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700/70 dark:active:bg-neutral-700 dark:aria-expanded:bg-neutral-700"
+        render={<button type="button" />}
+      >
+        <Icon className="size-4.5" />
+        <span className="max-w-[120px] truncate text-[14px] font-[500]">
+          {t(currentModel.nameKey)}
+        </span>
+      </SelectTrigger>
+      <SelectContent title={t("modelLabel")} className="min-w-[220px] gap-0.5 rounded-xl border-border/50 bg-popover p-2.5 [&_[role=listbox]]:flex [&_[role=listbox]]:flex-col [&_[role=listbox]]:gap-1 ">
         {models.map((model) => {
           const ModelIcon = model.icon;
           return (
-            <SelectItem key={model.id} value={model.id}>
-              <span className="flex items-center gap-2">
-                <ModelIcon className="size-4 shrink-0" />
+            <SelectItem key={model.id} value={model.id} className="h-10 rounded-lg px-3 text-[14px] font-[500] data-[highlighted]:bg-neutral-100 data-[selected]:bg-neutral-100 dark:data-[selected]:bg-neutral-800 data-[selected]:text-foreground  dark:data-[highlighted]:bg-neutral-800">
+              <span className="flex items-center gap-3">
+                <ModelIcon className="size-5 shrink-0" />
                 {t(model.nameKey)}
               </span>
             </SelectItem>

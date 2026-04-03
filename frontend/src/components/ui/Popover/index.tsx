@@ -21,7 +21,7 @@ function PopoverContent({
 }) {
   return (
     <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Positioner sideOffset={sideOffset} className="z-[9999]">
+      <PopoverPrimitive.Positioner sideOffset={sideOffset + 4} side="top" align="start" className="z-[9999]">
         <PopoverPrimitive.Popup
           data-slot="popover-content"
           className={cn(

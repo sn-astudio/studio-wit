@@ -150,23 +150,29 @@
       "style": "Style",
       "duration": "Duration",
       "resolution": "Resolution",
-      "cfgScale": "CFG Scale"
+      "cfgScale": "CFG Scale",
+      "reset": "Reset",
+      "negativePromptDesc": "Enter elements you don't want in the image",
+      "guidanceScaleDesc": "Higher values create images closer to your prompt",
+      "stepsDesc": "More steps means finer detail but longer generation time",
+      "seedDesc": "Use the same value to recreate the same image",
+      "cfgScaleDesc": "Higher values create videos closer to your prompt"
     },
     "aspectRatios": {
-      "1:1": "1:1 (Square)",
-      "16:9": "16:9 (Landscape)",
-      "9:16": "9:16 (Portrait)",
+      "1:1": "1:1",
+      "16:9": "16:9",
+      "9:16": "9:16",
       "4:3": "4:3",
       "3:4": "3:4",
       "3:2": "3:2",
       "2:3": "2:3",
       "4:5": "4:5",
       "5:4": "5:4",
-      "1:4": "1:4 (Tall)",
-      "4:1": "4:1 (Wide)",
-      "1:8": "1:8 (Tall Banner)",
-      "8:1": "8:1 (Wide Banner)",
-      "21:9": "21:9 (Ultrawide)"
+      "1:4": "1:4",
+      "4:1": "4:1",
+      "1:8": "1:8",
+      "8:1": "8:1",
+      "21:9": "21:9"
     },
     "numImages": {
       "1": "1",
@@ -369,6 +375,10 @@
     "fontSize": "Size",
     "textColor": "Color",
     "applyTextOverlay": "Apply Text"
+  },
+  "ImagePage": {
+    "tabCreate": "Create",
+    "tabEdit": "Edit"
   },
   "ImageCreate": {
     "generating": "Generating image...",

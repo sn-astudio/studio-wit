@@ -135,7 +135,7 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
   );
 
   return (
-    <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden">
+    <div className="flex h-[calc(100vh-64px-52px)] flex-col overflow-hidden">
       {/* 메인 콘텐츠: 프리뷰 + 탭 패널 */}
       <div className="flex min-h-0 flex-1 flex-col gap-0 sm:flex-row">
         {/* 좌측 프리뷰 */}
