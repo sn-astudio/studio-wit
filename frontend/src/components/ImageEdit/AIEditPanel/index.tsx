@@ -37,7 +37,15 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
   const [resultUrl, setResultUrl] = useState<string | null>(null);
 
   const { data: modelsData } = useModels("image");
-  const models = modelsData?.models ?? [];
+  const allModels = modelsData?.models ?? [];
+  const img2imgModels = allModels.filter((m) =>
+    m.supported_params.includes("input_image_url"),
+  );
+  // 백엔드 미배포 시 폴백: imagen-4만 제외
+  const models =
+    img2imgModels.length > 0
+      ? img2imgModels
+      : allModels.filter((m) => m.id !== "imagen-4");
 
   // 기본 모델 설정
   useEffect(() => {
