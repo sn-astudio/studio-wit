@@ -26,6 +26,7 @@ class BaseProvider(ABC):
         self,
         prompt: str,
         negative_prompt: Optional[str] = None,
+        input_image_url: Optional[str] = None,
         **params,
     ) -> GenerationResult:
         """이미지 생성 요청"""
@@ -45,3 +46,16 @@ class BaseProvider(ABC):
     async def check_status(self, provider_job_id: str) -> GenerationResult:
         """비동기 모델의 생성 상태 확인"""
         ...
+
+    async def compose_images(
+        self,
+        base_image_url: str,
+        reference_image_url: str,
+        prompt: str,
+    ) -> GenerationResult:
+        """이미지 합성 (기본: 미지원)"""
+        return GenerationResult(
+            status="failed",
+            error_code="PROVIDER_ERROR",
+            error_message="이 Provider는 이미지 합성을 지원하지 않습니다.",
+        )

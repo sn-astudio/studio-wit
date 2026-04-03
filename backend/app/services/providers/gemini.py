@@ -1,11 +1,15 @@
 """Google Gemini Provider (이미지 생성 — generateContent API)"""
 
+import base64
+import logging
 from typing import Optional
 
 import httpx
 
 from app.config import settings
 from app.services.providers.base import BaseProvider, GenerationResult
+
+logger = logging.getLogger(__name__)
 
 
 class GeminiProvider(BaseProvider):
@@ -20,12 +24,33 @@ class GeminiProvider(BaseProvider):
         self,
         prompt: str,
         negative_prompt: Optional[str] = None,
+        input_image_url: Optional[str] = None,
         **params,
     ) -> GenerationResult:
-        """Gemini generateContent API로 이미지 생성 (동기 — 즉시 결과 반환)"""
+        """Gemini generateContent API로 이미지 생성/편집 (동기 — 즉시 결과 반환)"""
         aspect_ratio = params.get("aspect_ratio", "1:1")
+
+        # contents 구성: 소스 이미지가 있으면 multimodal 입력
+        parts = []
+        if input_image_url:
+            try:
+                async with httpx.AsyncClient(timeout=60, follow_redirects=True) as dl:
+                    img_resp = await dl.get(input_image_url)
+                    img_resp.raise_for_status()
+                img_b64 = base64.b64encode(img_resp.content).decode()
+                mime_type = img_resp.headers.get("content-type", "image/png")
+                parts.append({"inline_data": {"mime_type": mime_type, "data": img_b64}})
+            except Exception as e:
+                logger.error("Gemini img2img 이미지 다운로드 실패: %s", e)
+                return GenerationResult(
+                    status="failed",
+                    error_code="PROVIDER_ERROR",
+                    error_message=f"입력 이미지 다운로드 실패: {e}",
+                )
+        parts.append({"text": prompt})
+
         body = {
-            "contents": [{"parts": [{"text": prompt}]}],
+            "contents": [{"parts": parts}],
             "generationConfig": {
                 "responseModalities": ["IMAGE"],
                 "imageConfig": {"aspectRatio": aspect_ratio},
@@ -39,6 +64,10 @@ class GeminiProvider(BaseProvider):
                 json=body,
             )
 
+        return await self._parse_image_response(resp)
+
+    async def _parse_image_response(self, resp: httpx.Response) -> GenerationResult:
+        """generateContent 응답에서 이미지 데이터를 추출하는 공통 헬퍼"""
         if resp.status_code != 200:
             error_code = "PROVIDER_ERROR"
             error_message = f"Gemini API 오류: {resp.status_code}"
@@ -65,7 +94,6 @@ class GeminiProvider(BaseProvider):
                 error_message="이미지 생성 결과가 없습니다. 안전 필터에 의해 차단되었을 수 있습니다.",
             )
 
-        # candidates[0].content.parts 에서 inline_data 찾기
         parts = candidates[0].get("content", {}).get("parts", [])
         for part in parts:
             inline_data = part.get("inlineData") or part.get("inline_data")
@@ -80,6 +108,51 @@ class GeminiProvider(BaseProvider):
             error_code="PROVIDER_ERROR",
             error_message="응답에서 이미지 데이터를 찾을 수 없습니다.",
         )
+
+    async def _download_image_as_inline_data(self, url: str) -> dict:
+        """URL에서 이미지를 다운로드하여 inline_data 파트로 변환"""
+        async with httpx.AsyncClient(timeout=60, follow_redirects=True) as dl:
+            img_resp = await dl.get(url)
+            img_resp.raise_for_status()
+        img_b64 = base64.b64encode(img_resp.content).decode()
+        mime_type = img_resp.headers.get("content-type", "image/png")
+        return {"inline_data": {"mime_type": mime_type, "data": img_b64}}
+
+    async def compose_images(
+        self,
+        base_image_url: str,
+        reference_image_url: str,
+        prompt: str,
+    ) -> GenerationResult:
+        """두 이미지를 합성하여 새 이미지를 생성"""
+        parts = []
+        try:
+            for url in [base_image_url, reference_image_url]:
+                parts.append(await self._download_image_as_inline_data(url))
+        except Exception as e:
+            logger.error("Compose 이미지 다운로드 실패: %s", e)
+            return GenerationResult(
+                status="failed",
+                error_code="PROVIDER_ERROR",
+                error_message=f"이미지 다운로드 실패: {e}",
+            )
+        parts.append({"text": prompt})
+
+        body = {
+            "contents": [{"parts": parts}],
+            "generationConfig": {
+                "responseModalities": ["IMAGE"],
+            },
+        }
+
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                f"{self.BASE_URL}/models/gemini-3.1-flash-image-preview:generateContent",
+                headers={"x-goog-api-key": self.api_key},
+                json=body,
+            )
+
+        return await self._parse_image_response(resp)
 
     async def generate_video(
         self,

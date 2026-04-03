@@ -24,15 +24,21 @@ class FalProvider(BaseProvider):
         self,
         prompt: str,
         negative_prompt: Optional[str] = None,
+        input_image_url: Optional[str] = None,
         **params,
     ) -> GenerationResult:
-        """Flux 2 Pro로 이미지 생성 (비동기 — queue 방식)"""
+        """Flux 2 Pro로 이미지 생성/편집 (비동기 — queue 방식)"""
         body = {
             "prompt": prompt,
             "image_size": self._aspect_to_size(params.get("aspect_ratio", "1:1")),
         }
         if params.get("seed") is not None:
             body["seed"] = params["seed"]
+
+        # img2img: 소스 이미지 URL과 strength 추가
+        if input_image_url:
+            body["image_url"] = input_image_url
+            body["strength"] = params.get("strength", 0.75)
 
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(

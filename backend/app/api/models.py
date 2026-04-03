@@ -52,7 +52,7 @@ AVAILABLE_MODELS: List[AIModel] = [
         provider=ProviderName.gemini,
         type=ModelType.image,
         description="Google Gemini 기반 이미지 생성 모델",
-        supported_params=["aspect_ratio"],
+        supported_params=["aspect_ratio", "input_image_url", "compose"],
         is_async=False,
     ),
     AIModel(
@@ -61,7 +61,7 @@ AVAILABLE_MODELS: List[AIModel] = [
         provider=ProviderName.openai,
         type=ModelType.image,
         description="OpenAI의 이미지 생성 모델",
-        supported_params=["aspect_ratio", "quality", "style"],
+        supported_params=["aspect_ratio", "quality", "style", "input_image_url", "compose"],
         is_async=False,
     ),
     AIModel(
@@ -88,7 +88,7 @@ AVAILABLE_MODELS: List[AIModel] = [
         provider=ProviderName.fal,
         type=ModelType.image,
         description="fal.ai의 고품질 이미지 생성 모델",
-        supported_params=["aspect_ratio", "guidance_scale", "num_steps"],
+        supported_params=["aspect_ratio", "guidance_scale", "num_steps", "input_image_url"],
         is_async=True,
     ),
     AIModel(

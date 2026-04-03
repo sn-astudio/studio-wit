@@ -357,6 +357,19 @@ export interface QuizOverlayResponse { result_url: string; }
 // 일괄 다운로드
 export interface BulkDownloadRequest { urls: string[]; filenames?: string[]; }
 
+// ── Compose ──
+
+export interface ComposeRequest {
+  model_id?: string;
+  base_image_url: string;
+  reference_image_url: string;
+  prompt: string;
+}
+
+export interface ComposeResponse {
+  generation: Generation;
+}
+
 export interface SaveEditRequest {
   result_url: string;
   edit_type: string;
