@@ -123,11 +123,15 @@ export interface GalleryItem {
   prompt: string;
   result_url: string;
   thumbnail_url: string | null;
+  aspect_ratio: string | null;
   created_at: string;
   user: GalleryUser;
   like_count: number;
+  comment_count: number;
   is_liked: boolean;
 }
+
+export type GalleryItemDetail = GalleryItem;
 
 export interface GalleryListResponse {
   items: GalleryItem[];
@@ -138,6 +142,21 @@ export interface GalleryListResponse {
 export interface LikeToggleResponse {
   is_liked: boolean;
   like_count: number;
+}
+
+// ── Comments ──
+
+export interface CommentItem {
+  id: number;
+  content: string;
+  created_at: string;
+  user: GalleryUser;
+}
+
+export interface CommentListResponse {
+  comments: CommentItem[];
+  next_cursor: string | null;
+  has_more: boolean;
 }
 
 // ── Image Upload ──
@@ -308,6 +327,32 @@ export interface SceneInfo { index: number; start: number; end: number; duration
 export interface DetectScenesResponse { scenes: SceneInfo[]; }
 export interface SplitSceneRequest { source_url: string; start_time: number; end_time: number; }
 export interface SplitSceneResponse { result_url: string; }
+
+// 크리에이티브 프리셋
+export interface CreativePresetRequest { source_url: string; preset: string; params?: Record<string, string>; }
+export interface CreativePresetResponse { result_url: string; }
+
+// 쇼츠/릴스 변환
+export interface ShortsConvertRequest { source_url: string; crop_x?: string; }
+export interface ShortsConvertResponse { result_url: string; }
+
+// 영상 콜라주
+export interface CollageRequest { video_urls: string[]; layout?: string; output_width?: number; output_height?: number; }
+export interface CollageResponse { result_url: string; }
+
+// 비포/애프터
+export interface BeforeAfterRequest { before_url: string; after_url: string; mode?: string; output_width?: number; output_height?: number; }
+export interface BeforeAfterResponse { result_url: string; }
+
+// 투표 오버레이
+export interface PollQuestionItem { question: string; option_a: string; option_b: string; start: number; end: number; }
+export interface PollOverlayRequest { source_url: string; questions: PollQuestionItem[]; text_color?: string; accent_color?: string; }
+export interface PollOverlayResponse { result_url: string; }
+
+// 퀴즈 오버레이
+export interface QuizQuestionItem { question: string; choices: string[]; answer_index: number; start: number; end: number; reveal_after: number; }
+export interface QuizOverlayRequest { source_url: string; questions: QuizQuestionItem[]; text_color?: string; }
+export interface QuizOverlayResponse { result_url: string; }
 
 // 일괄 다운로드
 export interface BulkDownloadRequest { urls: string[]; filenames?: string[]; }

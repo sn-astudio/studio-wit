@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/Separator";
 import {
   ChevronDown,
   Globe,
+  LayoutGrid,
   LogOut,
   Menu,
   Moon,
@@ -35,6 +36,28 @@ export function Header() {
 
   const nextLocale = locale === "ko" ? "en" : "ko";
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+      window.scrollTo(0, parseInt(scrollY || "0") * -1);
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
+    };
+  }, [mobileOpen]);
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -69,51 +92,70 @@ export function Header() {
   }, [navDropdown]);
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-border/60 bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">
-              W
-            </span>
-          </div>
-          <span className="text-lg font-semibold tracking-tight">Wit</span>
-        </Link>
+    <>
+    <header className={`fixed top-0 z-50 w-full ${mobileOpen ? "bg-[#0d0d0d] dark:bg-background" : "bg-[#0d0d0d] dark:bg-background/80 dark:backdrop-blur-xl"}`}>
+      <div className="relative z-10 mx-auto flex h-16 max-w-7xl items-center justify-between px-4 text-white dark:text-foreground md:px-6">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            className="md:hidden"
+            onClick={() => setMobileOpen((prev) => !prev)}
+          >
+            {mobileOpen ? <X className="size-6" /> : <Menu className="size-5" />}
+          </Button>
+          <Link href="/" className="flex items-center">
+            <span className="text-2xl font-bold tracking-tight">Wit</span>
+          </Link>
+        </div>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
           {NAV_ITEMS.map((item) =>
             item.children ? (
               <div
                 key={item.labelKey}
                 className="relative"
                 data-nav-dropdown
+                onMouseEnter={() => setNavDropdown(item.labelKey)}
+                onMouseLeave={() => setNavDropdown(null)}
               >
                 <button
-                  onClick={() =>
-                    setNavDropdown((prev) =>
-                      prev === item.labelKey ? null : item.labelKey,
-                    )
-                  }
-                  className="flex cursor-pointer items-center gap-1 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className={`flex cursor-pointer items-center gap-1 rounded-[12px] px-2.5 py-1.5 text-base font-medium transition-colors hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.05)] ${pathname.startsWith(item.href) ? "font-bold text-white dark:text-white" : "text-white/60 hover:text-white dark:text-muted-foreground dark:hover:text-foreground"}`}
                 >
                   {t(item.labelKey)}
-                  <ChevronDown
-                    className={`size-3.5 transition-transform ${navDropdown === item.labelKey ? "rotate-180" : ""}`}
-                  />
+                  <ChevronDown className={`size-3.5 transition-transform ${navDropdown === item.labelKey ? "rotate-180" : ""}`} />
                 </button>
 
                 {navDropdown === item.labelKey && (
-                  <div className="absolute left-0 top-full mt-1 min-w-[140px] rounded-lg border border-border/80 bg-popover p-1 shadow-lg">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.labelKey}
-                        href={child.href}
-                        className="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                        onClick={() => setNavDropdown(null)}
-                      >
-                        {t(child.labelKey)}
-                      </Link>
-                    ))}
+                  <div className="absolute -left-6 top-full pt-2">
+                  <div className="min-w-[280px] rounded-xl border border-border/50 bg-popover p-2 shadow-lg">
+                    <div className="flex flex-col gap-1">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.labelKey}
+                          href={child.href}
+                          className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)]"
+                          onClick={() => setNavDropdown(null)}
+                        >
+                          {child.icon && (
+                            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-[rgba(0,0,0,0.06)] dark:bg-[rgba(255,255,255,0.06)]">
+                              <child.icon className="size-5 text-muted-foreground" strokeWidth={2} />
+                            </div>
+                          )}
+                          <div className="flex flex-col gap-1">
+                            <p className="text-sm font-medium text-foreground">
+                              {t(child.labelKey)}
+                            </p>
+                            {child.descKey && (
+                              <p className="text-[13px] text-muted-foreground">
+                                {t(child.descKey)}
+                              </p>
+                            )}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                   </div>
                 )}
               </div>
@@ -121,7 +163,7 @@ export function Header() {
               <Link
                 key={item.labelKey}
                 href={item.href}
-                className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                className={`rounded-[12px] px-2.5 py-1.5 text-base font-medium transition-colors hover:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.05)] ${pathname.startsWith(item.href) ? "font-bold text-white dark:text-white" : "text-white/60 hover:text-white dark:text-muted-foreground dark:hover:text-foreground"}`}
               >
                 {t(item.labelKey)}
               </Link>
@@ -130,7 +172,7 @@ export function Header() {
         </nav>
 
         {/* 데스크탑: 프로필 드롭다운 */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           {session ? (
             <div className="relative" ref={profileRef}>
               <button
@@ -156,28 +198,36 @@ export function Header() {
                 <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border/80 bg-popover p-2 shadow-lg">
                   {/* 유저 정보 */}
                   <div className="px-3 py-2">
-                    <p className="text-sm font-medium">{session.user?.name}</p>
+                    <p className="text-base font-medium">{session.user?.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {session.user?.email}
                     </p>
                   </div>
                   <Separator className="my-1" />
+                  {/* 마이페이지 */}
+                  <Link
+                    href="/mypage"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex w-full items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                    {t("myPage")}
+                  </Link>
+                  <Separator className="my-1" />
                   {/* 테마 변경 */}
                   <button
                     onClick={toggleTheme}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
                   >
-                    {theme === "dark" ? (
-                      <Sun className="h-4 w-4" />
-                    ) : (
-                      <Moon className="h-4 w-4" />
-                    )}
-                    {theme === "dark" ? t("lightMode") : t("darkMode")}
+                    <Sun className="hidden h-4 w-4 dark:block" />
+                    <Moon className="block h-4 w-4 dark:hidden" />
+                    <span className="hidden dark:inline">{t("lightMode")}</span>
+                    <span className="inline dark:hidden">{t("darkMode")}</span>
                   </button>
                   {/* 언어 변경 */}
                   <button
                     onClick={switchLocale}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
                   >
                     <Globe className="h-4 w-4" />
                     {tLang(nextLocale)}
@@ -188,7 +238,7 @@ export function Header() {
                       setProfileOpen(false);
                       signOut({ callbackUrl: window.location.href });
                     }}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
                   >
                     <LogOut className="h-4 w-4" />
                     {t("signOut")}
@@ -197,43 +247,66 @@ export function Header() {
               )}
             </div>
           ) : (
-            <Button
-              size="sm"
-              onClick={() =>
-                signIn("google", { callbackUrl: window.location.href })
-              }
-              className="gap-2"
-            >
-              {t("signInWithGoogle")}
-            </Button>
+            <>
+              <button
+                onClick={toggleTheme}
+                className="flex cursor-pointer items-center justify-center rounded-[12px] p-2 text-white/60 transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-white dark:text-muted-foreground dark:hover:bg-[rgba(255,255,255,0.05)] dark:hover:text-foreground"
+              >
+                <Sun className="hidden size-5 dark:block" />
+                <Moon className="block size-5 dark:hidden" />
+              </button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() =>
+                  signIn("google", { callbackUrl: window.location.href })
+                }
+                className="border-white/15 bg-transparent px-4 text-sm font-medium text-white hover:bg-white/[0.05] hover:text-white"
+              >
+                {t("signIn")}
+              </Button>
+            </>
           )}
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-          onClick={() => setMobileOpen((prev) => !prev)}
-        >
-          {mobileOpen ? <X /> : <Menu />}
-        </Button>
+        <div className="flex items-center gap-2 md:hidden">
+          <button
+            onClick={toggleTheme}
+            className="flex cursor-pointer items-center justify-center rounded-[12px] p-2 text-white/60 transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-white dark:text-muted-foreground dark:hover:bg-[rgba(255,255,255,0.05)] dark:hover:text-foreground"
+          >
+            <Sun className="hidden size-5 dark:block" />
+            <Moon className="block size-5 dark:hidden" />
+          </button>
+          {!session && (
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() =>
+                signIn("google", { callbackUrl: window.location.href })
+              }
+              className="border-white/15 bg-transparent px-4 text-sm font-medium text-white hover:bg-white/[0.05] hover:text-white"
+            >
+              {t("signIn")}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* 모바일 메뉴 */}
       {mobileOpen && (
-        <div className="border-t border-border/60 bg-background px-6 pb-4 md:hidden">
-          <nav className="flex flex-col gap-1 pt-2">
+        <div className="relative z-10 border-b border-transparent bg-background px-5 pb-6 dark:border-border/50 md:hidden">
+          <nav className="flex flex-col gap-1 pt-1">
             {NAV_ITEMS.map((item) =>
               item.children ? (
                 <div key={item.labelKey}>
-                  <span className="block px-3 py-2 text-sm font-medium text-foreground">
+                  <span className="block px-3 py-2.5 text-base font-medium text-foreground">
                     {t(item.labelKey)}
                   </span>
                   {item.children.map((child) => (
                     <Link
                       key={child.labelKey}
                       href={child.href}
-                      className="block rounded-md px-6 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      className="block rounded-[12px] px-4 py-2.5 text-base text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] hover:text-foreground dark:hover:bg-[rgba(255,255,255,0.05)]"
                       onClick={() => setMobileOpen(false)}
                     >
                       {t(child.labelKey)}
@@ -244,7 +317,7 @@ export function Header() {
                 <Link
                   key={item.labelKey}
                   href={item.href}
-                  className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="block rounded-[12px] px-3 py-2.5 text-base font-medium text-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)]"
                   onClick={() => setMobileOpen(false)}
                 >
                   {t(item.labelKey)}
@@ -252,7 +325,6 @@ export function Header() {
               ),
             )}
           </nav>
-          <Separator className="my-3" />
           <div className="flex flex-col gap-1">
             {session ? (
               <>
@@ -271,75 +343,53 @@ export function Header() {
                     </div>
                   )}
                   <div>
-                    <p className="text-sm font-medium">{session.user?.name}</p>
+                    <p className="text-base font-medium">{session.user?.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {session.user?.email}
                     </p>
                   </div>
                 </div>
+                <Link
+                  href="/mypage"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  {t("myPage")}
+                </Link>
                 <button
                   onClick={toggleTheme}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  className="flex items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
                 >
-                  {theme === "dark" ? (
-                    <Sun className="h-4 w-4" />
-                  ) : (
-                    <Moon className="h-4 w-4" />
-                  )}
-                  {theme === "dark" ? t("lightMode") : t("darkMode")}
-                </button>
-                <button
-                  onClick={switchLocale}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                >
-                  <Globe className="h-4 w-4" />
-                  {tLang(nextLocale)}
+                  <Sun className="hidden h-4 w-4 dark:block" />
+                  <Moon className="block h-4 w-4 dark:hidden" />
+                  <span className="hidden dark:inline">{t("lightMode")}</span>
+                  <span className="inline dark:hidden">{t("darkMode")}</span>
                 </button>
                 <button
                   onClick={() => {
                     setMobileOpen(false);
                     signOut({ callbackUrl: window.location.href });
                   }}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  className="flex items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
                 >
                   <LogOut className="h-4 w-4" />
                   {t("signOut")}
                 </button>
               </>
             ) : (
-              <>
-                <button
-                  onClick={toggleTheme}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                >
-                  {theme === "dark" ? (
-                    <Sun className="h-4 w-4" />
-                  ) : (
-                    <Moon className="h-4 w-4" />
-                  )}
-                  {theme === "dark" ? t("lightMode") : t("darkMode")}
-                </button>
-                <button
-                  onClick={switchLocale}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                >
-                  <Globe className="h-4 w-4" />
-                  {tLang(nextLocale)}
-                </button>
-                <Button
-                  size="sm"
-                  onClick={() =>
-                    signIn("google", { callbackUrl: window.location.href })
-                  }
-                  className="gap-2"
-                >
-                  {t("signInWithGoogle")}
-                </Button>
-              </>
+              <></>
             )}
           </div>
         </div>
       )}
     </header>
+    {mobileOpen && (
+      <div
+        className="fixed inset-0 z-[49] bg-black/50 md:hidden"
+        onClick={() => setMobileOpen(false)}
+      />
+    )}
+    </>
   );
 }

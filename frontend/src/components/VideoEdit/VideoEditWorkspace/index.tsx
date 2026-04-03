@@ -6,7 +6,7 @@ import { Download, Globe, Lock, Loader2, Merge, MessageCircle, Save, ScanSearch,
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { ChevronDown, ChevronUp, Columns2, Crop, Film, ImageIcon, Pause, Play, Redo2, RotateCcw, Trash2, Undo2, Wand2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Columns2, Crop, Film, ImageIcon, Maximize2, Palette, Pause, Play, Redo2, RotateCcw, Trash2, Undo2, Upload, Wand2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -15,24 +15,26 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/Select";
-import { useTrimVideo, useSaveEdit } from "@/hooks/queries/useVideoEdit";
+import { useTrimVideo, useSaveEdit, useUploadVideo } from "@/hooks/queries/useVideoEdit";
 import { useGeneration } from "@/hooks/queries/useGeneration";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/queries/keys";
 
 import { VideoEditPreview } from "../VideoEditPreview";
-import { VideoSourceSelector } from "../VideoSourceSelector";
 import { VideoTimeline } from "../VideoTimeline";
+import { HistorySelectModal } from "../HistorySelectModal";
 import { TrimControls } from "../TrimControls";
 import { AIEditPanel } from "../AIEditPanel";
 import { MergePanel } from "../MergePanel";
 import { EffectsPanel } from "../EffectsPanel";
+import { FilterPanel } from "../FilterPanel";
 import { SubtitlesPanel } from "../SubtitlesPanel";
 import { AudioPanel } from "../AudioPanel";
 import { GifPanel } from "../GifPanel";
 import { SceneSplitPanel } from "../SceneSplitPanel";
 import { ThumbnailPanel } from "../ThumbnailPanel";
 import { CropPanel } from "../CropPanel";
+import { CreativePresetPanel } from "../CreativePresetPanel";
 import { VideoSourceSelectModal } from "../VideoSourceSelectModal";
 import type { MergeClip } from "../MergePanel/types";
 import { downloadVideo } from "../utils";
@@ -40,7 +42,7 @@ import { useVideoEditStore } from "@/stores/videoEditStore";
 import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import type { VideoSource } from "./types";
 
-type EditTab = "trim" | "ai" | "effects" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop" | "scene" | "preset";
+type EditTab = "trim" | "ai" | "effects" | "filter" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop" | "scene" | "preset" | "creative";
 
 export function VideoEditWorkspace() {
   const t = useTranslations("VideoEdit");
@@ -48,6 +50,8 @@ export function VideoEditWorkspace() {
   const queryClient = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadMutation = useUploadVideo();
   const searchParams = useSearchParams();
 
   // 탭 (URL ?tab= 파라미터로 초기값 설정)
@@ -172,7 +176,24 @@ export function VideoEditWorkspace() {
   // 비교 모드
   const [compareMode, setCompareMode] = useState(false);
   const [syncPlaying, setSyncPlaying] = useState(false);
+  const [compareModal, setCompareModal] = useState(false);
   const originalVideoRef = useRef<HTMLVideoElement | null>(null);
+  const modalOrigRef = useRef<HTMLVideoElement | null>(null);
+  const modalEditRef = useRef<HTMLVideoElement | null>(null);
+  const [modalSyncPlaying, setModalSyncPlaying] = useState(false);
+
+  // ESC로 비교 모달 닫기
+  useEffect(() => {
+    if (!compareModal) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setCompareModal(false);
+        setModalSyncPlaying(false);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [compareModal]);
   // 소스 변경 시 비교 모드 + 히스토리 + 이펙트 리셋
   useEffect(() => {
     setCompareMode(false);
@@ -220,6 +241,10 @@ export function VideoEditWorkspace() {
   const [previewTextOverlay, setPreviewTextOverlay] = useState<import("../VideoEditPreview/types").TextOverlayPreview | null>(null);
   const [previewWatermark, setPreviewWatermark] = useState<import("../VideoEditPreview/types").WatermarkPreview | null>(null);
   const [previewSubtitles, setPreviewSubtitles] = useState<import("../VideoEditPreview/types").SubtitlePreviewItem[]>([]);
+  const [previewCreativeOverlay, setPreviewCreativeOverlay] = useState<React.ReactNode>(null);
+
+  // 썸네일 캡처 이미지 (프리뷰 옆 표시용)
+  const [capturedThumbnails, setCapturedThumbnails] = useState<string[]>([]);
   const [previewSpeed, setPreviewSpeed] = useState(1);
 
   // 합치기
@@ -230,6 +255,9 @@ export function VideoEditWorkspace() {
   const setMergeClipsInternalRef = useRef<React.Dispatch<React.SetStateAction<MergeClip[]>> | null>(null);
   const [mergePreviewUrl, setMergePreviewUrl] = useState<string | null>(null);
   const [mergeClips, setMergeClips] = useState<MergeClip[]>([]);
+
+  // 히스토리 모달
+  const [isHistoryModalOpen, setHistoryModalOpen] = useState(false);
 
   // 모달
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -297,6 +325,15 @@ export function VideoEditWorkspace() {
       if (aiGeneration.status === "completed") {
         notify(t("aiGenerateComplete"), aiGeneration.prompt ?? undefined);
         queryClient.invalidateQueries({ queryKey: queryKeys.generation.all });
+        // AI 편집 완료 시 자동 DB 저장
+        if (aiGeneration.result_url) {
+          saveEditMutation.mutate({
+            result_url: aiGeneration.result_url,
+            edit_type: "ai_edit",
+            prompt: aiGeneration.prompt || "AI Edit",
+            is_public: false,
+          });
+        }
       } else if (aiGeneration.status === "failed") {
         notify(t("aiGenerateError"), aiGeneration.error?.message ?? undefined);
       }
@@ -442,6 +479,31 @@ export function VideoEditWorkspace() {
       }
     },
     [activeTab],
+  );
+
+  const handleFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      e.target.value = "";
+      try {
+        const result = await uploadMutation.mutateAsync(file);
+        if (activeTab === "merge") {
+          addMergeClipRef.current?.(result.url, file.name);
+        } else {
+          handleSourceSelected({
+            url: result.url,
+            duration: result.duration,
+            width: result.width,
+            height: result.height,
+            name: file.name,
+          });
+        }
+      } catch {
+        toast.error(t("uploadError"));
+      }
+    },
+    [uploadMutation, activeTab, handleSourceSelected, t],
   );
 
   const handleDurationLoaded = useCallback(
@@ -619,6 +681,7 @@ export function VideoEditWorkspace() {
             {activeTab === "trim" && <Scissors className="size-4" />}
             {activeTab === "ai" && <Sparkles className="size-4" />}
             {activeTab === "effects" && <Wand2 className="size-4" />}
+            {activeTab === "filter" && <Palette className="size-4" />}
             {activeTab === "merge" && <Merge className="size-4" />}
             {activeTab === "subtitles" && <MessageCircle className="size-4" />}
             {activeTab === "audio" && <Volume2 className="size-4" />}
@@ -626,9 +689,11 @@ export function VideoEditWorkspace() {
             {activeTab === "scene" && <ScanSearch className="size-4" />}
             {activeTab === "thumbnail" && <ImageIcon className="size-4" />}
             {activeTab === "crop" && <Crop className="size-4" />}
+            {activeTab === "creative" && <Clapperboard className="size-4" />}
             {activeTab === "trim" && t("tabTrim")}
             {activeTab === "ai" && t("tabAI")}
             {activeTab === "effects" && t("tabEffects")}
+            {activeTab === "filter" && t("tabFilter")}
             {activeTab === "merge" && t("tabMerge")}
             {activeTab === "subtitles" && t("tabSubtitles")}
             {activeTab === "audio" && t("tabAudio")}
@@ -636,6 +701,7 @@ export function VideoEditWorkspace() {
             {activeTab === "scene" && t("tabScene")}
             {activeTab === "thumbnail" && t("tabThumbnail")}
             {activeTab === "crop" && t("tabCrop")}
+            {activeTab === "creative" && t("tabCreative")}
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="trim">
@@ -646,6 +712,9 @@ export function VideoEditWorkspace() {
             </SelectItem>
             <SelectItem value="effects">
               <span className="flex items-center gap-2"><Wand2 className="size-3.5" />{t("tabEffects")}</span>
+            </SelectItem>
+            <SelectItem value="filter">
+              <span className="flex items-center gap-2"><Palette className="size-3.5" />{t("tabFilter")}</span>
             </SelectItem>
             <SelectItem value="merge">
               <span className="flex items-center gap-2"><Merge className="size-3.5" />{t("tabMerge")}</span>
@@ -667,6 +736,9 @@ export function VideoEditWorkspace() {
             </SelectItem>
             <SelectItem value="crop">
               <span className="flex items-center gap-2"><Crop className="size-3.5" />{t("tabCrop")}</span>
+            </SelectItem>
+            <SelectItem value="creative">
+              <span className="flex items-center gap-2"><Clapperboard className="size-3.5" />{t("tabCreative")}</span>
             </SelectItem>
           </SelectContent>
         </Select>
@@ -710,9 +782,9 @@ export function VideoEditWorkspace() {
 
       {/* 스크롤 영역 */}
       <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-2.5 sm:gap-3 sm:px-0 sm:pb-0">
-      {/* 메인: 모바일 세로(영상→옵션) / PC 가로(프리뷰|옵션) */}
+      {/* 메인: 모바일 세로 / PC 가로 */}
       <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-        {/* 왼쪽(PC) / 위(모바일): 프리뷰 + 타임라인 */}
+        {/* 프리뷰 + 타임라인 (PC에서 sticky) */}
         <div className="flex flex-col gap-2 sm:w-1/2 sm:shrink-0 sm:gap-3">
           {activeTab === "merge" ? (
             /* 합치기: 결과 또는 클립 목록 */
@@ -731,7 +803,10 @@ export function VideoEditWorkspace() {
                 /* 클립 목록 */
                 <div className="flex h-full w-full flex-col border-dashed border-zinc-400 bg-zinc-100/40 dark:border-zinc-700 dark:bg-zinc-900/40">
                   {mergeClips.length === 0 ? (
-                    <div className="flex flex-1 flex-col items-center justify-center gap-2 text-zinc-600 dark:text-zinc-600">
+                    <div
+                      onClick={() => setHistoryModalOpen(true)}
+                      className="flex flex-1 cursor-pointer flex-col items-center justify-center gap-2 text-zinc-600 transition-colors hover:bg-zinc-200/60 dark:text-zinc-600 dark:hover:bg-zinc-800/60"
+                    >
                       <Film className="mb-3 size-12" />
                       <p className="text-sm text-zinc-600 dark:text-zinc-500">{t("mergePreviewEmpty")}</p>
                     </div>
@@ -813,17 +888,27 @@ export function VideoEditWorkspace() {
             <div className="relative">
               {/* 비교 모드 토글 */}
               {resultUrl && source?.url && resultUrl !== source.url && (
-                <button
-                  onClick={() => setCompareMode((v) => !v)}
-                  className={`absolute top-2 right-2 z-10 flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium shadow transition-colors ${
-                    compareMode
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-black/50 text-white hover:bg-black/70"
-                  }`}
-                >
-                  <Columns2 className="size-3.5" />
-                  {t("comparePreview")}
-                </button>
+                <div className="absolute top-2 right-2 z-10 flex gap-1">
+                  <button
+                    onClick={() => setCompareMode((v) => !v)}
+                    className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium shadow transition-colors ${
+                      compareMode
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-black/50 text-white hover:bg-black/70"
+                    }`}
+                  >
+                    <Columns2 className="size-3.5" />
+                    {t("comparePreview")}
+                  </button>
+                  {compareMode && (
+                    <button
+                      onClick={() => setCompareModal(true)}
+                      className="flex items-center gap-1 rounded-md bg-black/50 px-2 py-1 text-[11px] font-medium text-white shadow transition-colors hover:bg-black/70"
+                    >
+                      <Maximize2 className="size-3.5" />
+                    </button>
+                  )}
+                </div>
               )}
 
               {compareMode && resultUrl && source?.url && resultUrl !== source.url ? (
@@ -847,7 +932,7 @@ export function VideoEditWorkspace() {
                         ref={videoRef}
                         src={resultUrl}
                         className="max-h-[280px] max-w-full object-contain"
-                        style={activeTab === "effects" && previewCssFilter ? { filter: previewCssFilter } : undefined}
+                        style={(activeTab === "effects" || activeTab === "filter") && previewCssFilter ? { filter: previewCssFilter } : undefined}
                         muted
                         onTimeUpdate={() => {
                           if (videoRef.current) setCurrentTime(videoRef.current.currentTime);
@@ -880,15 +965,42 @@ export function VideoEditWorkspace() {
                   onTimeUpdate={setCurrentTime}
                   onDurationLoaded={handleDurationLoaded}
                   videoRef={videoRef}
-                  cssFilter={activeTab === "effects" ? previewCssFilter : undefined}
+                  cssFilter={(activeTab === "effects" || activeTab === "creative" || activeTab === "filter") ? previewCssFilter : undefined}
                   textOverlay={activeTab === "effects" ? previewTextOverlay : undefined}
                   watermark={activeTab === "effects" ? previewWatermark : undefined}
                   subtitles={activeTab === "subtitles" ? previewSubtitles : undefined}
                   playbackRate={activeTab === "effects" ? previewSpeed : 1}
+                  creativeOverlay={activeTab === "creative" ? previewCreativeOverlay : undefined}
+                  onClickEmpty={() => setHistoryModalOpen(true)}
                 />
               )}
             </div>
           )}
+
+
+          {/* 비디오 선택 / 업로드 버튼 */}
+          <div className="flex gap-2">
+            <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-1.5 text-xs"
+              onClick={() => setHistoryModalOpen(true)}
+            >
+              <Film className="size-3.5" />
+              {t("selectVideo")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-1.5 text-xs"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadMutation.isPending}
+            >
+              {uploadMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
+              {t("uploadVideo")}
+            </Button>
+          </div>
         </div>
 
         {/* 오른쪽(PC) / 아래(모바일): 편집 옵션 */}
@@ -1004,72 +1116,25 @@ export function VideoEditWorkspace() {
                     </div>
                   )}
                   {aiIsCompleted && aiGeneration?.result_url && (
-                    <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-2">
-                      <video
-                        src={aiGeneration.result_url}
-                        className="h-20 rounded-md"
-                        controls
-                        muted
-                        loop
-                      />
-                      <div className="flex flex-1 flex-col gap-1.5 py-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <Sparkles className="size-3 text-primary" />
-                          <span className="text-xs font-medium text-primary">
-                            {t("aiGenerateComplete")}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
-                          onClick={() => setIsPublicSave(!isPublicSave)}
-                        >
-                          {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
-                          <span className="text-zinc-700 dark:text-zinc-300">{isPublicSave ? t("public") : t("private")}</span>
-                        </button>
-                        <div className="flex gap-1.5">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 flex-1 gap-1.5 text-xs"
-                            onClick={() =>
-                              downloadVideo(
-                                aiGeneration.result_url!,
-                                `ai_edit_${Date.now()}.mp4`,
-                              )
-                            }
-                          >
-                            <Download className="size-3" />
-                            {t("download")}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 flex-1 gap-1.5 text-xs"
-                            disabled={saveEditMutation.isPending}
-                            onClick={async () => {
-                              try {
-                                await saveEditMutation.mutateAsync({
-                                  result_url: aiGeneration.result_url!,
-                                  edit_type: "ai",
-                                  prompt: aiGeneration.prompt || "AI edited video",
-                                  is_public: isPublicSave,
-                                });
-                                toast.success(t("saveSuccess"));
-                              } catch {
-                                toast.error(t("saveError"));
-                              }
-                            }}
-                          >
-                            {saveEditMutation.isPending ? (
-                              <Loader2 className="size-3 animate-spin" />
-                            ) : (
-                              <Save className="size-3" />
-                            )}
-                            {t("save")}
-                          </Button>
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+                      <Sparkles className="size-3.5 text-primary" />
+                      <span className="flex-1 text-xs font-medium text-primary">
+                        {t("aiGenerateComplete")}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-xs"
+                        onClick={() =>
+                          downloadVideo(
+                            aiGeneration.result_url!,
+                            `ai_edit_${Date.now()}.mp4`,
+                          )
+                        }
+                      >
+                        <Download className="size-3" />
+                        {t("download")}
+                      </Button>
                     </div>
                   )}
                   {aiIsFailed && aiGeneration && (
@@ -1134,6 +1199,68 @@ export function VideoEditWorkspace() {
                             result_url: resultUrl,
                             edit_type: "effects",
                             prompt: source?.name || "Effect applied",
+                            is_public: isPublicSave,
+                          });
+                          toast.success(t("saveSuccess"));
+                        } catch {
+                          toast.error(t("saveError"));
+                        }
+                      }}
+                    >
+                      <Save className="size-3.5" />
+                      {t("saveMerged")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {source && activeTab === "filter" && (
+            <>
+              <FilterPanel
+                sourceUrl={source.url}
+                onEffectApplied={setResultUrl}
+                onPreviewFilter={setPreviewCssFilter}
+                onDirty={() => setIsPanelDirty(true)}
+              />
+
+              {resultUrl && (
+                <div className="space-y-2 rounded-xl bg-primary/10 px-4 py-3">
+                  <span className="text-sm font-semibold text-primary">
+                    {t("effectApplied")}
+                  </span>
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                    onClick={() => setIsPublicSave(!isPublicSave)}
+                  >
+                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
+                    <span className="text-zinc-700 dark:text-zinc-300">{isPublicSave ? t("public") : t("private")}</span>
+                  </button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 gap-1.5"
+                      onClick={() => {
+                        downloadVideo(resultUrl, `filter_${Date.now()}.mp4`);
+                        toast.success(t("downloadSuccess"));
+                      }}
+                    >
+                      <Download className="size-3.5" />
+                      {t("download")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 gap-1.5"
+                      disabled={saveEditMutation.isPending}
+                      onClick={async () => {
+                        try {
+                          await saveEditMutation.mutateAsync({
+                            result_url: resultUrl,
+                            edit_type: "filter",
+                            prompt: source?.name || "Filter applied",
                             is_public: isPublicSave,
                           });
                           toast.success(t("saveSuccess"));
@@ -1266,6 +1393,7 @@ export function VideoEditWorkspace() {
           {source && activeTab === "thumbnail" && (
               <ThumbnailPanel
                 sourceUrl={source.url}
+                onThumbnailsChange={setCapturedThumbnails}
                 onSave={async (url, isPublic) => {
                   await saveEditMutation.mutateAsync({
                     result_url: url,
@@ -1294,6 +1422,24 @@ export function VideoEditWorkspace() {
                 onDirty={() => setIsPanelDirty(true)}
               />
           )}
+
+          {source && activeTab === "creative" && (
+              <CreativePresetPanel
+                sourceUrl={displayUrl}
+                onApplied={setResultUrl}
+                onPreviewOverlay={setPreviewCreativeOverlay}
+                onPreviewFilter={setPreviewCssFilter}
+                onSave={async (url, isPublic) => {
+                  await saveEditMutation.mutateAsync({
+                    result_url: url,
+                    edit_type: "creative_preset",
+                    prompt: source?.name || "Creative Preset",
+                    is_public: isPublic,
+                  });
+                }}
+              />
+          )}
+
         </div>
       </div>
 
@@ -1312,14 +1458,6 @@ export function VideoEditWorkspace() {
         </div>
       )}
 
-      {/* 소스 선택 */}
-      <VideoSourceSelector
-        onSourceSelected={handleSourceSelected}
-        isLoading={false}
-        mergeMode={activeTab === "merge"}
-        onAddToMerge={(url, name) => addMergeClipRef.current?.(url, name)}
-        onSelectVideo={resultUrl ? openModal : undefined}
-      />
       </div>{/* 스크롤 영역 끝 */}
 
       {/* 모달 */}
@@ -1332,6 +1470,18 @@ export function VideoEditWorkspace() {
         onCancel={handleModalCancel}
         isSaving={isSavingModal}
         isDownloading={isDownloadingModal}
+      />
+
+      {/* 히스토리 선택 모달 */}
+      <HistorySelectModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+        multiSelect={activeTab === "merge"}
+        onSelect={handleSourceSelected}
+        onMultiSelect={(items) => {
+          items.forEach((item) => addMergeClipRef.current?.(item.url, item.name));
+          setHistoryModalOpen(false);
+        }}
       />
 
       {/* 탭 전환 확인 모달 */}
@@ -1360,6 +1510,78 @@ export function VideoEditWorkspace() {
                 {t("tabSwitchConfirm")}
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 비교 크게 보기 모달 */}
+      {compareModal && resultUrl && source?.url && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="relative flex h-[90vh] w-[95vw] max-w-7xl flex-col gap-3 rounded-2xl bg-background p-4">
+            {/* 닫기 */}
+            <button
+              onClick={() => { setCompareModal(false); setModalSyncPlaying(false); }}
+              className="absolute right-3 top-3 z-10 rounded-full bg-black/50 p-1.5 text-white transition-colors hover:bg-black/70"
+            >
+              <X className="size-5" />
+            </button>
+
+            {/* 비디오 영역 */}
+            <div className="flex flex-1 gap-2 overflow-hidden">
+              {/* 원본 */}
+              <div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-xl border border-border bg-black">
+                <video
+                  ref={modalOrigRef}
+                  src={source.url}
+                  className="max-h-full max-w-full object-contain"
+                  muted
+                  loop
+                />
+                <span className="absolute top-2 left-2 rounded bg-black/60 px-2 py-1 text-xs font-medium text-white">
+                  {t("original")}
+                </span>
+              </div>
+              {/* 편집본 */}
+              <div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-xl border border-border bg-black">
+                <video
+                  ref={modalEditRef}
+                  src={resultUrl}
+                  className="max-h-full max-w-full object-contain"
+                  muted
+                  loop
+                />
+                <span className="absolute top-2 left-2 rounded bg-primary/80 px-2 py-1 text-xs font-medium text-white">
+                  {t("edited")}
+                </span>
+              </div>
+            </div>
+
+            {/* 동시 재생 버튼 */}
+            <button
+              onClick={() => {
+                const orig = modalOrigRef.current;
+                const edit = modalEditRef.current;
+                if (!orig || !edit) return;
+                if (modalSyncPlaying) {
+                  orig.pause();
+                  edit.pause();
+                  setModalSyncPlaying(false);
+                } else {
+                  orig.currentTime = 0;
+                  edit.currentTime = 0;
+                  orig.play();
+                  edit.play();
+                  setModalSyncPlaying(true);
+                }
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-200/60 px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            >
+              {modalSyncPlaying ? (
+                <><Pause className="size-4" />{t("syncPause")}</>
+              ) : (
+                <><Play className="size-4" />{t("syncPlay")}</>
+              )}
+            </button>
           </div>
         </div>
       )}

@@ -29,7 +29,7 @@ import type { ThumbnailPanelProps } from "./types";
 
 const COUNT_PRESETS = [4, 6, 8, 12, 16];
 
-export function ThumbnailPanel({ sourceUrl, onSave }: ThumbnailPanelProps) {
+export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: ThumbnailPanelProps) {
   const t = useTranslations("VideoEdit");
   const extractMutation = useExtractThumbnails();
   const captureMutation = useCaptureFrame();
@@ -45,6 +45,8 @@ export function ThumbnailPanel({ sourceUrl, onSave }: ThumbnailPanelProps) {
   const [isSaving, setIsSaving] = useState(false);
   // 모달
   const [modalIdx, setModalIdx] = useState<number | null>(null);
+  // 일괄 다운로드
+  const [isBulkDownloading, setIsBulkDownloading] = useState(false);
 
   // 모달 키보드 네비게이션
   useEffect(() => {
@@ -61,6 +63,11 @@ export function ThumbnailPanel({ sourceUrl, onSave }: ThumbnailPanelProps) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [modalIdx, thumbnails.length]);
+
+  // 썸네일 변경 시 부모에 전달
+  useEffect(() => {
+    onThumbnailsChange?.(thumbnails);
+  }, [thumbnails, onThumbnailsChange]);
 
   const isPending = extractMutation.isPending || captureMutation.isPending;
 
@@ -229,8 +236,45 @@ export function ThumbnailPanel({ sourceUrl, onSave }: ThumbnailPanelProps) {
       {/* 썸네일 그리드 */}
       {thumbnails.length > 0 && (
         <div className="space-y-3">
-          <span className="text-xs font-medium">{t("selectThumbnail")}</span>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium">{t("selectThumbnail")}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1.5 text-[11px]"
+              disabled={isBulkDownloading}
+              onClick={async () => {
+                setIsBulkDownloading(true);
+                try {
+                  const filenames = thumbnails.map((_, i) => `thumbnail_${i + 1}.png`);
+                  const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/video/bulk-download`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${(await import("@/services/api")).getAccessToken()}` },
+                      body: JSON.stringify({ urls: thumbnails, filenames }),
+                    },
+                  );
+                  if (!res.ok) throw new Error("ZIP 다운로드 실패");
+                  const blob = await res.blob();
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(blob);
+                  a.download = `thumbnails_${Date.now()}.zip`;
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                  toast.success(t("bulkDownloadSuccess", { count: thumbnails.length }));
+                } catch {
+                  toast.error(t("bulkDownloadError"));
+                } finally {
+                  setIsBulkDownloading(false);
+                }
+              }}
+            >
+              {isBulkDownloading ? <Loader2 className="size-3 animate-spin" /> : <Download className="size-3" />}
+              {t("downloadAll")} ({thumbnails.length})
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {thumbnails.map((url, idx) => (
               <div key={`${url}-${idx}`} className="group relative">
                 <button

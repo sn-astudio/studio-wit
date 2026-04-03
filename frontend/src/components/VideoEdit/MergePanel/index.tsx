@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Download,
   Globe,
@@ -23,21 +23,19 @@ export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onM
   const t = useTranslations("VideoEdit");
   const [clips, setClips] = useState<MergeClip[]>([]);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
-  const [clipCounter, setClipCounter] = useState(0);
   const [isPublicSave, setIsPublicSave] = useState(false);
 
   const notify = useNotifyOnComplete();
   const mergeMutation = useMergeVideos();
   const saveEditMutation = useSaveEdit();
 
+  const clipIdRef = useRef(0);
   const addClip = useCallback((url: string, name?: string) => {
-    setClips((prev) => [
-      ...prev,
-      { id: `clip_${Date.now()}_${clipCounter}`, url, name },
-    ]);
-    setClipCounter((c) => c + 1);
+    clipIdRef.current += 1;
+    const id = `clip_${Date.now()}_${clipIdRef.current}`;
+    setClips((prev) => [...prev, { id, url, name }]);
     setResultUrl(null);
-  }, [clipCounter]);
+  }, []);
 
   const handleSaveToHistory = useCallback(async () => {
     if (!resultUrl) return;
@@ -84,7 +82,7 @@ export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onM
   const resetClips = useCallback(() => {
     setClips([]);
     setResultUrl(null);
-    setClipCounter(0);
+    clipIdRef.current = 0;
   }, []);
 
   useEffect(() => {
@@ -211,7 +209,7 @@ export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onM
             onClick={() => {
               setResultUrl(null);
               setClips([]);
-              setClipCounter(0);
+              clipIdRef.current = 0;
             }}
           >
             <Merge className="size-3.5" />

@@ -13,6 +13,10 @@ export const queryKeys = {
       model_id?: string;
       sort?: "recent" | "popular";
     }) => [...queryKeys.gallery.all, "list", params ?? {}] as const,
+    detail: (id: string) =>
+      [...queryKeys.gallery.all, "detail", id] as const,
+    comments: (generationId: string) =>
+      [...queryKeys.gallery.all, "comments", generationId] as const,
   },
 
   generation: {
