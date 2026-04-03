@@ -69,6 +69,8 @@ import type {
   SplitSceneRequest,
   SplitSceneResponse,
   BulkDownloadRequest,
+  ComposeRequest,
+  ComposeResponse,
 } from "@/types/api";
 
 // ── 설정 ──
@@ -501,6 +503,17 @@ export const videoEditApi = {
 
   creativePreset(body: { source_url: string; preset: string; params?: Record<string, string> }) {
     return request<{ result_url: string }>("/api/video/creative-preset", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+};
+
+// ── Compose API ──
+
+export const composeApi = {
+  create(body: ComposeRequest) {
+    return request<ComposeResponse>("/api/compose", {
       method: "POST",
       body: JSON.stringify(body),
     });
