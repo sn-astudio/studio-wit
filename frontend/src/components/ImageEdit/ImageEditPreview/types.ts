@@ -10,4 +10,7 @@ export interface ImageEditPreviewProps {
   onCropChange: (rect: CropRect | null) => void;
   onExport: () => void;
   onGenerateVideo: () => void;
+  onUpload?: () => void;
+  onScrollToHistory?: () => void;
+  onRemoveImage?: () => void;
 }

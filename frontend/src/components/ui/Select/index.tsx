@@ -38,6 +38,11 @@ function SelectContent({
   title,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Popup> & { title?: string }) {
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Positioner sideOffset={8} side="top" align="start" className="z-[9999]">

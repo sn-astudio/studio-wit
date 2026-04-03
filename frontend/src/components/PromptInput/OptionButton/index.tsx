@@ -65,7 +65,7 @@ export function OptionButton({ paramType }: OptionButtonProps) {
         onValueChange={(value) => setParam(paramType, value as string)}
       >
         <SelectTrigger
-          className="h-10 w-auto gap-2 rounded-lg border-none bg-neutral-100 px-3 ring-0 hover:bg-neutral-200/60 active:bg-neutral-200 aria-expanded:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700/70 dark:active:bg-neutral-700 dark:aria-expanded:bg-neutral-700"
+          className="h-10 w-auto shrink-0 gap-2 whitespace-nowrap rounded-lg border-none bg-neutral-100 px-3 ring-0 hover:bg-neutral-200/60 active:bg-neutral-200 aria-expanded:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700/70 dark:active:bg-neutral-700 dark:aria-expanded:bg-neutral-700"
           render={<button type="button" />}
         >
           {paramType === "aspectRatio" ? (
@@ -109,7 +109,7 @@ export function OptionButton({ paramType }: OptionButtonProps) {
           render={
             <button
               type="button"
-              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border-none bg-neutral-100 px-3 text-sm transition-colors hover:bg-neutral-200/60 active:bg-neutral-200 aria-expanded:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700/70 dark:active:bg-neutral-700 dark:aria-expanded:bg-neutral-700"
+              className="inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg border-none bg-neutral-100 px-3 text-sm transition-colors hover:bg-neutral-200/60 active:bg-neutral-200 aria-expanded:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700/70 dark:active:bg-neutral-700 dark:aria-expanded:bg-neutral-700"
             />
           }
         >
@@ -164,7 +164,7 @@ export function OptionButton({ paramType }: OptionButtonProps) {
         <span className="text-[14px] font-[500]">{t(config.labelKey)}</span>
         {hasValue && <span className="size-1.5 rounded-full bg-primary" />}
       </PopoverTrigger>
-      <PopoverContent className={`rounded-xl border-border/50 bg-popover p-2.5 shadow-lg ${paramType === "seed" ? "w-56" : "w-[480px]"}`}>
+      <PopoverContent className={`rounded-xl border-border/50 bg-popover p-2.5 shadow-lg ${paramType === "seed" ? "w-56" : "sm:w-[480px]"}`}>
         <div className="px-3 pt-1 pb-0.5 text-[13px] font-semibold tracking-wide text-foreground">
           {t(config.labelKey)}
         </div>
@@ -184,7 +184,7 @@ export function OptionButton({ paramType }: OptionButtonProps) {
                   setParam(paramType, v);
                 }}
                 placeholder={t(config.labelKey)}
-                className="h-full min-w-0 flex-1 bg-transparent px-3 text-[14px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50"
+                className="h-full min-w-0 flex-1 bg-transparent px-3 text-[16px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50 sm:text-[14px]"
               />
               <div className="flex h-full flex-col border-l border-neutral-200 dark:border-neutral-700">
                 <button
@@ -211,7 +211,7 @@ export function OptionButton({ paramType }: OptionButtonProps) {
                 onChange={(e) => setParam(paramType, e.target.value)}
                 placeholder={t(config.labelKey)}
                 rows={5}
-                className="w-full resize-none rounded-lg border border-neutral-200 bg-transparent px-3 py-2.5 text-[14px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50 focus-visible:border-neutral-300 dark:border-neutral-700 dark:bg-transparent dark:focus-visible:border-neutral-600"
+                className="w-full resize-none rounded-lg border border-neutral-200 bg-transparent px-3 py-2.5 text-[16px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50 focus-visible:border-neutral-300 sm:text-[14px] dark:border-neutral-700 dark:bg-transparent dark:focus-visible:border-neutral-600"
               />
               {hasValue && (
                 <button

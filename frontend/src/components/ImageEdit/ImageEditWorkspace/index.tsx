@@ -39,6 +39,8 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
   );
   const [activeTab, setActiveTab] = useState<EditTab>("edit");
   const canvasRef = useRef<EditorCanvasHandle>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
 
   const filterValues = useImageEditorStore((s) => s.filterValues);
@@ -117,6 +119,31 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
     [reset],
   );
 
+  const handleRemoveImage = useCallback(() => {
+    reset();
+    setCropRect(null);
+    setSource(null);
+  }, [reset]);
+
+  const handleFileUpload = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      handleSourceSelected({ url });
+      e.target.value = "";
+    },
+    [handleSourceSelected],
+  );
+
+  const handleScrollToHistory = useCallback(() => {
+    historyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   const handleTabChange = useCallback(
     (tab: EditTab) => {
       // 편집 탭 전환 시 activeTool 리셋 (crop 등 해제)
@@ -135,11 +162,11 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
   );
 
   return (
-    <div className="flex h-[calc(100vh-64px-52px)] flex-col overflow-hidden">
+    <div className="mx-auto flex max-w-7xl flex-col px-4 pb-[240px] pt-5 sm:pt-6 md:px-6">
       {/* 메인 콘텐츠: 프리뷰 + 탭 패널 */}
-      <div className="flex min-h-0 flex-1 flex-col gap-0 sm:flex-row">
+      <div className="flex min-h-0 flex-col gap-4 sm:flex-row sm:gap-6">
         {/* 좌측 프리뷰 */}
-        <div className="min-h-[30vh] flex-1 p-3 sm:min-h-0 sm:p-4">
+        <div className="min-h-[30vh] flex-1 sm:min-h-0">
           <ImageEditPreview
             imageUrl={source?.url ?? null}
             canvasRef={canvasRef}
@@ -149,13 +176,23 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
             onCropChange={setCropRect}
             onExport={handleExport}
             onGenerateVideo={handleGenerateVideo}
+            onUpload={handleFileUpload}
+            onScrollToHistory={handleScrollToHistory}
+            onRemoveImage={handleRemoveImage}
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
           />
         </div>
 
         {/* 우측 탭 패널 */}
-        <div className="flex w-full flex-1 flex-col border-t border-zinc-800 sm:border-l sm:border-t-0">
+        <div className="flex w-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-background sm:w-[360px] sm:shrink-0 dark:border-neutral-800">
           {/* 탭 헤더 */}
-          <div className="flex border-b border-zinc-800">
+          <div className="flex border-b border-neutral-200 dark:border-neutral-800">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -163,13 +200,13 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
                   className={cn(
-                    "flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors",
+                    "flex flex-1 cursor-pointer items-center justify-center gap-2 px-3 py-3 text-[13px] font-[500] transition-colors",
                     activeTab === tab.id
-                      ? "border-b-2 border-primary text-primary"
-                      : "text-zinc-500 hover:text-zinc-300",
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Icon className="size-3.5" />
+                  <Icon className="size-4" strokeWidth={activeTab === tab.id ? 2 : 1.5} />
                   {t(tab.labelKey)}
                 </button>
               );
@@ -177,7 +214,7 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
           </div>
 
           {/* 탭 콘텐츠 */}
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="flex-1">
             {activeTab === "edit" && (
               <EditPanel
                 canvasRef={canvasRef}
@@ -199,7 +236,9 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
       </div>
 
       {/* 하단 소스 선택 */}
-      <ImageSourceSelector onSourceSelected={handleSourceSelected} />
+      <div ref={historyRef} className="mt-6">
+        <ImageSourceSelector onSourceSelected={handleSourceSelected} />
+      </div>
     </div>
   );
 }

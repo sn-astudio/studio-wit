@@ -1,14 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Upload } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/stores/auth";
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
-import { useModels } from "@/hooks/queries/useModels";
-import { cn } from "@/lib/utils";
 
 import type { ImageSourceSelectorProps } from "./types";
 
@@ -18,10 +15,6 @@ export function ImageSourceSelector({
   const t = useTranslations("ImageEdit");
   const token = useAuthStore((s) => s.token);
 
-  const [modelFilter, setModelFilter] = useState<string | null>(null);
-
-  const { data: modelsData } = useModels("image");
-  const models = modelsData?.models ?? [];
 
   const {
     data,
@@ -34,12 +27,22 @@ export function ImageSourceSelector({
       : undefined,
   );
 
-  const generations =
+  const apiGenerations =
     data?.pages.flatMap((page) => page.generations) ?? [];
 
-  const filtered = modelFilter
-    ? generations.filter((g) => g.model_id === modelFilter)
-    : generations;
+  // Mock 생성 이미지도 표시
+  const [mockGenerations, setMockGenerations] = useState<typeof apiGenerations>([]);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("mock-generations");
+      if (saved) setMockGenerations(JSON.parse(saved));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const generations = [...mockGenerations, ...apiGenerations];
+
 
   // 무한 스크롤
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -58,90 +61,31 @@ export function ImageSourceSelector({
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // 파일 업로드
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const url = URL.createObjectURL(file);
-      onSourceSelected({ url });
-      e.target.value = "";
-    },
-    [onSourceSelected],
-  );
-
   return (
-    <div className="border-t border-zinc-800/80">
-      {/* 업로드 */}
-      <div className="flex items-center gap-2 px-4 py-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          className="cursor-pointer gap-1.5"
-        >
-          <Upload className="size-4" />
-          <span className="text-xs">{t("uploadImage")}</span>
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-
-        <div className="mx-1 h-5 w-px bg-zinc-700" />
-
-        <span className="text-[11px] text-zinc-500">
+    <div>
+      {/* 업로드 + 라벨 */}
+      <div className="pb-3">
+        <span className="text-[13px] text-muted-foreground">
           {t("orSelectFromHistory")}
         </span>
       </div>
 
-      {/* 모델 필터 */}
-      <div className="flex items-center gap-1 px-4 pb-2">
-        <button
-          onClick={() => setModelFilter(null)}
-          className={cn(
-            "cursor-pointer rounded-md px-2 py-0.5 text-[10px] transition-colors",
-            !modelFilter
-              ? "bg-primary/20 text-primary"
-              : "text-zinc-500 hover:text-zinc-300",
-          )}
-        >
-          {t("filterAll")}
-        </button>
-        {models.map((m) => (
-          <button
-            key={m.id}
-            onClick={() => setModelFilter(m.id)}
-            className={cn(
-              "cursor-pointer rounded-md px-2 py-0.5 text-[10px] transition-colors",
-              modelFilter === m.id
-                ? "bg-primary/20 text-primary"
-                : "text-zinc-500 hover:text-zinc-300",
-            )}
-          >
-            {m.name}
-          </button>
-        ))}
-      </div>
-
       {/* 히스토리 그리드 */}
-      <div className="max-h-[35vh] overflow-y-auto px-4 pb-3">
-        {filtered.length === 0 ? (
-          <div className="flex w-full items-center justify-center py-6">
+      <div>
+        {generations.length === 0 ? (
+          <div className="flex w-full items-center justify-center py-10">
             <div className="text-center">
-              <ImageIcon className="mx-auto size-6 text-zinc-800" />
-              <p className="mt-1.5 text-xs text-zinc-600">
+              <ImageIcon className="mx-auto size-8 text-neutral-300 dark:text-neutral-600" />
+              <p className="mt-2 text-[13px] text-muted-foreground/60">
                 {t("noHistory")}
               </p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-            {filtered.map((gen) => (
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            {generations.map((gen) => {
+              const ratio = gen.aspect_ratio?.replace(":", "/") ?? "1/1";
+              return (
               <button
                 key={gen.id}
                 onClick={() => {
@@ -152,26 +96,30 @@ export function ImageSourceSelector({
                     });
                   }
                 }}
-                className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border border-zinc-800/60 bg-zinc-900/60 transition-colors hover:border-zinc-600"
+                className="group relative aspect-square cursor-pointer overflow-hidden rounded-xl bg-neutral-100 sm:aspect-auto sm:h-[280px] sm:max-w-[320px] sm:flex-grow dark:bg-neutral-800/60"
+                style={{ aspectRatio: ratio }}
               >
                 {gen.result_url && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={gen.result_url}
-                    alt={gen.prompt}
-                    className="absolute inset-0 size-full object-cover"
-                  />
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={gen.result_url}
+                      alt={gen.prompt}
+                      className="size-full object-cover sm:transition-transform sm:duration-300 sm:group-hover:scale-105"
+                    />
+                    {/* 호버 오버레이 */}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100" />
+                    {/* 프롬프트 */}
+                    <div className="pointer-events-none absolute inset-x-0 top-0 px-3 pt-3 pb-8 opacity-100 sm:px-4 sm:pt-4 sm:pb-10 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                      <p className="line-clamp-1 text-[13px] font-[500] leading-relaxed text-white/90 sm:line-clamp-2 sm:text-[15px]">
+                        {gen.prompt}
+                      </p>
+                    </div>
+                  </>
                 )}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 pt-4 opacity-0 transition-opacity group-hover:opacity-100">
-                  <p className="truncate text-[10px] text-zinc-200">
-                    {gen.prompt}
-                  </p>
-                  <span className="text-[9px] text-zinc-400">
-                    {gen.model_id}
-                  </span>
-                </div>
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
         <div ref={sentinelRef} className="h-1" />

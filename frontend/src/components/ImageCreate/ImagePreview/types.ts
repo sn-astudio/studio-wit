@@ -7,4 +7,7 @@ export interface ImagePreviewProps {
   generations?: Generation[];
   onSelectGeneration?: (gen: Generation) => void;
   onEdit?: (imageUrl: string) => void;
+  onDelete?: (gen: Generation) => void;
+  generatingRatio?: string;
+  generatingCount?: number;
 }

@@ -14,6 +14,35 @@ import { useAuthStore } from "@/stores/auth";
 import { OptionsBar } from "./OptionsBar";
 import type { PromptInputProps } from "./types";
 
+function AttachedImageThumb({ file, onRemove, removeLabel }: { file: File; onRemove: () => void; removeLabel: string }) {
+  const [loaded, setLoaded] = React.useState(false);
+  return (
+    <div className="group relative shrink-0">
+      {!loaded && (
+        <div className="flex size-14 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
+          <div className="size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600 dark:border-neutral-600 dark:border-t-neutral-300" />
+        </div>
+      )}
+      <Image
+        src={URL.createObjectURL(file)}
+        alt={file.name}
+        width={56}
+        height={56}
+        unoptimized
+        onLoad={() => setLoaded(true)}
+        className={`size-14 rounded-lg border border-neutral-200 object-cover dark:border-neutral-800 ${loaded ? "" : "hidden"}`}
+      />
+      <button
+        onClick={onRemove}
+        className="absolute -top-1.5 -right-1.5 flex size-5 cursor-pointer items-center justify-center rounded-full bg-neutral-900 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 dark:bg-neutral-100 dark:text-neutral-900"
+        aria-label={removeLabel}
+      >
+        <X className="size-3" strokeWidth={2.5} />
+      </button>
+    </div>
+  );
+}
+
 export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
   const t = useTranslations("PromptInput");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -115,28 +144,17 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
   return (
     <TooltipProvider delay={300}>
       <div className="w-full">
-          <div className="overflow-hidden rounded-2xl border-2 border-neutral-200 bg-background shadow-lg dark:border-neutral-800">
+          <div className="overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
             {/* Attached image thumbnails — 입력 영역 위에 표시 */}
             {attachedImages.length > 0 && (
               <div className="flex gap-2 overflow-x-auto px-3.5 pt-3.5 pb-1 pr-5 sm:px-5 sm:pt-4 sm:pb-1">
                 {attachedImages.map((file, index) => (
-                  <div key={index} className="group relative shrink-0">
-                    <Image
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      width={56}
-                      height={56}
-                      unoptimized
-                      className="size-14 rounded-lg border border-neutral-200 object-cover dark:border-neutral-800"
-                    />
-                    <button
-                      onClick={() => removeImage(index)}
-                      className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-neutral-900 text-white opacity-0 transition-opacity group-hover:opacity-100 dark:bg-neutral-100 dark:text-neutral-900"
-                      aria-label={t("removeImage")}
-                    >
-                      <X className="size-3" strokeWidth={2.5} />
-                    </button>
-                  </div>
+                  <AttachedImageThumb
+                    key={index}
+                    file={file}
+                    onRemove={() => removeImage(index)}
+                    removeLabel={t("removeImage")}
+                  />
                 ))}
               </div>
             )}
@@ -210,8 +228,10 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
             </div>
 
             {/* Options bar */}
-            <div className="overflow-x-auto scrollbar-none px-3.5 pb-3.5 sm:px-5 sm:pb-[20px]">
-              <OptionsBar mode={mode} />
+            <div className="relative">
+              <div className="overflow-x-auto scrollbar-none px-3.5 pb-3.5 sm:px-5 sm:pb-[20px]">
+                <OptionsBar mode={mode} />
+              </div>
             </div>
             </div>{/* end left */}
 

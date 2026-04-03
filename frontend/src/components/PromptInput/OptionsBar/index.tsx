@@ -52,7 +52,7 @@ function NumImagesCounter() {
   return (
     <Tooltip>
     <TooltipTrigger
-      render={<div className="flex h-10 cursor-default items-center gap-0 rounded-lg bg-neutral-100 px-2 dark:bg-neutral-800" />}
+      render={<div className="flex h-10 shrink-0 cursor-default items-center gap-0 whitespace-nowrap rounded-lg bg-neutral-100 px-2 dark:bg-neutral-800" />}
     >
       <button
         className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-200/60 hover:text-foreground disabled:pointer-events-none disabled:opacity-20 dark:hover:bg-neutral-700/60"
@@ -103,11 +103,12 @@ export function OptionsBar({ mode }: OptionsBarProps) {
       return false;
     return true;
   });
-  const hasNumImages = supportedParams.includes("numImages");
+  const numImagesOptions = getOptionsForParam(selectedModel, "numImages");
+  const hasNumImages = supportedParams.includes("numImages") && numImagesOptions.length > 1;
 
   return (
     <div
-      className="flex items-center gap-2 overflow-x-auto scrollbar-none"
+      className="flex w-max items-center gap-2"
       role="toolbar"
       aria-label="Generation options"
     >

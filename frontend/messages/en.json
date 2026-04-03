@@ -20,7 +20,9 @@
     "signInWithGoogle": "Sign in with Google",
     "signIn": "Sign in",
     "darkMode": "Dark mode",
-    "lightMode": "Light mode"
+    "lightMode": "Light mode",
+    "systemMode": "System",
+    "themeLabel": "Theme"
   },
   "Hero": {
     "poweredByAI": "Powered by AI",
@@ -127,7 +129,7 @@
     "description": "Generate videos with AI."
   },
   "PromptInput": {
-    "placeholder": "Describe the image you want to create...",
+    "placeholder": "Describe your image...",
     "placeholderVideo": "Describe the video you want to create...",
     "submit": "Generate",
     "attachImage": "Attach image",
@@ -407,7 +409,12 @@
     "noHistory": "No images generated yet",
     "loginRequired": "Please sign in to generate images",
     "generateSuccess": "Image generation complete!",
-    "generateFailed": "Image generation failed"
+    "generateFailed": "Image generation failed",
+    "deleteTitle": "Delete this image?",
+    "deleteDesc": "This action cannot be undone.",
+    "deleteCancel": "Cancel",
+    "deleteConfirm": "Delete",
+    "imageLoadError": "Unable to load image"
   },
   "ImageEditor": {
     "edit": "Edit",
@@ -431,7 +438,9 @@
   },
   "ImageEdit": {
     "selectImage": "Select an image to edit",
+    "selectImageDesc": "Upload an image or select from your generations",
     "uploadImage": "Upload Image",
+    "myImages": "My Images",
     "orSelectFromHistory": "or select from history below",
     "filterAll": "All",
     "download": "Download",
@@ -453,7 +462,8 @@
     "modelLabel": "Model",
     "aspectRatio": "Aspect Ratio",
     "loginRequired": "Please sign in",
-    "generateVideo": "Generate Video"
+    "generateVideo": "Generate Video",
+    "removeImage": "Remove Image"
   },
   "VideoEdit": {
     "title": "Video Edit",

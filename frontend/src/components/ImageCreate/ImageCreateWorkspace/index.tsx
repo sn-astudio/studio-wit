@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -122,6 +123,7 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
         setMockProgress(0);
         setSelectedImageUrl(null);
         usePromptStore.getState().setPrompt("");
+        setTimeout(() => contentTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
 
         let p = 0;
         const interval = setInterval(() => {
@@ -130,22 +132,30 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
             p = 100;
             clearInterval(interval);
             setTimeout(() => {
-              const mockUrl = `https://picsum.photos/seed/${Date.now()}/1024/1024`;
+              const ratio = state.params.aspectRatio ? String(state.params.aspectRatio) : "1:1";
+              const [rw, rh] = ratio.split(":").map(Number);
+              const baseSize = 1024;
+              const imgW = rw >= rh ? baseSize : Math.round(baseSize * (rw / rh));
+              const imgH = rh >= rw ? baseSize : Math.round(baseSize * (rh / rw));
+              const numImages = Number(state.params.numImages) || 1;
+              const newGens: Generation[] = [];
+              for (let i = 0; i < numImages; i++) {
+                const seed = Date.now() + i;
+                newGens.push({
+                  id: `mock-${seed}`,
+                  prompt: state.prompt,
+                  model_id: state.selectedModel,
+                  status: "completed",
+                  result_url: `https://picsum.photos/seed/${seed}/${imgW}/${imgH}`,
+                  aspect_ratio: ratio,
+                  created_at: new Date().toISOString(),
+                } as Generation);
+              }
               setMockGenerating(false);
               setMockProgress(null);
-              setSelectedImageUrl(mockUrl);
+              setSelectedImageUrl(newGens[0].result_url ?? null);
               setMockGenerations((prev) => {
-                const next = [
-                  {
-                    id: `mock-${Date.now()}`,
-                    prompt: state.prompt,
-                    model_id: state.selectedModel,
-                    status: "completed",
-                    result_url: mockUrl,
-                    created_at: new Date().toISOString(),
-                  } as Generation,
-                  ...prev,
-                ];
+                const next = [...newGens, ...prev];
                 localStorage.setItem("mock-generations", JSON.stringify(next));
                 return next;
               });
@@ -180,6 +190,7 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
             prevStatusRef.current = res.generation.status;
             setCurrentGenId(res.generation.id);
             usePromptStore.getState().setPrompt("");
+            setTimeout(() => contentTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
           },
           onError: (err) => {
             toast.error(err.message || t("generateFailed"));
@@ -212,8 +223,11 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
       .filter((g) => g.status === "completed" && g.result_url) ?? [];
   const completedGenerations = [...mockGenerations, ...apiGenerations];
 
+  const contentTopRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div className="relative flex h-[calc(100vh-64px-52px)] flex-col overflow-hidden bg-background">
+    <div className="relative bg-background">
+      <div ref={contentTopRef} />
       {/* Mock mode 토글 */}
       <button
         onClick={() => setMockMode((v) => !v)}
@@ -228,29 +242,44 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
       </button>
 
       {/* 프리뷰 + 히스토리 영역 (하단 입력창 높이만큼 패딩) */}
-      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col overflow-auto px-4 md:px-6">
-        <div className="flex-1 py-5 sm:py-6">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
+        <div className="pt-5 pb-[240px] sm:pt-6">
           <ImagePreview
             imageUrl={imageUrl ?? undefined}
             isGenerating={isGenerating || createMutation.isPending}
             progress={progress}
+            generatingRatio={usePromptStore.getState().params.aspectRatio as string}
+            generatingCount={Number(usePromptStore.getState().params.numImages) || 1}
             generations={completedGenerations}
             onSelectGeneration={handleSelectGeneration}
             onEdit={onSwitchToEdit}
+            onDelete={(gen) => {
+              setMockGenerations((prev) => {
+                const next = prev.filter((g) => g.id !== gen.id);
+                localStorage.setItem("mock-generations", JSON.stringify(next));
+                return next;
+              });
+              if (selectedImageUrl === gen.result_url) {
+                setSelectedImageUrl(null);
+              }
+            }}
           />
         </div>
       </div>
 
-      {/* PromptInput — 하단 플로팅 */}
-      <div className="absolute inset-x-0 bottom-0 z-10 pt-6 pb-5 sm:pb-6">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <PromptInput
-            mode="image"
-            disabled={isGenerating || createMutation.isPending}
-            onSubmit={handleSubmit}
-          />
-        </div>
-      </div>
+      {/* PromptInput — 하단 플로팅 (createPortal로 body에 렌더링) */}
+      {typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-x-0 bottom-0 z-10 overscroll-none pt-6 pb-5 sm:pb-6" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }} onTouchMove={(e) => e.stopPropagation()}>
+          <div className="mx-auto max-w-7xl px-3 md:px-6">
+            <PromptInput
+              mode="image"
+              disabled={isGenerating || createMutation.isPending}
+              onSubmit={handleSubmit}
+            />
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
