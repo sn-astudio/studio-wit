@@ -348,7 +348,20 @@
     "modelLabel": "모델",
     "aspectRatio": "비율",
     "loginRequired": "로그인이 필요합니다",
-    "generateVideo": "비디오 생성"
+    "generateVideo": "비디오 생성",
+    "tabCompose": "AI 합성",
+    "composeBaseImage": "이미지 1",
+    "composeReferenceImage": "이미지 2",
+    "composePrompt": "두 이미지를 어떻게 합성할지 설명하세요...",
+    "composeGenerate": "AI 합성",
+    "composeLoading": "합성 중...",
+    "composeAddImage": "이미지 선택",
+    "composeUpload": "파일에서 업로드",
+    "composeUseCurrentImage": "현재 편집 이미지 사용",
+    "composeComplete": "이미지 합성 완료!",
+    "composeError": "이미지 합성에 실패했습니다",
+    "composeStarted": "이미지 합성을 시작했습니다",
+    "composeModelLabel": "모델"
   },
   "VideoEdit": {
     "title": "비디오 편집",

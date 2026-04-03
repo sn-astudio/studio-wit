@@ -480,7 +480,20 @@
     "modelLabel": "Model",
     "aspectRatio": "Aspect Ratio",
     "loginRequired": "Please sign in",
-    "generateVideo": "Generate Video"
+    "generateVideo": "Generate Video",
+    "tabCompose": "AI Compose",
+    "composeBaseImage": "Image 1",
+    "composeReferenceImage": "Image 2",
+    "composePrompt": "Describe how to compose the two images...",
+    "composeGenerate": "AI Compose",
+    "composeLoading": "Composing...",
+    "composeAddImage": "Select Image",
+    "composeUpload": "Upload from file",
+    "composeUseCurrentImage": "Use current editing image",
+    "composeComplete": "Image composition complete!",
+    "composeError": "Image composition failed",
+    "composeStarted": "Image composition started",
+    "composeModelLabel": "Model"
   },
   "VideoEdit": {
     "title": "Video Edit",

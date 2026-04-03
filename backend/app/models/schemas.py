@@ -221,3 +221,18 @@ class CommentListResponse(BaseModel):
     comments: list[CommentItem]
     next_cursor: Optional[str] = Field(None, description="다음 페이지 커서")
     has_more: bool = Field(..., description="추가 페이지 존재 여부")
+
+
+# ──────────────────────────────────────
+# Compose
+# ──────────────────────────────────────
+
+class ComposeRequest(BaseModel):
+    model_id: str = Field("nano-banana-pro", description="사용할 모델 ID")
+    base_image_url: str = Field(..., description="베이스 이미지 URL")
+    reference_image_url: str = Field(..., description="합성할 참조 이미지 URL")
+    prompt: str = Field(..., description="합성 프롬프트", max_length=2000)
+
+
+class ComposeResponse(BaseModel):
+    generation: Generation

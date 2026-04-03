@@ -134,6 +134,50 @@ class OpenAIProvider(BaseProvider):
             progress=100,
         )
 
+    async def compose_images(
+        self,
+        base_image_url: str,
+        reference_image_url: str,
+        prompt: str,
+    ) -> GenerationResult:
+        """두 이미지를 합성하여 새 이미지 생성 (/v1/images/edits)"""
+        try:
+            async with httpx.AsyncClient(timeout=60, follow_redirects=True) as dl:
+                base_resp = await dl.get(base_image_url)
+                base_resp.raise_for_status()
+                ref_resp = await dl.get(reference_image_url)
+                ref_resp.raise_for_status()
+        except Exception as e:
+            logger.error("OpenAI compose 이미지 다운로드 실패: %s", e)
+            return GenerationResult(
+                status="failed",
+                error_code="PROVIDER_ERROR",
+                error_message=f"입력 이미지 다운로드 실패: {e}",
+            )
+
+        base_mime = base_resp.headers.get("content-type", "image/png")
+        base_ext = base_mime.split("/")[-1] if "/" in base_mime else "png"
+        ref_mime = ref_resp.headers.get("content-type", "image/png")
+        ref_ext = ref_mime.split("/")[-1] if "/" in ref_mime else "png"
+
+        files = [
+            ("image[]", (f"base.{base_ext}", base_resp.content, base_mime)),
+            ("image[]", (f"ref.{ref_ext}", ref_resp.content, ref_mime)),
+            ("model", (None, "gpt-image-1")),
+            ("prompt", (None, prompt)),
+            ("size", (None, "1024x1024")),
+        ]
+
+        headers_no_ct = {"Authorization": f"Bearer {self.api_key}"}
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                f"{self.BASE_URL}/images/edits",
+                headers=headers_no_ct,
+                files=files,
+            )
+
+        return self._parse_image_response(resp)
+
     async def generate_video(
         self,
         prompt: str,

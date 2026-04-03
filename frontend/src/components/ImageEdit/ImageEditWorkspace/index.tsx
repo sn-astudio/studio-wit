@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Scissors, Palette, Sparkles } from "lucide-react";
+import { Scissors, Palette, Sparkles, Layers } from "lucide-react";
 
 import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
@@ -26,12 +26,14 @@ import { ImageSourceSelector } from "../ImageSourceSelector";
 import { EditPanel } from "../EditPanel";
 import { ImageFilterPanel } from "../ImageFilterPanel";
 import { AIEditPanel } from "../AIEditPanel";
+import { ComposePanel } from "../ComposePanel";
 import type { EditTab, ImageSource, ImageEditWorkspaceProps } from "./types";
 
 const TABS: { id: EditTab; labelKey: string; icon: typeof Scissors }[] = [
   { id: "edit", labelKey: "tabEdit", icon: Scissors },
   { id: "filter", labelKey: "tabFilter", icon: Palette },
   { id: "ai", labelKey: "tabAI", icon: Sparkles },
+  { id: "compose", labelKey: "tabCompose", icon: Layers },
 ];
 
 export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps) {
@@ -222,6 +224,12 @@ export function ImageEditWorkspace({ initialImageUrl }: ImageEditWorkspaceProps)
             {activeTab === "ai" && (
               <AIEditPanel
                 sourceUrl={source?.url ?? null}
+                onUseAsSource={handleUseAsSource}
+              />
+            )}
+            {activeTab === "compose" && (
+              <ComposePanel
+                currentEditingImageUrl={source?.url ?? null}
                 onUseAsSource={handleUseAsSource}
               />
             )}

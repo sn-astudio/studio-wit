@@ -2,14 +2,18 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Upload } from "lucide-react";
+import { ImageIcon, Pencil, Upload } from "lucide-react";
 
 import { useAuthStore } from "@/stores/auth";
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
 
 import type { GalleryPopoverProps } from "./types";
 
-export function GalleryPopover({ onSelect, onClose }: GalleryPopoverProps) {
+export function GalleryPopover({
+  onSelect,
+  onClose,
+  currentEditingImageUrl,
+}: GalleryPopoverProps) {
   const t = useTranslations("ImageEdit");
   const token = useAuthStore((s) => s.token);
 
@@ -70,8 +74,19 @@ export function GalleryPopover({ onSelect, onClose }: GalleryPopoverProps) {
       ref={popoverRef}
       className="absolute top-full right-0 left-0 z-10 mt-1 rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl"
     >
-      {/* 업로드 버튼 */}
       <div className="border-b border-zinc-800 p-2">
+        {/* 현재 편집 이미지 사용 */}
+        {currentEditingImageUrl && (
+          <button
+            onClick={() => onSelect(currentEditingImageUrl)}
+            className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+          >
+            <Pencil className="size-3.5" />
+            {t("composeUseCurrentImage")}
+          </button>
+        )}
+
+        {/* 업로드 버튼 */}
         <button
           onClick={() => fileInputRef.current?.click()}
           className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
