@@ -4,6 +4,7 @@ export interface EditorCanvasProps {
   imageUrl: string;
   filterValues: FilterValues;
   isCropping: boolean;
+  isFreeCrop?: boolean;
   cropRect: CropRect | null;
   onCropChange: (rect: CropRect | null) => void;
 }

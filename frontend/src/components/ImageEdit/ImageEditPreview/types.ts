@@ -6,6 +6,7 @@ export interface ImageEditPreviewProps {
   canvasRef: React.RefObject<EditorCanvasHandle | null>;
   filterValues: FilterValues;
   isCropping: boolean;
+  isFreeCrop?: boolean;
   cropRect: CropRect | null;
   onCropChange: (rect: CropRect | null) => void;
   onExport: () => void;

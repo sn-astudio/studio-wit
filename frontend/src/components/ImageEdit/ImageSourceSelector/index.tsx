@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import {
   ImageIcon,
+  ImagePlus,
   X,
   Minus,
   Plus,
@@ -15,6 +16,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { useRouter } from "@/i18n/routing";
 import { useAuthStore } from "@/stores/auth";
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
 import type { Generation } from "@/types/api";
@@ -35,6 +37,7 @@ export function ImageSourceSelector({
   selectedUrl,
 }: ImageSourceSelectorProps) {
   const t = useTranslations("ImageEdit");
+  const router = useRouter();
   const token = useAuthStore((s) => s.token);
 
   const {
@@ -48,33 +51,14 @@ export function ImageSourceSelector({
       : undefined,
   );
 
-  const apiGenerations =
+  const generations =
     data?.pages.flatMap((page) => page.generations) ?? [];
 
-  // Mock 생성 이미지도 표시
-  const [mockGenerations, setMockGenerations] = useState<typeof apiGenerations>([]);
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("mock-generations");
-      if (saved) setMockGenerations(JSON.parse(saved));
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const generations = [...mockGenerations, ...apiGenerations];
-
   const handleDelete = useCallback(
-    (genId: string) => {
-      const updated = mockGenerations.filter((g) => g.id !== genId);
-      setMockGenerations(updated);
-      try {
-        localStorage.setItem("mock-generations", JSON.stringify(updated));
-      } catch {
-        // ignore
-      }
+    (_genId: string) => {
+      // TODO: API 삭제 구현
     },
-    [mockGenerations],
+    [],
   );
 
   // 삭제 다이얼로그
@@ -219,13 +203,22 @@ export function ImageSourceSelector({
       {/* 히스토리 그리드 */}
       <div>
         {generations.length === 0 ? (
-          <div className="flex w-full items-center justify-center py-10">
-            <div className="text-center">
-              <ImageIcon className="mx-auto size-8 text-neutral-300 dark:text-neutral-600" />
-              <p className="mt-2 text-[13px] text-muted-foreground/60">
-                {t("noHistory")}
-              </p>
+          <div className="flex w-full flex-col items-center justify-center py-20">
+            <div className="flex size-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+              <ImagePlus className="size-6 text-neutral-400 dark:text-neutral-500" />
             </div>
+            <p className="mt-4 text-[16px] font-[600] text-foreground">
+              {t("noHistory")}
+            </p>
+            <p className="mt-2.5 text-[14px] text-muted-foreground/60">
+              {t("noHistoryDesc")}
+            </p>
+            <button
+              onClick={() => router.push("/image")}
+              className="mt-6 flex h-10 cursor-pointer items-center rounded-lg bg-neutral-100 px-5 text-[14px] font-[500] text-muted-foreground transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
+            >
+              {t("goToCreate")}
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
@@ -449,30 +442,62 @@ export function ImageSourceSelector({
 
               {/* 하단 액션 버튼 */}
               <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    if (lightboxGen.result_url) {
-                      skipRestoreRef.current = true;
-                      onSourceSelected({
-                        url: lightboxGen.result_url,
-                        generationId: lightboxGen.id,
-                      });
-                      closeLightbox();
-                    }
-                  }}
-                  className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
-                >
-                  <Wand2 className="size-4" />
-                </button>
-                <button
-                  onClick={async () => {
-                    if (lightboxGen.result_url)
-                      await downloadImage(lightboxGen.result_url);
-                  }}
-                  className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
-                >
-                  <Download className="size-4" />
-                </button>
+                <TooltipProvider delay={0}>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          onClick={() => {
+                            if (lightboxGen.result_url) {
+                              skipRestoreRef.current = true;
+                              onSourceSelected({
+                                url: lightboxGen.result_url,
+                                generationId: lightboxGen.id,
+                              });
+                              closeLightbox();
+                            }
+                          }}
+                          className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                        >
+                          <Wand2 className="size-4" />
+                        </button>
+                      }
+                    />
+                    <TooltipContent>{t("startEdit")}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          onClick={async () => {
+                            if (lightboxGen.result_url)
+                              await downloadImage(lightboxGen.result_url);
+                          }}
+                          className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                        >
+                          <Download className="size-4" />
+                        </button>
+                      }
+                    />
+                    <TooltipContent>{t("download")}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          onClick={() => {
+                            closeLightbox();
+                            setDeleteTarget(lightboxGen);
+                          }}
+                          className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-red-500/80"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      }
+                    />
+                    <TooltipContent>{t("delete")}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
             </div>

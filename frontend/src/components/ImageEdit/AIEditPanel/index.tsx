@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Download, Loader2, Sparkles } from "lucide-react";
+import { Download, Loader2, Sparkle } from "lucide-react";
 
 import { useAuthStore } from "@/stores/auth";
 import {
@@ -134,13 +134,13 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
       {/* 모델 선택 */}
       <div className="space-y-3">
         <p className="text-[13px] font-[600] text-foreground">{t("modelLabel")}</p>
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="flex flex-wrap gap-2">
           {models.map((m) => (
             <button
               key={m.id}
               onClick={() => setSelectedModel(m.id)}
               className={cn(
-                "cursor-pointer rounded-lg py-3 text-center text-[13px] font-[500] transition-colors",
+                "cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80",
                 selectedModel === m.id
                   ? "bg-foreground text-background"
                   : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white",
@@ -155,13 +155,13 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
       {/* 비율 선택 */}
       <div className="space-y-3">
         <p className="text-[13px] font-[600] text-foreground">{t("aspectRatio")}</p>
-        <div className="grid grid-cols-5 gap-2.5">
+        <div className="flex flex-wrap gap-1.5">
           {ASPECT_RATIOS.map((r) => (
             <button
               key={r}
               onClick={() => setAspectRatio(r)}
               className={cn(
-                "cursor-pointer rounded-lg py-3 text-center text-[13px] font-[500] transition-colors",
+                "cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80",
                 aspectRatio === r
                   ? "bg-foreground text-background"
                   : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white",
@@ -176,7 +176,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
       </div>
 
       {/* 생성 버튼 — 하단 고정 */}
-      <div className="mt-auto pt-4">
+      <div className="mt-auto pt-6">
       <button
         onClick={handleGenerate}
         disabled={
@@ -187,7 +187,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
         {isGenerating ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
-          <Sparkles className="size-4" />
+          <Sparkle className="size-4" />
         )}
         {isGenerating ? t("aiGenerating") : t("aiGenerate")}
       </button>

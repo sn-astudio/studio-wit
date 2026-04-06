@@ -7,7 +7,7 @@ import {
   Loader2,
   Download,
   Wand2,
-  Sparkles,
+  ImagePlus,
   Trash2,
   X,
   ZoomIn,
@@ -154,7 +154,7 @@ export function ImagePreview({
             Array.from({ length: generatingCount }).map((_, i) => (
               <div
                 key={`loading-${i}`}
-                className="relative flex aspect-square flex-col items-center justify-center overflow-hidden rounded-xl bg-neutral-100 sm:aspect-auto sm:h-[280px] sm:flex-grow dark:bg-neutral-800/60"
+                className="relative flex flex-col items-center justify-center overflow-hidden rounded-xl bg-neutral-100 sm:h-[280px] dark:bg-neutral-800/60"
                 style={{ aspectRatio: generatingRatio?.replace(":", "/") ?? "1/1" }}
               >
                 <div className="relative flex items-center justify-center">
@@ -283,18 +283,16 @@ export function ImagePreview({
         </div>
       ) : (
         /* 완전 빈 상태 */
-        <div className="flex flex-col items-center pt-[22vh] gap-5">
-          <div className="flex size-20 items-center justify-center rounded-2xl bg-neutral-100 dark:bg-neutral-800/80">
-            <Sparkles className="size-8 text-neutral-300 dark:text-neutral-600" strokeWidth={1.5} />
+        <div className="flex flex-col items-center pt-[20vh]">
+          <div className="flex size-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+            <ImagePlus className="size-6 text-neutral-400 dark:text-neutral-500" />
           </div>
-          <div className="text-center">
-            <p className="text-[15px] font-semibold text-muted-foreground">
-              {t("emptyPreview")}
-            </p>
-            <p className="mt-1.5 text-[13px] text-muted-foreground/60">
-              {t("emptyPreviewDesc")}
-            </p>
-          </div>
+          <p className="mt-4 text-[16px] font-[600] text-foreground">
+            {t("emptyPreview")}
+          </p>
+          <p className="mt-2.5 text-[14px] text-muted-foreground/60">
+            {t("emptyPreviewDesc")}
+          </p>
         </div>
       )}
 
@@ -411,41 +409,64 @@ export function ImagePreview({
 
             {/* 하단 액션 버튼 */}
             <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    if (onEdit) {
-                      onEdit(lightboxGen.result_url!);
-                    } else {
-                      router.push(
-                        `/image-edit?img=${encodeURIComponent(lightboxGen.result_url!)}`,
-                      );
+              <TooltipProvider delay={0}>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        onClick={() => {
+                          if (onEdit) {
+                            onEdit(lightboxGen.result_url!);
+                          } else {
+                            router.push(
+                              `/image-edit?img=${encodeURIComponent(lightboxGen.result_url!)}`,
+                            );
+                          }
+                          setLightboxGen(null);
+                        }}
+                        className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                      >
+                        <Wand2 className="size-4" />
+                      </button>
                     }
-                    setLightboxGen(null);
-                  }}
-                  className="pointer-events-auto flex size-9 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm hover:bg-black/60"
-                >
-                  <Wand2 className="size-4" />
-                </button>
-                <button
-                  onClick={async () => {
-                    if (lightboxGen.result_url)
-                      await downloadImage(lightboxGen.result_url);
-                  }}
-                  className="pointer-events-auto flex size-9 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm hover:bg-black/60"
-                >
-                  <Download className="size-4" />
-                </button>
+                  />
+                  <TooltipContent>{t("edit")}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        onClick={async () => {
+                          if (lightboxGen.result_url)
+                            await downloadImage(lightboxGen.result_url);
+                        }}
+                        className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                      >
+                        <Download className="size-4" />
+                      </button>
+                    }
+                  />
+                  <TooltipContent>{t("download")}</TooltipContent>
+                </Tooltip>
                 {onDelete && (
-                  <button
-                    onClick={() => {
-                      setLightboxGen(null);
-                      setDeleteTarget(lightboxGen);
-                    }}
-                    className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-red-500/80"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          onClick={() => {
+                            setLightboxGen(null);
+                            setDeleteTarget(lightboxGen);
+                          }}
+                          className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-red-500/80"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      }
+                    />
+                    <TooltipContent>{t("delete")}</TooltipContent>
+                  </Tooltip>
                 )}
+              </TooltipProvider>
             </div>
           </div>
         </div>,

@@ -72,7 +72,7 @@ export default async function LocaleLayout({
                   toastOptions={{
                     classNames: {
                       toast:
-                        "!min-w-[320px] !max-w-[420px] !rounded-xl !bg-neutral-900 !px-5 !py-4 !shadow-2xl !border !border-neutral-800 !gap-2",
+                        "!rounded-xl !bg-neutral-900 !px-5 !py-4 !shadow-2xl !border !border-neutral-800 !gap-2",
                       title: "!text-[14px] !font-[500] !leading-snug !text-white",
                       description: "!text-[13px] !text-white/50 !mt-0.5",
                       icon: "!text-white/80",

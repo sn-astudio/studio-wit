@@ -1,9 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
+import { Undo2, Redo2 } from "lucide-react";
 
 import { useImageEditorStore } from "@/stores/imageEditor";
 import { EditorToolbar } from "@/components/ImageCreate/ImageEditor/EditorToolbar";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/Tooltip";
 import { CropOverlay } from "@/components/ImageCreate/ImageEditor/CropOverlay";
 import {
   rotateCanvas90,
@@ -11,18 +19,22 @@ import {
   flipCanvasV,
 } from "@/components/ImageCreate/ImageEditor/utils";
 import { clampRect } from "@/components/ImageCreate/ImageEditor/CropOverlay/utils";
-import type { CropRatio } from "@/components/ImageCreate/ImageEditor/CropOverlay/types";
-
 import type { EditPanelProps } from "./types";
 
 export function EditPanel({
   canvasRef,
   cropRect,
   setCropRect,
+  cropRatio,
+  setCropRatio,
 }: EditPanelProps) {
+  const t = useTranslations("ImageEdit");
   const activeTool = useImageEditorStore((s) => s.activeTool);
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
-  const [cropRatio, setCropRatio] = useState<CropRatio>("free");
+  const historyIndex = useImageEditorStore((s) => s.historyIndex);
+  const historyLength = useImageEditorStore((s) => s.historyLength);
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < historyLength - 1;
   const ratioFromPanelRef = useRef(false);
 
   const handleRotate = useCallback(() => {
@@ -75,15 +87,19 @@ export function EditPanel({
     prevToolRef.current = activeTool;
   }, [activeTool, setCropRect]);
 
-  // 캔버스에서 cropRect가 변경되면 (패널 비율 선택이 아닐 때) 자유로 리셋
+  // 캔버스에서 cropRect 크기가 변경되면 (이동이 아닌 리사이즈/새 드래그) 자유로 리셋
+  const prevSizeRef = useRef<{ w: number; h: number } | null>(null);
   useEffect(() => {
+    if (!ratioFromPanelRef.current && activeTool === "crop" && cropRect) {
+      const prev = prevSizeRef.current;
+      if (prev != null && cropRatio !== "free" && (Math.round(prev.w) !== Math.round(cropRect.width) || Math.round(prev.h) !== Math.round(cropRect.height))) {
+        setCropRatio("free");
+      }
+    }
+    prevSizeRef.current = cropRect ? { w: cropRect.width, h: cropRect.height } : null;
     if (ratioFromPanelRef.current) {
-      // 패널에서 변경한 것 → 타이머 후 리셋
       const id = setTimeout(() => { ratioFromPanelRef.current = false; }, 100);
       return () => clearTimeout(id);
-    }
-    if (activeTool === "crop" && cropRect) {
-      setCropRatio("free");
     }
   }, [cropRect, activeTool]);
 
@@ -97,6 +113,40 @@ export function EditPanel({
         onFlipH={handleFlipH}
         onFlipV={handleFlipV}
       />
+
+      {/* undo/redo */}
+      <TooltipProvider delay={0}>
+        <div className="flex items-center justify-center gap-1">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  onClick={() => canvasRef.current?.undo()}
+                  disabled={!canUndo}
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-800"
+                >
+                  <Undo2 className="size-4" />
+                </button>
+              }
+            />
+            <TooltipContent>{t("undo")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  onClick={() => canvasRef.current?.redo()}
+                  disabled={!canRedo}
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-800"
+                >
+                  <Redo2 className="size-4" />
+                </button>
+              }
+            />
+            <TooltipContent>{t("redo")}</TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
 
       {/* 자르기 옵션 — 구분선 + 비율 프리셋 */}
       {activeTool === "crop" && (

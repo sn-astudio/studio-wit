@@ -92,11 +92,13 @@ export function CropOverlay({
         <p className="text-[13px] font-[600] text-foreground">
           {t("cropRatio")}
         </p>
-        {cropRect && (
-          <span className="text-[12px] font-[500] tabular-nums text-muted-foreground">
-            {Math.round(cropRect.width)} × {Math.round(cropRect.height)}
-          </span>
-        )}
+        <span className="text-[12px] font-[500] text-muted-foreground">
+          {selectedRatio === "free" && !cropRect
+            ? t("cropHint")
+            : cropRect
+              ? <span className="tabular-nums">{Math.round(cropRect.width)} × {Math.round(cropRect.height)}</span>
+              : null}
+        </span>
       </div>
 
       {/* 비율 프리셋 — 가로 pill */}
@@ -128,7 +130,7 @@ export function CropOverlay({
         <button
           onClick={onApply}
           disabled={!cropRect || cropRect.width < 2 || cropRect.height < 2}
-          className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-foreground py-2.5 text-[13px] font-[600] text-background transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+          className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
         >
           {t("applyCrop")}
         </button>

@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Upload, Download, Clapperboard, Trash2 } from "lucide-react";
+import { Upload, Download, Clapperboard, Minus, Wand2 } from "lucide-react";
 import { EditorCanvas } from "@/components/ImageCreate/ImageEditor/EditorCanvas";
 import {
   TooltipProvider,
@@ -18,6 +18,7 @@ export function ImageEditPreview({
   canvasRef,
   filterValues,
   isCropping,
+  isFreeCrop,
   cropRect,
   onCropChange,
   onExport,
@@ -68,7 +69,7 @@ export function ImageEditPreview({
         onDrop={handleDrop}
       >
         <div className="flex size-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-          <Upload className="size-6 text-neutral-400 dark:text-neutral-500" />
+          <Wand2 className="size-6 text-neutral-400 dark:text-neutral-500" />
         </div>
         <p className="mt-4 text-[16px] font-[600] text-foreground">
           {isDragging ? t("dropImage") : t("selectImage")}
@@ -102,6 +103,7 @@ export function ImageEditPreview({
         imageUrl={imageUrl}
         filterValues={filterValues}
         isCropping={isCropping}
+        isFreeCrop={isFreeCrop}
         cropRect={cropRect}
         onCropChange={onCropChange}
       />
@@ -140,13 +142,13 @@ export function ImageEditPreview({
             render={
               <button
                 onClick={onRemoveImage}
-                className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-red-500/80"
+                className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
               >
-                <Trash2 className="size-4" />
+                <Minus className="size-4" />
               </button>
             }
           />
-          <TooltipContent>{t("delete")}</TooltipContent>
+          <TooltipContent>{t("removeImage")}</TooltipContent>
         </Tooltip>
         </TooltipProvider>
       </div>

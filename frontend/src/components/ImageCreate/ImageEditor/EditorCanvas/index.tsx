@@ -15,9 +15,19 @@ import type { CropRect } from "../types";
 import type { EditorCanvasHandle, EditorCanvasProps } from "./types";
 import { cssToCanvasCoords } from "./utils";
 
+type DragMode = "draw" | "move" | "resize";
+type ResizeHandle = "nw" | "ne" | "sw" | "se" | "n" | "s" | "w" | "e";
+
+const CURSOR_MAP: Record<ResizeHandle, string> = {
+  nw: "nwse-resize", se: "nwse-resize",
+  ne: "nesw-resize", sw: "nesw-resize",
+  n: "ns-resize", s: "ns-resize",
+  w: "ew-resize", e: "ew-resize",
+};
+
 export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
   function EditorCanvas(
-    { imageUrl, filterValues, isCropping, cropRect, onCropChange },
+    { imageUrl, filterValues, isCropping, isFreeCrop = true, cropRect, onCropChange },
     ref,
   ) {
     const mainRef = useRef<HTMLCanvasElement>(null);
@@ -78,6 +88,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         overlay.style.height = `${displayH}px`;
         overlay.width = iw;
         overlay.height = ih;
+        pixelRatioRef.current = displayW > 0 ? iw / displayW : 1;
       }
     }, []);
 
@@ -133,9 +144,8 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        pushSnapshot(); // save pre-crop state — wait, pushSnapshot saves current, but we want it before crop
-        // Actually pushSnapshot already saved the current state above.
-        // Let's redo: we push a snapshot of the current canvas, then mutate.
+        // undo용: 자르기 전 상태 저장
+        pushSnapshot();
 
         const imageData = ctx.getImageData(
           rect.x,
@@ -147,7 +157,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         canvas.height = rect.height;
         ctx.putImageData(imageData, 0, 0);
 
-        // Push the cropped state as new snapshot
+        // 자른 결과를 새 체크포인트로 기록
         const croppedData = ctx.getImageData(
           0,
           0,
@@ -225,9 +235,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       return () => observer.disconnect();
     }, [fitCanvas]);
 
-    // 크롭 드래그 (그리기 + 이동 + 리사이즈)
-    type DragMode = "draw" | "move" | "resize";
-    type ResizeHandle = "nw" | "ne" | "sw" | "se" | "n" | "s" | "w" | "e";
+    // 크롭 드래그
     const dragRef = useRef<{
       startX: number;
       startY: number;
@@ -237,11 +245,16 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       origRect?: CropRect;
     } | null>(null);
 
-    const EDGE = 14;
+    const pixelRatioRef = useRef(1);
+
+    const getEdge = useCallback(() => {
+      return 14 * pixelRatioRef.current;
+    }, []);
 
     const getHandle = useCallback(
       (x: number, y: number): ResizeHandle | null => {
         if (!cropRect) return null;
+        const EDGE = getEdge();
         const { x: cx, y: cy, width: cw, height: ch } = cropRect;
         const nearL = Math.abs(x - cx) < EDGE;
         const nearR = Math.abs(x - (cx + cw)) < EDGE;
@@ -260,15 +273,8 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         if (nearR && inY) return "e";
         return null;
       },
-      [cropRect],
+      [cropRect, getEdge],
     );
-
-    const cursorMap: Record<ResizeHandle, string> = {
-      nw: "nwse-resize", se: "nwse-resize",
-      ne: "nesw-resize", sw: "nesw-resize",
-      n: "ns-resize", s: "ns-resize",
-      w: "ew-resize", e: "ew-resize",
-    };
 
     const drawCropOverlay = useCallback(
       (rect: CropRect) => {
@@ -278,6 +284,8 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         if (!ctx) return;
         ctx.clearRect(0, 0, overlay.width, overlay.height);
 
+        const pixelRatio = pixelRatioRef.current;
+
         // 어두운 오버레이
         ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
         ctx.fillRect(0, 0, overlay.width, overlay.height);
@@ -285,15 +293,15 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
 
         // 얇은 테두리
         ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1 * pixelRatio;
         ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
 
-        // L자 모서리 핸들 + 가장자리 중앙 바
+        // L자 모서리 핸들 + 가장자리 중앙 바 (화면상 일정 크기 유지)
         ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 3 * pixelRatio;
         ctx.lineCap = "round";
-        const L = Math.min(24, rect.width / 4, rect.height / 4);
-        const bar = Math.min(32, rect.width / 4, rect.height / 4);
+        const L = Math.min(16 * pixelRatio, rect.width / 4, rect.height / 4);
+        const bar = Math.min(32 * pixelRatio, rect.width / 4, rect.height / 4);
         const { x: rx, y: ry, width: rw, height: rh } = rect;
 
         ctx.beginPath();
@@ -330,7 +338,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         const handle = getHandle(x, y);
         if (cropRect && handle) {
           dragRef.current = { startX: x, startY: y, dragging: true, mode: "resize", handle, origRect: { ...cropRect } };
-          overlay.style.cursor = cursorMap[handle];
+          overlay.style.cursor = CURSOR_MAP[handle];
           return;
         }
 
@@ -341,11 +349,16 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
           return;
         }
 
-        // 3) 외부 → 새로 그리기
+        // 3) 외부 → 비율 고정이면 이동, 자유면 새로 그리기
+        if (!isFreeCrop && cropRect) {
+          dragRef.current = { startX: x, startY: y, dragging: true, mode: "move", origRect: { ...cropRect } };
+          overlay.style.cursor = "grabbing";
+          return;
+        }
         dragRef.current = { startX: x, startY: y, dragging: true, mode: "draw" };
         onCropChange(null);
       },
-      [isCropping, onCropChange, cropRect, getHandle, cursorMap],
+      [isCropping, isFreeCrop, onCropChange, cropRect, getHandle],
     );
 
     const handlePointerMove = useCallback(
@@ -362,8 +375,10 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         if (!dragRef.current?.dragging) {
           const handle = getHandle(x, y);
           if (handle) {
-            overlay.style.cursor = cursorMap[handle];
+            overlay.style.cursor = CURSOR_MAP[handle];
           } else if (cropRect && x >= cropRect.x && x <= cropRect.x + cropRect.width && y >= cropRect.y && y <= cropRect.y + cropRect.height) {
+            overlay.style.cursor = "grab";
+          } else if (!isFreeCrop && cropRect) {
             overlay.style.cursor = "grab";
           } else {
             overlay.style.cursor = "crosshair";
@@ -403,13 +418,11 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
           drawCropOverlay(newRect);
         }
       },
-      [isCropping, onCropChange, drawCropOverlay, cropRect, getHandle, cursorMap],
+      [isCropping, isFreeCrop, onCropChange, drawCropOverlay, cropRect, getHandle],
     );
 
     const handlePointerUp = useCallback(() => {
-      if (dragRef.current) dragRef.current.dragging = false;
-      const overlay = overlayRef.current;
-      if (overlay) overlay.style.cursor = "crosshair";
+      dragRef.current = null;
     }, []);
 
     // 크롭 모드 해제 시 오버레이 클리어
