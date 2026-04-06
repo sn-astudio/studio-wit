@@ -6,9 +6,9 @@ export interface EditorToolbarProps {
   onRotate: () => void;
   onFlipH: () => void;
   onFlipV: () => void;
-  onUndo: () => void;
-  onRedo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
   hideFilter?: boolean;
 }

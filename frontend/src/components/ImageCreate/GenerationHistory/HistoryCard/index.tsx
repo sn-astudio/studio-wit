@@ -27,8 +27,8 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
         isProcessing
           ? "pointer-events-none border border-primary/20 bg-primary/5"
           : isFailed
-            ? "pointer-events-none border border-red-900/40 bg-red-950/20 opacity-60"
-            : "cursor-pointer border border-zinc-800/60 bg-zinc-900/60 transition-colors hover:border-zinc-700"
+            ? "pointer-events-none border border-destructive/20 bg-destructive/5 opacity-60"
+            : "cursor-pointer border border-border/60 bg-card transition-all hover:border-border hover:shadow-sm"
       }`}
     >
       {/* Thumbnail */}
@@ -37,7 +37,7 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
         <img
           src={gen.result_url}
           alt={gen.prompt}
-          className="absolute inset-0 size-full object-cover"
+          className="absolute inset-0 size-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
         />
       )}
 
@@ -49,24 +49,24 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
       )}
       {isFailed && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <AlertCircle className="size-5 text-red-500" />
+          <AlertCircle className="size-5 text-destructive" />
         </div>
       )}
       {isCompleted && !gen.result_url && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <ImageIcon className="size-6 text-zinc-600 transition-colors group-hover:text-zinc-400" />
+          <ImageIcon className="size-6 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground" />
         </div>
       )}
 
       {/* Bottom gradient overlay with info */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-6 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-        <p className="truncate text-left text-[11px] leading-tight text-zinc-200">
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2.5 pt-8 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <p className="truncate text-left text-xs leading-snug text-white">
           {gen.prompt}
         </p>
-        <div className="mt-0.5 flex items-center gap-1.5">
-          <span className="text-[10px] text-zinc-400">{gen.model_id}</span>
-          <span className="text-[10px] text-zinc-500">&middot;</span>
-          <span className="text-[10px] text-zinc-400">{timeAgo}</span>
+        <div className="mt-1 flex items-center gap-1.5">
+          <span className="text-[11px] text-white/60">{gen.model_id}</span>
+          <span className="text-[11px] text-white/40">&middot;</span>
+          <span className="text-[11px] text-white/60">{timeAgo}</span>
         </div>
       </div>
     </button>

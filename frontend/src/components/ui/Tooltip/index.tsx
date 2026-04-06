@@ -21,11 +21,11 @@ function TooltipContent({
 }) {
   return (
     <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Positioner sideOffset={sideOffset}>
+      <TooltipPrimitive.Positioner sideOffset={sideOffset + 4} className="pointer-events-none z-[9999]">
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={cn(
-            "z-50 rounded-md bg-primary px-2.5 py-1 text-xs text-primary-foreground",
+            "z-50 animate-in fade-in-0 zoom-in-95 rounded-md bg-neutral-900 px-2.5 py-1.5 text-[13px] text-white shadow-lg duration-150 dark:border dark:border-neutral-800 dark:bg-neutral-900",
             className,
           )}
           {...props}

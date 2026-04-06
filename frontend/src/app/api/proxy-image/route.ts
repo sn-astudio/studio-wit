@@ -5,7 +5,12 @@ const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? "";
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get("url");
 
-  if (!url || !CDN_URL || !url.startsWith(CDN_URL.replace(/\/+$/, ""))) {
+  const allowedPrefixes = [
+    CDN_URL.replace(/\/+$/, ""),
+    "https://picsum.photos",
+  ].filter(Boolean);
+
+  if (!url || !allowedPrefixes.some((prefix) => url.startsWith(prefix))) {
     return NextResponse.json(
       { error: "허용되지 않는 URL입니다." },
       { status: 400 },

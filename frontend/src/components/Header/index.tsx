@@ -9,11 +9,13 @@ import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import {
+  Check,
   ChevronDown,
+  ChevronRight,
   Globe,
-  LayoutGrid,
   LogOut,
   Menu,
+  Monitor,
   Moon,
   Sun,
   User,
@@ -25,9 +27,12 @@ import { NAV_ITEMS } from "./const";
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
+  const [themeSubOpen, setThemeSubOpen] = useState(false);
+  const mobileProfileRef = useRef<HTMLDivElement>(null);
   const [navDropdown, setNavDropdown] = useState<string | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const t = useTranslations("Header");
   const tLang = useTranslations("LanguageSwitcher");
   const locale = useLocale();
@@ -59,8 +64,15 @@ export function Header() {
     };
   }, [mobileOpen]);
 
+  const themeOptions = [
+    { value: "system", labelKey: "systemMode", icon: Monitor },
+    { value: "light", labelKey: "lightMode", icon: Sun },
+    { value: "dark", labelKey: "darkMode", icon: Moon },
+  ] as const;
+
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    const next = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
+    setTheme(next);
     setProfileOpen(false);
     setMobileOpen(false);
   };
@@ -79,6 +91,14 @@ export function Header() {
         !profileRef.current.contains(e.target as Node)
       ) {
         setProfileOpen(false);
+        setThemeSubOpen(false);
+      }
+      if (
+        mobileProfileRef.current &&
+        !mobileProfileRef.current.contains(e.target as Node)
+      ) {
+        setMobileProfileOpen(false);
+        setThemeSubOpen(false);
       }
       if (
         navDropdown &&
@@ -96,14 +116,12 @@ export function Header() {
     <header className={`fixed top-0 z-50 w-full ${mobileOpen ? "bg-[#0d0d0d] dark:bg-background" : "bg-[#0d0d0d] dark:bg-background/80 dark:backdrop-blur-xl"}`}>
       <div className="relative z-10 mx-auto flex h-16 max-w-7xl items-center justify-between px-4 text-white dark:text-foreground md:px-6">
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon-lg"
-            className="md:hidden"
+          <button
+            className="flex size-10 cursor-pointer items-center justify-center rounded-xl text-white transition-colors hover:bg-white/[0.08] dark:text-foreground dark:hover:bg-white/[0.05] md:hidden"
             onClick={() => setMobileOpen((prev) => !prev)}
           >
             {mobileOpen ? <X className="size-6" /> : <Menu className="size-5" />}
-          </Button>
+          </button>
           <Link href="/" className="flex items-center">
             <span className="text-2xl font-bold tracking-tight">Wit</span>
           </Link>
@@ -173,11 +191,11 @@ export function Header() {
 
         {/* 데스크탑: 프로필 드롭다운 */}
         <div className="hidden items-center gap-2 md:flex">
-          {session ? (
+          {status === "loading" ? null : session ? (
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setProfileOpen((prev) => !prev)}
-                className="flex cursor-pointer items-center gap-2 rounded-full p-1 transition-colors hover:bg-secondary"
+                className="flex cursor-pointer items-center gap-2 rounded-full p-1"
               >
                 {session.user?.image ? (
                   <NextImage
@@ -195,41 +213,74 @@ export function Header() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border/80 bg-popover p-2 shadow-lg">
+                <div className="absolute right-0 top-full mt-2 w-60 rounded-xl border border-neutral-200 bg-popover p-2.5 shadow-lg dark:border-neutral-800">
                   {/* 유저 정보 */}
-                  <div className="px-3 py-2">
-                    <p className="text-base font-medium">{session.user?.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="px-3 pt-1 pb-2.5">
+                    <p className="text-[14px] font-[500] text-foreground">{session.user?.name}</p>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground/60">
                       {session.user?.email}
                     </p>
                   </div>
-                  <Separator className="my-1" />
+                  <div className="mx-2 my-1.5 h-px bg-neutral-200 dark:bg-neutral-800" />
                   {/* 마이페이지 */}
                   <Link
                     href="/mypage"
                     onClick={() => setProfileOpen(false)}
-                    className="flex w-full items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                    className="flex h-10 w-full items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
-                    <LayoutGrid className="h-4 w-4" />
+                    <User className="size-4 opacity-50" />
                     {t("myPage")}
                   </Link>
-                  <Separator className="my-1" />
                   {/* 테마 변경 */}
-                  <button
-                    onClick={toggleTheme}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                  <div
+                    className="group/theme relative"
+                    onMouseEnter={() => setThemeSubOpen(true)}
+                    onMouseLeave={() => setThemeSubOpen(false)}
                   >
-                    <Sun className="hidden h-4 w-4 dark:block" />
-                    <Moon className="block h-4 w-4 dark:hidden" />
-                    <span className="hidden dark:inline">{t("lightMode")}</span>
-                    <span className="inline dark:hidden">{t("darkMode")}</span>
-                  </button>
+                    <button
+                      className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    >
+                      <Sun className="size-4 opacity-50" />
+                      <span className="flex-1 text-left">{t("themeLabel")}</span>
+                      <ChevronRight className="size-4 opacity-30" />
+                    </button>
+                    {themeSubOpen && (
+                      <>
+                        {/* 브릿지: 버튼과 서브메뉴 사이 마우스 이동 영역 */}
+                        <div className="absolute right-full top-0 z-40 h-full w-4" />
+                        <div className="absolute right-full -top-4 z-50 mr-2 w-44 rounded-xl border border-neutral-200 bg-popover p-1.5 shadow-lg dark:border-neutral-800">
+                          <div className="flex flex-col gap-1">
+                          {themeOptions.map((opt) => {
+                            const Icon = opt.icon;
+                            const isActive = theme === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                onClick={() => {
+                                  setTheme(opt.value);
+                                  setThemeSubOpen(false);
+                                }}
+                                className={`flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[13px] font-[500] transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 ${
+                                  isActive ? "bg-neutral-100 text-foreground dark:bg-neutral-800" : "text-muted-foreground"
+                                }`}
+                              >
+                                <Icon className={`size-4 ${isActive ? "opacity-80" : "opacity-40"}`} />
+                                <span className="flex-1 text-left">{t(opt.labelKey)}</span>
+                                {isActive && <Check className="size-3.5 text-foreground" strokeWidth={2.5} />}
+                              </button>
+                            );
+                          })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
                   {/* 언어 변경 */}
                   <button
                     onClick={switchLocale}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                    className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
-                    <Globe className="h-4 w-4" />
+                    <Globe className="size-4 opacity-50" />
                     {tLang(nextLocale)}
                   </button>
                   {/* 로그아웃 */}
@@ -238,9 +289,9 @@ export function Header() {
                       setProfileOpen(false);
                       signOut({ callbackUrl: window.location.href });
                     }}
-                    className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
+                    className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="size-4 opacity-50" />
                     {t("signOut")}
                   </button>
                 </div>
@@ -270,24 +321,127 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
-          <button
-            onClick={toggleTheme}
-            className="flex cursor-pointer items-center justify-center rounded-[12px] p-2 text-white/60 transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-white dark:text-muted-foreground dark:hover:bg-[rgba(255,255,255,0.05)] dark:hover:text-foreground"
-          >
-            <Sun className="hidden size-5 dark:block" />
-            <Moon className="block size-5 dark:hidden" />
-          </button>
-          {!session && (
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() =>
-                signIn("google", { callbackUrl: window.location.href })
-              }
-              className="border-white/15 bg-transparent px-4 text-sm font-medium text-white hover:bg-white/[0.05] hover:text-white"
-            >
-              {t("signIn")}
-            </Button>
+          {status === "loading" ? null : session ? (
+            <div className="relative" ref={mobileProfileRef}>
+              <button
+                onClick={() => setMobileProfileOpen((prev) => !prev)}
+                className="flex cursor-pointer items-center rounded-full p-1"
+              >
+                {session.user?.image ? (
+                  <NextImage
+                    src={session.user.image}
+                    alt={session.user.name ?? ""}
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                  />
+                ) : (
+                  <div className="flex size-8 items-center justify-center rounded-full bg-secondary">
+                    <User className="size-4 text-muted-foreground" />
+                  </div>
+                )}
+              </button>
+
+              {mobileProfileOpen && (
+                <div className="absolute right-0 top-full mt-2 w-60 rounded-xl border border-neutral-200 bg-popover p-2.5 shadow-lg dark:border-neutral-800">
+                  <div className="px-3 pt-1 pb-2.5">
+                    <p className="text-[14px] font-[500] text-foreground">{session.user?.name}</p>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground/60">
+                      {session.user?.email}
+                    </p>
+                  </div>
+                  <div className="mx-2 my-1.5 h-px bg-neutral-200 dark:bg-neutral-800" />
+                  <Link
+                    href="/mypage"
+                    onClick={() => setMobileProfileOpen(false)}
+                    className="flex h-10 w-full items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    <User className="size-4 opacity-50" />
+                    {t("myPage")}
+                  </Link>
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setThemeSubOpen(true)}
+                    onMouseLeave={() => setThemeSubOpen(false)}
+                  >
+                    <button
+                      onClick={() => setThemeSubOpen((v) => !v)}
+                      className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    >
+                      <Sun className="size-4 opacity-50" />
+                      <span className="flex-1 text-left">{t("themeLabel")}</span>
+                      <ChevronRight className="size-4 opacity-30" />
+                    </button>
+                    {themeSubOpen && (
+                      <>
+                        <div className="absolute right-full top-0 z-40 h-full w-4" />
+                        <div className="absolute right-full -top-4 z-50 mr-2 w-44 rounded-xl border border-neutral-200 bg-popover p-1.5 shadow-lg dark:border-neutral-800">
+                          <div className="flex flex-col gap-1">
+                          {themeOptions.map((opt) => {
+                            const Icon = opt.icon;
+                            const isActive = theme === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                onClick={() => {
+                                  setTheme(opt.value);
+                                  setThemeSubOpen(false);
+                                }}
+                                className={`flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[13px] font-[500] transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 ${
+                                  isActive ? "bg-neutral-100 text-foreground dark:bg-neutral-800" : "text-muted-foreground"
+                                }`}
+                              >
+                                <Icon className={`size-4 ${isActive ? "opacity-80" : "opacity-40"}`} />
+                                <span className="flex-1 text-left">{t(opt.labelKey)}</span>
+                                {isActive && <Check className="size-3.5 text-foreground" strokeWidth={2.5} />}
+                              </button>
+                          );
+                          })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <button
+                    onClick={switchLocale}
+                    className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    <Globe className="size-4 opacity-50" />
+                    {tLang(nextLocale)}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileProfileOpen(false);
+                      signOut({ callbackUrl: window.location.href });
+                    }}
+                    className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  >
+                    <LogOut className="size-4 opacity-50" />
+                    {t("signOut")}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={toggleTheme}
+                className="flex cursor-pointer items-center justify-center rounded-[12px] p-2 text-white/60 transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-white dark:text-muted-foreground dark:hover:bg-[rgba(255,255,255,0.05)] dark:hover:text-foreground"
+              >
+                <Sun className="hidden size-5 dark:block" />
+                <Moon className="block size-5 dark:hidden" />
+              </button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() =>
+                  signIn("google", { callbackUrl: window.location.href })
+                }
+                className="border-white/15 bg-transparent px-4 text-sm font-medium text-white hover:bg-white/[0.05] hover:text-white"
+              >
+                {t("signIn")}
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -325,62 +479,6 @@ export function Header() {
               ),
             )}
           </nav>
-          <div className="flex flex-col gap-1">
-            {session ? (
-              <>
-                <div className="flex items-center gap-2 px-3 py-2">
-                  {session.user?.image ? (
-                    <NextImage
-                      src={session.user.image}
-                      alt={session.user.name ?? ""}
-                      width={28}
-                      height={28}
-                      className="rounded-full"
-                    />
-                  ) : (
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary">
-                      <User className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-base font-medium">{session.user?.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {session.user?.email}
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  href="/mypage"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                  {t("myPage")}
-                </Link>
-                <button
-                  onClick={toggleTheme}
-                  className="flex items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
-                >
-                  <Sun className="hidden h-4 w-4 dark:block" />
-                  <Moon className="block h-4 w-4 dark:hidden" />
-                  <span className="hidden dark:inline">{t("lightMode")}</span>
-                  <span className="inline dark:hidden">{t("darkMode")}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    signOut({ callbackUrl: window.location.href });
-                  }}
-                  className="flex items-center gap-2 rounded-[12px] px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-[rgba(0,0,0,0.05)] dark:hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {t("signOut")}
-                </button>
-              </>
-            ) : (
-              <></>
-            )}
-          </div>
         </div>
       )}
     </header>

@@ -16,6 +16,16 @@ import type { CropRect } from "../types";
 import type { EditorCanvasHandle, EditorCanvasProps } from "./types";
 import { cssToCanvasCoords } from "./utils";
 
+type DragMode = "draw" | "move" | "resize";
+type ResizeHandle = "nw" | "ne" | "sw" | "se" | "n" | "s" | "w" | "e";
+
+const CURSOR_MAP: Record<ResizeHandle, string> = {
+  nw: "nwse-resize", se: "nwse-resize",
+  ne: "nesw-resize", sw: "nesw-resize",
+  n: "ns-resize", s: "ns-resize",
+  w: "ew-resize", e: "ew-resize",
+};
+
 export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
   function EditorCanvas(
     {
@@ -35,6 +45,8 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
     const mainRef = useRef<HTMLCanvasElement>(null);
     const overlayRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    const [isPanDragging, setIsPanDragging] = useState(false);
 
     const [cursorPos, setCursorPos] = useState<{
       cssX: number;
@@ -56,6 +68,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
 
     const zoomPan = useImageEditorStore((s) => s.zoomPan);
     const setZoomPan = useImageEditorStore((s) => s.setZoomPan);
+    const resetZoomPan = useImageEditorStore((s) => s.resetZoomPan);
 
     // Undo/Redo 스냅샷 스택
     const snapshotsRef = useRef<ImageData[]>([]);
@@ -85,6 +98,35 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       syncHistoryMeta();
     }, [syncHistoryMeta]);
 
+    // 캔버스 CSS 크기를 컨테이너에 맞춰 비율 유지
+    const fitCanvas = useCallback(() => {
+      const container = containerRef.current;
+      const main = mainRef.current;
+      const overlay = overlayRef.current;
+      if (!container || !main) return;
+
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const iw = main.width;
+      const ih = main.height;
+      if (!iw || !ih) return;
+
+      const scale = Math.min(cw / iw, ch / ih);
+      const displayW = Math.round(iw * scale);
+      const displayH = Math.round(ih * scale);
+
+      main.style.width = `${displayW}px`;
+      main.style.height = `${displayH}px`;
+
+      if (overlay) {
+        overlay.style.width = `${displayW}px`;
+        overlay.style.height = `${displayH}px`;
+        overlay.width = iw;
+        overlay.height = ih;
+        pixelRatioRef.current = displayW > 0 ? iw / displayW : 1;
+      }
+    }, []);
+
     const undo = useCallback(() => {
       if (indexRef.current <= 0) return;
       indexRef.current--;
@@ -97,7 +139,8 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       canvas.height = snapshot.height;
       ctx.putImageData(snapshot, 0, 0);
       syncHistoryMeta();
-    }, [syncHistoryMeta]);
+      requestAnimationFrame(() => fitCanvas());
+    }, [syncHistoryMeta, fitCanvas]);
 
     const redo = useCallback(() => {
       if (indexRef.current >= snapshotsRef.current.length - 1) return;
@@ -111,7 +154,8 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       canvas.height = snapshot.height;
       ctx.putImageData(snapshot, 0, 0);
       syncHistoryMeta();
-    }, [syncHistoryMeta]);
+      requestAnimationFrame(() => fitCanvas());
+    }, [syncHistoryMeta, fitCanvas]);
 
     const replaceMainCanvas = useCallback(
       (source: HTMLCanvasElement) => {
@@ -123,8 +167,9 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         if (!ctx) return;
         ctx.drawImage(source, 0, 0);
         pushSnapshot();
+        requestAnimationFrame(() => fitCanvas());
       },
-      [pushSnapshot],
+      [pushSnapshot, fitCanvas],
     );
 
     const bakeOverlay = useCallback(() => {
@@ -154,6 +199,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
+        // undo용: 자르기 전 상태 저장
         pushSnapshot();
 
         const imageData = ctx.getImageData(
@@ -166,6 +212,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         canvas.height = rect.height;
         ctx.putImageData(imageData, 0, 0);
 
+        // 자른 결과를 새 체크포인트로 기록
         const croppedData = ctx.getImageData(
           0,
           0,
@@ -182,8 +229,9 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         }
         indexRef.current = snapshotsRef.current.length - 1;
         syncHistoryMeta();
+        requestAnimationFrame(() => fitCanvas());
       },
-      [pushSnapshot, syncHistoryMeta],
+      [pushSnapshot, syncHistoryMeta, fitCanvas],
     );
 
     useImperativeHandle(
@@ -224,11 +272,14 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
           if (!ctx) return;
           ctx.drawImage(img, 0, 0);
 
+          // 초기 스냅샷
           snapshotsRef.current = [
             ctx.getImageData(0, 0, canvas.width, canvas.height),
           ];
           indexRef.current = 0;
           syncHistoryMeta();
+          // 비율 맞춤
+          requestAnimationFrame(() => fitCanvas());
         })
         .catch((err) => {
           if (!cancelled) {
@@ -238,7 +289,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       return () => {
         cancelled = true;
       };
-    }, [imageUrl, syncHistoryMeta]);
+    }, [imageUrl, syncHistoryMeta, fitCanvas]);
 
     // 필터 CSS 프리뷰 적용
     useEffect(() => {
@@ -247,21 +298,14 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       canvas.style.filter = buildCssFilter(filterValues);
     }, [filterValues]);
 
-    // 오버레이 크기 동기화
+    // 오버레이 크기 동기화 + 리사이즈 대응
     useEffect(() => {
-      const main = mainRef.current;
-      const overlay = overlayRef.current;
-      if (!main || !overlay) return;
-      const observer = new ResizeObserver(() => {
-        const rect = main.getBoundingClientRect();
-        overlay.style.width = `${rect.width}px`;
-        overlay.style.height = `${rect.height}px`;
-        overlay.width = main.width;
-        overlay.height = main.height;
-      });
-      observer.observe(main);
+      const container = containerRef.current;
+      if (!container) return;
+      const observer = new ResizeObserver(() => fitCanvas());
+      observer.observe(container);
       return () => observer.disconnect();
-    }, []);
+    }, [fitCanvas]);
 
     // --- 텍스트 도구: overlay에 텍스트 렌더링 ---
     const textHoverRef = useRef<{ x: number; y: number } | null>(null);
@@ -360,7 +404,91 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       lastX: number;
       lastY: number;
       dragging: boolean;
+      mode?: DragMode;
+      handle?: ResizeHandle;
+      origRect?: CropRect;
     } | null>(null);
+
+    const pixelRatioRef = useRef(1);
+
+    const getEdge = useCallback(() => {
+      return 14 * pixelRatioRef.current;
+    }, []);
+
+    const getHandle = useCallback(
+      (x: number, y: number): ResizeHandle | null => {
+        if (!cropRect) return null;
+        const EDGE = getEdge();
+        const { x: cx, y: cy, width: cw, height: ch } = cropRect;
+        const nearL = Math.abs(x - cx) < EDGE;
+        const nearR = Math.abs(x - (cx + cw)) < EDGE;
+        const nearT = Math.abs(y - cy) < EDGE;
+        const nearB = Math.abs(y - (cy + ch)) < EDGE;
+        const inX = x >= cx - EDGE && x <= cx + cw + EDGE;
+        const inY = y >= cy - EDGE && y <= cy + ch + EDGE;
+
+        if (nearT && nearL) return "nw";
+        if (nearT && nearR) return "ne";
+        if (nearB && nearL) return "sw";
+        if (nearB && nearR) return "se";
+        if (nearT && inX) return "n";
+        if (nearB && inX) return "s";
+        if (nearL && inY) return "w";
+        if (nearR && inY) return "e";
+        return null;
+      },
+      [cropRect, getEdge],
+    );
+
+    const drawCropOverlay = useCallback(
+      (rect: CropRect) => {
+        const overlay = overlayRef.current;
+        if (!overlay) return;
+        const ctx = overlay.getContext("2d");
+        if (!ctx) return;
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+        const pixelRatio = pixelRatioRef.current;
+
+        // 어두운 오버레이
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.fillRect(0, 0, overlay.width, overlay.height);
+        ctx.clearRect(rect.x, rect.y, rect.width, rect.height);
+
+        // 얇은 테두리
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.lineWidth = 1 * pixelRatio;
+        ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+
+        // L자 모서리 핸들 + 가장자리 중앙 바 (화면상 일정 크기 유지)
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3 * pixelRatio;
+        ctx.lineCap = "round";
+        const L = Math.min(16 * pixelRatio, rect.width / 4, rect.height / 4);
+        const bar = Math.min(32 * pixelRatio, rect.width / 4, rect.height / 4);
+        const { x: rx, y: ry, width: rw, height: rh } = rect;
+
+        ctx.beginPath();
+        // 좌상
+        ctx.moveTo(rx, ry + L); ctx.lineTo(rx, ry); ctx.lineTo(rx + L, ry);
+        // 우상
+        ctx.moveTo(rx + rw - L, ry); ctx.lineTo(rx + rw, ry); ctx.lineTo(rx + rw, ry + L);
+        // 좌하
+        ctx.moveTo(rx, ry + rh - L); ctx.lineTo(rx, ry + rh); ctx.lineTo(rx + L, ry + rh);
+        // 우하
+        ctx.moveTo(rx + rw - L, ry + rh); ctx.lineTo(rx + rw, ry + rh); ctx.lineTo(rx + rw, ry + rh - L);
+        // 상 중앙
+        ctx.moveTo(rx + rw / 2 - bar / 2, ry); ctx.lineTo(rx + rw / 2 + bar / 2, ry);
+        // 하 중앙
+        ctx.moveTo(rx + rw / 2 - bar / 2, ry + rh); ctx.lineTo(rx + rw / 2 + bar / 2, ry + rh);
+        // 좌 중앙
+        ctx.moveTo(rx, ry + rh / 2 - bar / 2); ctx.lineTo(rx, ry + rh / 2 + bar / 2);
+        // 우 중앙
+        ctx.moveTo(rx + rw, ry + rh / 2 - bar / 2); ctx.lineTo(rx + rw, ry + rh / 2 + bar / 2);
+        ctx.stroke();
+      },
+      [],
+    );
 
     const handlePointerDown = useCallback(
       (e: React.PointerEvent) => {
@@ -371,17 +499,37 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
 
         overlay.setPointerCapture(e.pointerId);
         const { x, y } = cssToCanvasCoords(overlay, e.clientX, e.clientY);
+
+        if (isCropping) {
+          // 1) 리사이즈 핸들
+          const handle = getHandle(x, y);
+          if (cropRect && handle) {
+            dragRef.current = { startX: x, startY: y, lastX: x, lastY: y, dragging: true, mode: "resize", handle, origRect: { ...cropRect } };
+            overlay.style.cursor = CURSOR_MAP[handle];
+            return;
+          }
+
+          // 2) 내부 → 이동
+          if (cropRect && x >= cropRect.x && x <= cropRect.x + cropRect.width && y >= cropRect.y && y <= cropRect.y + cropRect.height) {
+            dragRef.current = { startX: x, startY: y, lastX: x, lastY: y, dragging: true, mode: "move", origRect: { ...cropRect } };
+            overlay.style.cursor = "grabbing";
+            return;
+          }
+
+          // 3) 외부 → 새로 그리기
+          dragRef.current = { startX: x, startY: y, lastX: x, lastY: y, dragging: true, mode: "draw" };
+          onCropChange(null);
+          return;
+        }
+
         dragRef.current = {
           startX: x,
           startY: y,
           lastX: x,
           lastY: y,
           dragging: true,
+          mode: "draw",
         };
-
-        if (isCropping) {
-          onCropChange(null);
-        }
 
         // 모자이크: main canvas에 직접 적용
         if (isMosaic) {
@@ -422,7 +570,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         if (isText && textSettings.text.trim()) {
           onTextPlace?.(x, y);
           renderTextOnOverlay(x, y, false);
-          dragRef.current.dragging = false; // 텍스트는 드래그 시작하지 않음
+          dragRef.current.dragging = false;
         }
       },
       [
@@ -433,6 +581,8 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         isMosaic,
         needsOverlay,
         onCropChange,
+        cropRect,
+        getHandle,
         drawingSettings,
         textSettings,
         onTextPlace,
@@ -492,32 +642,64 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
           return;
         }
 
-        if (!dragRef.current?.dragging) return;
         const overlay = overlayRef.current;
-        if (!overlay) return;
+        const main = mainRef.current;
+        if (!overlay || !main) return;
         const { x, y } = cssToCanvasCoords(overlay, e.clientX, e.clientY);
 
-        // 크롭
+        // 크롭: hover 커서 + drag 처리
         if (isCropping) {
-          const sx = dragRef.current.startX;
-          const sy = dragRef.current.startY;
-          const rx = Math.min(sx, x);
-          const ry = Math.min(sy, y);
-          const rw = Math.abs(x - sx);
-          const rh = Math.abs(y - sy);
+          const mw = main.width;
+          const mh = main.height;
 
-          onCropChange({ x: rx, y: ry, width: rw, height: rh });
+          // hover 커서
+          if (!dragRef.current?.dragging) {
+            const handle = getHandle(x, y);
+            if (handle) {
+              overlay.style.cursor = CURSOR_MAP[handle];
+            } else if (cropRect && x >= cropRect.x && x <= cropRect.x + cropRect.width && y >= cropRect.y && y <= cropRect.y + cropRect.height) {
+              overlay.style.cursor = "grab";
+            } else {
+              overlay.style.cursor = "crosshair";
+            }
+            return;
+          }
 
-          const ctx = overlay.getContext("2d");
-          if (!ctx) return;
-          ctx.clearRect(0, 0, overlay.width, overlay.height);
-          ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-          ctx.fillRect(0, 0, overlay.width, overlay.height);
-          ctx.clearRect(rx, ry, rw, rh);
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 2;
-          ctx.strokeRect(rx, ry, rw, rh);
+          if (dragRef.current.mode === "resize" && dragRef.current.origRect && dragRef.current.handle) {
+            const orig = dragRef.current.origRect;
+            const h = dragRef.current.handle;
+            let nx = orig.x, ny = orig.y, nw = orig.width, nh = orig.height;
+
+            if (h.includes("w")) { nw = orig.x + orig.width - Math.max(0, x); nx = Math.max(0, x); }
+            if (h.includes("e")) { nw = Math.min(mw, x) - orig.x; }
+            if (h.includes("n")) { nh = orig.y + orig.height - Math.max(0, y); ny = Math.max(0, y); }
+            if (h.includes("s")) { nh = Math.min(mh, y) - orig.y; }
+            if (nw < 10) nw = 10;
+            if (nh < 10) nh = 10;
+
+            const newRect = { x: nx, y: ny, width: nw, height: nh };
+            onCropChange(newRect);
+            drawCropOverlay(newRect);
+          } else if (dragRef.current.mode === "move" && dragRef.current.origRect) {
+            const dx = x - dragRef.current.startX;
+            const dy = y - dragRef.current.startY;
+            const orig = dragRef.current.origRect;
+            const newX = Math.max(0, Math.min(orig.x + dx, mw - orig.width));
+            const newY = Math.max(0, Math.min(orig.y + dy, mh - orig.height));
+            const newRect = { x: newX, y: newY, width: orig.width, height: orig.height };
+            onCropChange(newRect);
+            drawCropOverlay(newRect);
+          } else {
+            const sx = dragRef.current.startX;
+            const sy = dragRef.current.startY;
+            const newRect = { x: Math.min(sx, x), y: Math.min(sy, y), width: Math.abs(x - sx), height: Math.abs(y - sy) };
+            onCropChange(newRect);
+            drawCropOverlay(newRect);
+          }
+          return;
         }
+
+        if (!dragRef.current?.dragging) return;
 
         // 그리기/지우개
         if (isDrawing || isEraser) {
@@ -540,6 +722,9 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         isMosaic,
         showBrushCursor,
         onCropChange,
+        drawCropOverlay,
+        cropRect,
+        getHandle,
         drawingSettings.size,
         textSettings,
         renderTextOnOverlay,
@@ -551,8 +736,6 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       // 모자이크 종료
       if (canvasMosaicRef.current) {
         canvasMosaicRef.current = false;
-        // 모자이크 적용 후 snapshot은 이미 pushSnapshot으로 저장됨
-        // 최종 상태를 새 snapshot으로 저장
         const main = mainRef.current;
         if (main) {
           const ctx = main.getContext("2d");
@@ -589,7 +772,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       }
 
       dragRef.current.dragging = false;
-    }, [isDrawing, isEraser]);
+    }, [isDrawing, isEraser, syncHistoryMeta]);
 
     // 크롭 모드 해제 시 오버레이 클리어
     useEffect(() => {
@@ -607,35 +790,11 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
     // 크롭 모드 진입 시 cropRect가 있으면 오버레이에 그리기
     useEffect(() => {
       if (!isCropping || !cropRect) return;
-      const overlay = overlayRef.current;
-      if (!overlay) return;
-      const ctx = overlay.getContext("2d");
-      if (!ctx) return;
-      ctx.clearRect(0, 0, overlay.width, overlay.height);
-      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-      ctx.fillRect(0, 0, overlay.width, overlay.height);
-      ctx.clearRect(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
-    }, [isCropping, cropRect]);
+      drawCropOverlay(cropRect);
+    }, [isCropping, cropRect, drawCropOverlay]);
 
     // 줌 휠 핸들러
-    const handleWheel = useCallback(
-      (e: React.WheelEvent) => {
-        if (!isZoom) return;
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? 0.9 : 1.1;
-        const newScale = Math.min(
-          5,
-          Math.max(0.1, zoomPan.scale * delta),
-        );
-        setZoomPan({ ...zoomPan, scale: newScale });
-      },
-      [isZoom, zoomPan, setZoomPan],
-    );
-
-    // 줌 모드 팬 드래그
+    // 팬 드래그
     const panRef = useRef<{
       startX: number;
       startY: number;
@@ -646,10 +805,11 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
 
     const handlePanDown = useCallback(
       (e: React.PointerEvent) => {
-        if (!isZoom) return;
+        if (zoomPan.scale <= 1) return;
         const container = containerRef.current;
         if (!container) return;
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        setIsPanDragging(true);
         panRef.current = {
           startX: e.clientX,
           startY: e.clientY,
@@ -658,7 +818,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
           dragging: true,
         };
       },
-      [isZoom, zoomPan],
+      [zoomPan],
     );
 
     const handlePanMove = useCallback(
@@ -676,8 +836,30 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
     );
 
     const handlePanUp = useCallback(() => {
-      if (panRef.current) panRef.current.dragging = false;
+      if (panRef.current) {
+        panRef.current.dragging = false;
+        setIsPanDragging(false);
+      }
     }, []);
+
+    const handleCursorEnter = useCallback(
+      (e: React.PointerEvent) => {
+        if (!showBrushCursor) return;
+        const overlay = overlayRef.current;
+        const main = mainRef.current;
+        if (!overlay || !main) return;
+        const rect = overlay.getBoundingClientRect();
+        const cssX = e.clientX - rect.left;
+        const cssY = e.clientY - rect.top;
+        const scaleX = main.width / rect.width;
+        const canvasDiameter = isMosaic
+          ? drawingSettings.size * 4
+          : drawingSettings.size;
+        const cssDiameter = canvasDiameter / scaleX;
+        setCursorPos({ cssX, cssY, cssDiameter, visible: true });
+      },
+      [showBrushCursor, isMosaic, drawingSettings.size],
+    );
 
     const handleCursorLeave = useCallback(() => {
       setCursorPos((prev) => ({ ...prev, visible: false }));
@@ -688,7 +870,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       return () => cancelAnimationFrame(rafIdRef.current);
     }, []);
 
-    const cursorStyle = isZoom
+    const cursorStyle = zoomPan.scale > 1 && !showBrushCursor && !isCropping && !isText
       ? "grab"
       : showBrushCursor
         ? "none"
@@ -701,11 +883,11 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
     return (
       <div
         ref={containerRef}
-        className="relative flex flex-1 items-center justify-center overflow-hidden"
-        onWheel={handleWheel}
-        onPointerDown={isZoom ? handlePanDown : undefined}
-        onPointerMove={isZoom ? handlePanMove : undefined}
-        onPointerUp={isZoom ? handlePanUp : undefined}
+        className="relative flex size-full items-center justify-center overflow-hidden"
+        style={{ cursor: zoomPan.scale > 1 ? (isPanDragging ? "grabbing" : "grab") : undefined }}
+        onPointerDown={handlePanDown}
+        onPointerMove={handlePanMove}
+        onPointerUp={handlePanUp}
       >
         <div
           style={{
@@ -732,6 +914,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
+            onPointerEnter={handleCursorEnter}
             onPointerLeave={handleCursorLeave}
           />
           {showBrushCursor && cursorPos.visible && (
@@ -740,18 +923,24 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
                 position: "absolute",
                 left: cursorPos.cssX - cursorPos.cssDiameter / 2,
                 top: cursorPos.cssY - cursorPos.cssDiameter / 2,
-                width: cursorPos.cssDiameter,
-                height: cursorPos.cssDiameter,
+                width: Math.max(cursorPos.cssDiameter, 8),
+                height: Math.max(cursorPos.cssDiameter, 8),
                 borderRadius: "50%",
-                border: `1.5px solid ${
+                border: `2px solid ${
                   isEraser
                     ? "rgba(255,255,255,0.8)"
                     : isMosaic
                       ? "rgba(255,255,0,0.6)"
                       : drawingSettings.color
                 }`,
+                background: isEraser
+                  ? "rgba(255,255,255,0.15)"
+                  : isMosaic
+                    ? "rgba(255,255,0,0.1)"
+                    : `${drawingSettings.color}20`,
                 pointerEvents: "none",
                 boxSizing: "border-box",
+                transition: "width 0.1s, height 0.1s",
               }}
             />
           )}

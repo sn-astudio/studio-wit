@@ -14,6 +14,35 @@ import { useAuthStore } from "@/stores/auth";
 import { OptionsBar } from "./OptionsBar";
 import type { PromptInputProps } from "./types";
 
+function AttachedImageThumb({ file, onRemove, removeLabel }: { file: File; onRemove: () => void; removeLabel: string }) {
+  const [loaded, setLoaded] = React.useState(false);
+  return (
+    <div className="group relative shrink-0">
+      {!loaded && (
+        <div className="flex size-14 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-800">
+          <div className="size-4 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600 dark:border-neutral-600 dark:border-t-neutral-300" />
+        </div>
+      )}
+      <Image
+        src={URL.createObjectURL(file)}
+        alt={file.name}
+        width={56}
+        height={56}
+        unoptimized
+        onLoad={() => setLoaded(true)}
+        className={`size-14 rounded-lg border border-neutral-200 object-cover dark:border-neutral-800 ${loaded ? "" : "hidden"}`}
+      />
+      <button
+        onClick={onRemove}
+        className="absolute -top-1.5 -right-1.5 flex size-5 cursor-pointer items-center justify-center rounded-full bg-neutral-900 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 dark:bg-neutral-100 dark:text-neutral-900"
+        aria-label={removeLabel}
+      >
+        <X className="size-3" strokeWidth={2.5} />
+      </button>
+    </div>
+  );
+}
+
 export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
   const t = useTranslations("PromptInput");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -115,16 +144,29 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
   return (
     <TooltipProvider delay={300}>
       <div className="w-full">
-        <div className="mx-auto max-w-4xl">
-          <div className="rounded-2xl bg-zinc-100 shadow-lg sm:flex dark:bg-zinc-900">
-            {/* Left: input + options (PC) */}
+          <div className="overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
+            {/* Attached image thumbnails — 입력 영역 위에 표시 */}
+            {attachedImages.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto px-3.5 pt-3.5 pb-1 pr-5 sm:px-5 sm:pt-4 sm:pb-1">
+                {attachedImages.map((file, index) => (
+                  <AttachedImageThumb
+                    key={index}
+                    file={file}
+                    onRemove={() => removeImage(index)}
+                    removeLabel={t("removeImage")}
+                  />
+                ))}
+              </div>
+            )}
+            <div className="sm:flex">
+            {/* Input + options */}
             <div className="min-w-0 flex-1">
             {/* Prompt input */}
-            <div className="p-2.5 pb-0 sm:p-3 sm:pb-0">
-              <div className="flex items-center gap-2">
+            <div className={`px-3.5 py-3.5 sm:px-5 sm:pb-3 ${attachedImages.length > 0 ? "sm:pt-[10px]" : "sm:pt-[20px]"}`}>
+              <div className="flex items-start gap-0">
                 <div className="relative" ref={dropdownRef}>
                   <button
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full border border-zinc-300 text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-700 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                    className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-[8px] border-[1.5px] border-neutral-200 text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground dark:border-neutral-700/40 dark:hover:bg-white/[0.05]"
                     onClick={() => {
                       if (mode === "video") {
                         setShowDropdown((v) => !v);
@@ -134,30 +176,30 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                     }}
                     aria-label={t("attachImage")}
                   >
-                    <Plus className="size-4" />
+                    <Plus className="size-5" />
                   </button>
 
                   {/* 비디오 모드 드롭다운 */}
                   {showDropdown && mode === "video" && (
-                    <div className="absolute top-full left-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+                    <div className="absolute top-full left-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-popover shadow-xl">
                       <button
-                        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                         onClick={() => {
                           fileInputRef.current?.click();
                           setShowDropdown(false);
                         }}
                       >
-                        <Upload className="size-4 text-zinc-600 dark:text-zinc-500" />
+                        <Upload className="size-4 text-muted-foreground" />
                         {t("uploadFile")}
                       </button>
                       <button
-                        className="flex w-full items-center gap-2.5 border-t border-zinc-200 px-3 py-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        className="flex w-full items-center gap-2.5 border-t border-neutral-200 dark:border-neutral-800 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
                         onClick={() => {
                           setShowDropdown(false);
                           setShowGalleryModal(true);
                         }}
                       >
-                        <ImageIcon className="size-4 text-zinc-600 dark:text-zinc-500" />
+                        <ImageIcon className="size-4 text-muted-foreground" />
                         {t("selectFromGallery")}
                       </button>
                     </div>
@@ -177,47 +219,26 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={t(placeholderKey)}
-                  className="max-h-[120px] min-h-[40px] flex-1 border-none bg-transparent py-1.5 text-zinc-800 shadow-none placeholder:text-zinc-400 focus-visible:ring-0 dark:bg-transparent dark:text-zinc-100 dark:placeholder:text-zinc-500"
-                  rows={1}
+                  autoFocus={typeof window !== "undefined" && window.innerWidth >= 640}
+                  className="max-h-[173px] min-h-0 flex-1 border-none bg-transparent pt-[9px] pb-2 text-[16px] leading-relaxed text-foreground shadow-none placeholder:text-[16px] placeholder:text-muted-foreground/50 focus-visible:ring-0 dark:bg-transparent"
+                  rows={2}
                 />
               </div>
 
-              {/* Attached image thumbnails */}
-              {attachedImages.length > 0 && (
-                <div className="mt-2 flex gap-2 overflow-x-auto pl-10 pt-2">
-                  {attachedImages.map((file, index) => (
-                    <div key={index} className="group relative shrink-0">
-                      <Image
-                        src={URL.createObjectURL(file)}
-                        alt={file.name}
-                        width={56}
-                        height={56}
-                        unoptimized
-                        className="size-14 rounded-md border border-zinc-300 object-cover dark:border-zinc-700"
-                      />
-                      <button
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
-                        aria-label={t("removeImage")}
-                      >
-                        <X className="size-2.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Options bar */}
-            <div className="overflow-x-auto scrollbar-none px-2.5 pb-2.5 sm:px-3 sm:pb-3">
-              <OptionsBar mode={mode} />
+            <div className="relative">
+              <div className="overflow-x-auto scrollbar-none px-3.5 pb-3.5 sm:px-5 sm:pb-[20px]">
+                <OptionsBar mode={mode} />
+              </div>
             </div>
             </div>{/* end left */}
 
             {/* Generate button — 모바일: 하단 full width / PC: 오른쪽 세로 */}
-            <div className="px-2.5 pb-2.5 sm:hidden">
+            <div className="px-3.5 pb-3.5 sm:hidden">
               <button
-                className="w-full cursor-pointer rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                className="w-full cursor-pointer rounded-xl bg-primary py-3.5 text-base font-semibold text-primary-foreground transition-opacity hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:brightness-100"
                 onClick={handleSubmit}
                 disabled={!prompt.trim() || disabled}
               >
@@ -226,7 +247,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
               </button>
             </div>
             <button
-              className="m-2 hidden shrink-0 cursor-pointer rounded-xl bg-primary px-6 text-base font-semibold text-primary-foreground transition-opacity hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 sm:block"
+              className="hidden h-[80px] shrink-0 cursor-pointer self-end mb-[20px] mr-[20px] rounded-xl bg-primary px-8 text-base font-semibold text-primary-foreground transition-opacity hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:brightness-100 sm:flex sm:items-center sm:justify-center"
               onClick={handleSubmit}
               disabled={!prompt.trim() || disabled}
             >
@@ -234,25 +255,25 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
               {mode === "image" && <> ✦ {numImages ?? 1}</>}
             </button>
           </div>
-        </div>
+          </div>
       </div>
       {/* 이미지 갤러리 모달 */}
       {showGalleryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60">
-          <div className="w-full max-w-2xl rounded-xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="mx-4 w-full max-w-2xl rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-popover p-6 shadow-xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground">
                 {t("selectFromGallery")}
               </h2>
               <button
                 onClick={() => setShowGalleryModal(false)}
-                className="text-zinc-600 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="size-5" />
               </button>
             </div>
             {generatedImages.length > 0 ? (
-              <div className="grid max-h-[60vh] grid-cols-4 gap-2 overflow-y-auto sm:grid-cols-5">
+              <div className="grid max-h-[60vh] grid-cols-3 gap-2.5 overflow-y-auto sm:grid-cols-4 md:grid-cols-5">
                 {generatedImages.map((gen) => (
                   <button
                     key={gen.id}
@@ -260,7 +281,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                       handleSelectGeneratedImage(gen.result_url!);
                       setShowGalleryModal(false);
                     }}
-                    className="group relative aspect-square overflow-hidden rounded-lg border border-zinc-200 transition-colors hover:border-primary dark:border-zinc-800"
+                    className="group relative aspect-square overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800 transition-colors hover:border-primary"
                   >
                     <Image
                       src={gen.result_url!}
@@ -270,7 +291,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                       unoptimized
                     />
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 pt-3 opacity-0 transition-opacity group-hover:opacity-100">
-                      <p className="truncate text-[9px] text-zinc-300">
+                      <p className="truncate text-[11px] text-white/80">
                         {gen.prompt}
                       </p>
                     </div>
@@ -278,7 +299,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-zinc-600">
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <ImageIcon className="mb-2 size-8" />
                 <p className="text-sm">{t("noGeneratedImages")}</p>
               </div>
