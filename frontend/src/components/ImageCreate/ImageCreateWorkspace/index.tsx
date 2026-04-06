@@ -172,10 +172,8 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
             generations={completedGenerations}
             onSelectGeneration={handleSelectGeneration}
             onEdit={onSwitchToEdit}
-            onDelete={(gen) => {
-              if (selectedImageUrl === gen.result_url) {
-                setSelectedImageUrl(null);
-              }
+            onDelete={() => {
+              // TODO: API 삭제 연동
             }}
           />
         </div>

@@ -179,7 +179,7 @@ export function ImagePreview({
             return (
             <div
               key={gen.id}
-              className="group relative aspect-square cursor-pointer overflow-hidden rounded-xl bg-neutral-100 sm:aspect-auto sm:h-[280px] sm:flex-grow dark:bg-neutral-800/60"
+              className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 sm:h-[280px] dark:bg-neutral-800/60"
               style={{ aspectRatio: ratio }}
               onClick={() => setLightboxGen(gen)}
             >
@@ -204,7 +204,7 @@ export function ImagePreview({
 
                   {/* 하단 액션 버튼 — 모바일 항상 표시, PC 호버 시 */}
                   <div className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 opacity-100 sm:bottom-2.5 sm:right-2.5 sm:gap-1.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
-                    <TooltipProvider delay={0}>
+                    <TooltipProvider delay={0} closeDelay={0}>
                     <Tooltip>
                       <TooltipTrigger
                         render={
@@ -372,10 +372,12 @@ export function ImagePreview({
               if (e.deltaY < 0) zoomIn();
               else zoomOut();
             }}
+            style={{ cursor: zoom > 1 ? (isPanning.current ? "grabbing" : "grab") : "default" }}
             onMouseDown={(e) => {
               if (zoom <= 1) return;
               isPanning.current = true;
               panStart.current = { x: e.clientX - panOffset.current.x, y: e.clientY - panOffset.current.y };
+              (e.currentTarget as HTMLElement).style.cursor = "grabbing";
               e.preventDefault();
             }}
             onMouseMove={(e) => {
@@ -385,15 +387,15 @@ export function ImagePreview({
               panOffset.current = { x, y };
               setPan({ x, y });
             }}
-            onMouseUp={() => { isPanning.current = false; }}
-            onMouseLeave={() => { isPanning.current = false; }}
+            onMouseUp={(e) => { isPanning.current = false; (e.currentTarget as HTMLElement).style.cursor = zoom > 1 ? "grab" : ""; }}
+            onMouseLeave={(e) => { isPanning.current = false; (e.currentTarget as HTMLElement).style.cursor = zoom > 1 ? "grab" : ""; }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={lightboxGen.result_url}
               alt={lightboxGen.prompt}
               className="block max-h-[70vh] max-w-[90vw] object-contain transition-transform duration-100"
-              style={{ transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`, cursor: zoom > 1 ? "grab" : "default" }}
+              style={{ transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)` }}
               draggable={false}
             />
 
@@ -409,7 +411,7 @@ export function ImagePreview({
 
             {/* 하단 액션 버튼 */}
             <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
-              <TooltipProvider delay={0}>
+              <TooltipProvider delay={0} closeDelay={0}>
                 <Tooltip>
                   <TooltipTrigger
                     render={

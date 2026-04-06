@@ -218,7 +218,7 @@ export function EditPanel({
   const canvasHeight = currentCanvas?.height ?? 0;
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <div className="flex flex-col gap-4">
       {/* 도구 */}
       <EditorToolbar
         activeTool={activeTool}
@@ -234,7 +234,7 @@ export function EditPanel({
       />
 
       {/* undo/redo */}
-      <TooltipProvider delay={0}>
+      <TooltipProvider delay={0} closeDelay={0}>
         <div className="flex items-center justify-center gap-1">
           <Tooltip>
             <TooltipTrigger
@@ -288,6 +288,8 @@ export function EditPanel({
       )}
 
       {activeTool === "resize" && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <ResizePanel
           currentWidth={canvasWidth}
           currentHeight={canvasHeight}
@@ -295,9 +297,12 @@ export function EditPanel({
           onCancel={handleCancelResize}
           onChange={onResizeChange}
         />
+        </>
       )}
 
       {(activeTool === "draw" || activeTool === "eraser") && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <DrawingPanel
           settings={drawingSettings}
           onChange={setDrawingSettings}
@@ -305,35 +310,47 @@ export function EditPanel({
           onClear={handleClearDrawing}
           isEraser={activeTool === "eraser"}
         />
+        </>
       )}
 
       {activeTool === "text" && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <TextPanel
           settings={textSettings}
           onChange={setTextSettings}
           onApply={handleApplyDrawing}
           onClear={handleClearText}
         />
+        </>
       )}
 
       {activeTool === "freeRotate" && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <FreeRotatePanel
           onApply={handleApplyFreeRotate}
           onCancel={handleCancelFreeRotate}
           onChange={onFreeRotateChange}
         />
+        </>
       )}
 
       {activeTool === "effects" && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <EffectsPanel
           onApplySharpen={handleApplySharpen}
           onApplyVignette={handleApplyVignette}
           onApplyNoise={handleApplyNoise}
           onCancel={() => setActiveTool(null)}
         />
+        </>
       )}
 
       {activeTool === "mosaic" && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <DrawingPanel
           settings={drawingSettings}
           onChange={setDrawingSettings}
@@ -344,6 +361,7 @@ export function EditPanel({
           }}
           isEraser={false}
         />
+        </>
       )}
     </div>
   );

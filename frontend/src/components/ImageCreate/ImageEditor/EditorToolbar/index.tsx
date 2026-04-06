@@ -11,7 +11,6 @@ import {
   Eraser,
   Type,
   RotateCcw,
-  ZoomIn,
   Sparkles,
   Grid3x3,
 } from "lucide-react";
@@ -51,7 +50,6 @@ export function EditorToolbar({
       : []),
     { id: "effects" as const, icon: Sparkles, label: t("effects"), onClick: () => onToolChange("effects"), isActive: activeTool === "effects" },
     { id: "mosaic" as const, icon: Grid3x3, label: t("mosaic"), onClick: () => onToolChange("mosaic"), isActive: activeTool === "mosaic" },
-    { id: "zoom" as const, icon: ZoomIn, label: t("zoom"), onClick: () => onToolChange("zoom"), isActive: activeTool === "zoom" },
   ];
 
   return (

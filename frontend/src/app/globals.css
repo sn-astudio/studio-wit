@@ -381,6 +381,19 @@
 }
 
 /* ── 필터 슬라이더 thumb ── */
+.filter-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+.filter-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: #d4d4d4;
+}
+.dark .filter-slider::-webkit-slider-runnable-track {
+  background: #404040;
+}
 .filter-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 16px;
@@ -389,6 +402,15 @@
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   cursor: pointer;
+  margin-top: -5px;
+}
+.filter-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: #d4d4d4;
+}
+.dark .filter-slider::-moz-range-track {
+  background: #404040;
 }
 .filter-slider::-moz-range-thumb {
   width: 16px;
@@ -400,4 +422,7 @@
   cursor: pointer;
 }
 
-
+/* ── Sonner 토스트 위치 보정 ── */
+[data-sonner-toaster] {
+  --offset: 76px !important;
+}

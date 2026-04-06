@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import {
-  ImageIcon,
   ImagePlus,
   X,
   Minus,
@@ -54,13 +53,6 @@ export function ImageSourceSelector({
   const generations =
     data?.pages.flatMap((page) => page.generations) ?? [];
 
-  const handleDelete = useCallback(
-    (_genId: string) => {
-      // TODO: API 삭제 구현
-    },
-    [],
-  );
-
   // 삭제 다이얼로그
   const [deleteTarget, setDeleteTarget] = useState<Generation | null>(null);
 
@@ -73,10 +65,6 @@ export function ImageSourceSelector({
     document.body.style.right = "0";
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setDeleteTarget(null);
-      if (e.key === "Enter") {
-        handleDelete(deleteTarget.id);
-        setDeleteTarget(null);
-      }
     };
     document.addEventListener("keydown", handleKey);
     return () => {
@@ -87,7 +75,7 @@ export function ImageSourceSelector({
       window.scrollTo(0, scrollY);
       document.removeEventListener("keydown", handleKey);
     };
-  }, [deleteTarget, handleDelete]);
+  }, [deleteTarget]);
 
   // 무한 스크롤
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -227,7 +215,7 @@ export function ImageSourceSelector({
               return (
               <div
                 key={gen.id}
-                className="group relative aspect-square cursor-pointer overflow-hidden rounded-xl bg-neutral-100 text-left sm:aspect-auto sm:h-[280px] sm:flex-grow dark:bg-neutral-800/60"
+                className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 text-left sm:h-[280px] dark:bg-neutral-800/60"
                 style={{ aspectRatio: ratio }}
                 onClick={() => setLightboxGen(gen)}
               >
@@ -249,7 +237,7 @@ export function ImageSourceSelector({
                     </div>
                     {/* 하단 액션 버튼 — 모바일 항상 표시, PC 호버 시 */}
                     <div className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 opacity-100 sm:bottom-2.5 sm:right-2.5 sm:gap-1.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
-                      <TooltipProvider delay={0}>
+                      <TooltipProvider delay={0} closeDelay={0}>
                       <Tooltip>
                         <TooltipTrigger
                           render={
@@ -395,6 +383,7 @@ export function ImageSourceSelector({
                 if (e.deltaY < 0) zoomIn();
                 else zoomOut();
               }}
+              style={{ cursor: zoom > 1 ? "grab" : "default" }}
               onMouseDown={(e) => {
                 if (zoom <= 1) return;
                 isPanning.current = true;
@@ -402,6 +391,7 @@ export function ImageSourceSelector({
                   x: e.clientX - panOffset.current.x,
                   y: e.clientY - panOffset.current.y,
                 };
+                (e.currentTarget as HTMLElement).style.cursor = "grabbing";
                 e.preventDefault();
               }}
               onMouseMove={(e) => {
@@ -411,12 +401,8 @@ export function ImageSourceSelector({
                 panOffset.current = { x, y };
                 setPan({ x, y });
               }}
-              onMouseUp={() => {
-                isPanning.current = false;
-              }}
-              onMouseLeave={() => {
-                isPanning.current = false;
-              }}
+              onMouseUp={(e) => { isPanning.current = false; (e.currentTarget as HTMLElement).style.cursor = zoom > 1 ? "grab" : ""; }}
+              onMouseLeave={(e) => { isPanning.current = false; (e.currentTarget as HTMLElement).style.cursor = zoom > 1 ? "grab" : ""; }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -425,7 +411,6 @@ export function ImageSourceSelector({
                 className="block max-h-[70vh] max-w-[90vw] object-contain transition-transform duration-100"
                 style={{
                   transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
-                  cursor: zoom > 1 ? "grab" : "default",
                 }}
                 draggable={false}
               />
@@ -442,7 +427,7 @@ export function ImageSourceSelector({
 
               {/* 하단 액션 버튼 */}
               <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
-                <TooltipProvider delay={0}>
+                <TooltipProvider delay={0} closeDelay={0}>
                   <Tooltip>
                     <TooltipTrigger
                       render={
@@ -532,7 +517,7 @@ export function ImageSourceSelector({
                 </button>
                 <button
                   onClick={() => {
-                    handleDelete(deleteTarget.id);
+                    // TODO: API 삭제 연동
                     setDeleteTarget(null);
                   }}
                   className="flex-1 cursor-pointer rounded-xl bg-red-500 py-2.5 text-[14px] font-[500] text-white transition-colors hover:bg-red-600"

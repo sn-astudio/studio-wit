@@ -153,8 +153,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
   ]);
 
   return (
-    <div className="flex flex-1 flex-col pt-3">
-      <div className="flex flex-col gap-6">
+    <div className="flex flex-1 flex-col gap-6 pt-3">
       {/* 프롬프트 */}
       <textarea
         value={prompt}
@@ -206,16 +205,14 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
         </div>
       </div>
 
-      </div>
-
       {/* 생성 버튼 — 하단 고정 */}
-      <div className="mt-auto pt-6">
+      <div className="sticky bottom-0 z-10 mt-auto -mx-5 bg-white px-5 pt-6 pb-4 dark:bg-[#161616]">
       <button
         onClick={handleGenerate}
         disabled={
           !prompt.trim() || !selectedModel || isGenerating || createMutation.isPending
         }
-        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-3 text-[14px] font-[600] text-white transition-colors hover:opacity-90 disabled:pointer-events-none disabled:opacity-30"
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-colors hover:opacity-90 disabled:pointer-events-none disabled:opacity-30"
       >
         {isGenerating ? (
           <Loader2 className="size-4 animate-spin" />

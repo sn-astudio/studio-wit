@@ -46,6 +46,8 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
     const overlayRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
+    const [isPanDragging, setIsPanDragging] = useState(false);
+
     const [cursorPos, setCursorPos] = useState<{
       cssX: number;
       cssY: number;
@@ -66,6 +68,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
 
     const zoomPan = useImageEditorStore((s) => s.zoomPan);
     const setZoomPan = useImageEditorStore((s) => s.setZoomPan);
+    const resetZoomPan = useImageEditorStore((s) => s.resetZoomPan);
 
     // Undo/Redo 스냅샷 스택
     const snapshotsRef = useRef<ImageData[]>([]);
@@ -791,21 +794,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
     }, [isCropping, cropRect, drawCropOverlay]);
 
     // 줌 휠 핸들러
-    const handleWheel = useCallback(
-      (e: React.WheelEvent) => {
-        if (!isZoom) return;
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? 0.9 : 1.1;
-        const newScale = Math.min(
-          5,
-          Math.max(0.1, zoomPan.scale * delta),
-        );
-        setZoomPan({ ...zoomPan, scale: newScale });
-      },
-      [isZoom, zoomPan, setZoomPan],
-    );
-
-    // 줌 모드 팬 드래그
+    // 팬 드래그
     const panRef = useRef<{
       startX: number;
       startY: number;
@@ -816,10 +805,11 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
 
     const handlePanDown = useCallback(
       (e: React.PointerEvent) => {
-        if (!isZoom) return;
+        if (zoomPan.scale <= 1) return;
         const container = containerRef.current;
         if (!container) return;
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        setIsPanDragging(true);
         panRef.current = {
           startX: e.clientX,
           startY: e.clientY,
@@ -828,7 +818,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
           dragging: true,
         };
       },
-      [isZoom, zoomPan],
+      [zoomPan],
     );
 
     const handlePanMove = useCallback(
@@ -846,8 +836,30 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
     );
 
     const handlePanUp = useCallback(() => {
-      if (panRef.current) panRef.current.dragging = false;
+      if (panRef.current) {
+        panRef.current.dragging = false;
+        setIsPanDragging(false);
+      }
     }, []);
+
+    const handleCursorEnter = useCallback(
+      (e: React.PointerEvent) => {
+        if (!showBrushCursor) return;
+        const overlay = overlayRef.current;
+        const main = mainRef.current;
+        if (!overlay || !main) return;
+        const rect = overlay.getBoundingClientRect();
+        const cssX = e.clientX - rect.left;
+        const cssY = e.clientY - rect.top;
+        const scaleX = main.width / rect.width;
+        const canvasDiameter = isMosaic
+          ? drawingSettings.size * 4
+          : drawingSettings.size;
+        const cssDiameter = canvasDiameter / scaleX;
+        setCursorPos({ cssX, cssY, cssDiameter, visible: true });
+      },
+      [showBrushCursor, isMosaic, drawingSettings.size],
+    );
 
     const handleCursorLeave = useCallback(() => {
       setCursorPos((prev) => ({ ...prev, visible: false }));
@@ -858,7 +870,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       return () => cancelAnimationFrame(rafIdRef.current);
     }, []);
 
-    const cursorStyle = isZoom
+    const cursorStyle = zoomPan.scale > 1 && !showBrushCursor && !isCropping && !isText
       ? "grab"
       : showBrushCursor
         ? "none"
@@ -872,10 +884,10 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       <div
         ref={containerRef}
         className="relative flex size-full items-center justify-center overflow-hidden"
-        onWheel={handleWheel}
-        onPointerDown={isZoom ? handlePanDown : undefined}
-        onPointerMove={isZoom ? handlePanMove : undefined}
-        onPointerUp={isZoom ? handlePanUp : undefined}
+        style={{ cursor: zoomPan.scale > 1 ? (isPanDragging ? "grabbing" : "grab") : undefined }}
+        onPointerDown={handlePanDown}
+        onPointerMove={handlePanMove}
+        onPointerUp={handlePanUp}
       >
         <div
           style={{
@@ -902,6 +914,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
+            onPointerEnter={handleCursorEnter}
             onPointerLeave={handleCursorLeave}
           />
           {showBrushCursor && cursorPos.visible && (
@@ -910,18 +923,24 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
                 position: "absolute",
                 left: cursorPos.cssX - cursorPos.cssDiameter / 2,
                 top: cursorPos.cssY - cursorPos.cssDiameter / 2,
-                width: cursorPos.cssDiameter,
-                height: cursorPos.cssDiameter,
+                width: Math.max(cursorPos.cssDiameter, 8),
+                height: Math.max(cursorPos.cssDiameter, 8),
                 borderRadius: "50%",
-                border: `1.5px solid ${
+                border: `2px solid ${
                   isEraser
                     ? "rgba(255,255,255,0.8)"
                     : isMosaic
                       ? "rgba(255,255,0,0.6)"
                       : drawingSettings.color
                 }`,
+                background: isEraser
+                  ? "rgba(255,255,255,0.15)"
+                  : isMosaic
+                    ? "rgba(255,255,0,0.1)"
+                    : `${drawingSettings.color}20`,
                 pointerEvents: "none",
                 boxSizing: "border-box",
+                transition: "width 0.1s, height 0.1s",
               }}
             />
           )}
