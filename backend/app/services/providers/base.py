@@ -26,6 +26,7 @@ class BaseProvider(ABC):
         self,
         prompt: str,
         negative_prompt: Optional[str] = None,
+        input_image_url: Optional[str] = None,
         **params,
     ) -> GenerationResult:
         """이미지 생성 요청"""

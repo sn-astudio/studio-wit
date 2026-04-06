@@ -13,8 +13,13 @@ import type { CropRect } from "@/components/ImageCreate/ImageEditor/types";
 import type { CropRatio } from "@/components/ImageCreate/ImageEditor/CropOverlay/types";
 import { DEFAULT_FILTER_VALUES } from "@/components/ImageCreate/ImageEditor/const";
 import {
+  DEFAULT_DRAWING_SETTINGS,
+  DEFAULT_TEXT_SETTINGS,
+} from "@/components/ImageCreate/ImageEditor/const";
+import {
   exportCanvas,
   applyFilterToCanvas,
+  hasFilterChanges,
 } from "@/components/ImageCreate/ImageEditor/utils";
 import { cn } from "@/lib/utils";
 
@@ -46,9 +51,16 @@ export function ImageEditWorkspace({
   const historyRef = useRef<HTMLDivElement>(null);
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
   const [cropRatio, setCropRatio] = useState<CropRatio>("free");
+  const [freeRotateDegrees, setFreeRotateDegrees] = useState(0);
+  const [resizePreviewScale, setResizePreviewScale] = useState<
+    { scaleX: number; scaleY: number } | undefined
+  >();
 
   const filterValues = useImageEditorStore((s) => s.filterValues);
   const activeTool = useImageEditorStore((s) => s.activeTool);
+  const drawingSettings = useImageEditorStore((s) => s.drawingSettings);
+  const textSettings = useImageEditorStore((s) => s.textSettings);
+  const setTextSettings = useImageEditorStore((s) => s.setTextSettings);
   const reset = useImageEditorStore((s) => s.reset);
 
   // 상단 탭 슬라이딩 인디케이터
@@ -65,6 +77,25 @@ export function ImageEditWorkspace({
     setIndicator({ left: btn.offsetLeft, width: btn.offsetWidth });
   }, [activeTab, source]);
 
+  const handleResizeChange = useCallback(
+    (w: number, h: number) => {
+      const canvas = canvasRef.current?.getMainCanvas();
+      if (!canvas) return;
+      setResizePreviewScale({
+        scaleX: w / canvas.width,
+        scaleY: h / canvas.height,
+      });
+    },
+    [],
+  );
+
+  const handleTextPlace = useCallback(
+    (x: number, y: number) => {
+      setTextSettings({ ...textSettings, placedX: x, placedY: y });
+    },
+    [textSettings, setTextSettings],
+  );
+
   const handleSourceSelected = useCallback(
     (newSource: ImageSource) => {
       reset();
@@ -80,10 +111,7 @@ export function ImageEditWorkspace({
     const canvas = canvasRef.current?.getMainCanvas();
     if (!canvas) return;
 
-    const needsBake =
-      filterValues.brightness !== DEFAULT_FILTER_VALUES.brightness ||
-      filterValues.contrast !== DEFAULT_FILTER_VALUES.contrast ||
-      filterValues.saturate !== DEFAULT_FILTER_VALUES.saturate;
+    const needsBake = hasFilterChanges(filterValues);
 
     let exportSource = canvas;
     if (needsBake) {
@@ -104,10 +132,7 @@ export function ImageEditWorkspace({
     const canvas = canvasRef.current?.getMainCanvas();
     if (!canvas) return;
 
-    const needsBake =
-      filterValues.brightness !== DEFAULT_FILTER_VALUES.brightness ||
-      filterValues.contrast !== DEFAULT_FILTER_VALUES.contrast ||
-      filterValues.saturate !== DEFAULT_FILTER_VALUES.saturate;
+    const needsBake = hasFilterChanges(filterValues);
 
     let exportSource = canvas;
     if (needsBake) {
@@ -193,10 +218,14 @@ export function ImageEditWorkspace({
               imageUrl={source?.url ?? null}
               canvasRef={canvasRef}
               filterValues={filterValues}
-              isCropping={activeTool === "crop"}
-              isFreeCrop={cropRatio === "free"}
+              activeTool={activeTool}
               cropRect={cropRect}
               onCropChange={setCropRect}
+              drawingSettings={drawingSettings}
+              textSettings={textSettings}
+              onTextPlace={handleTextPlace}
+              freeRotateDegrees={freeRotateDegrees}
+              resizePreviewScale={resizePreviewScale}
               onExport={handleExport}
               onGenerateVideo={handleGenerateVideo}
               onUpload={handleFileUpload}
@@ -263,6 +292,8 @@ export function ImageEditWorkspace({
                     setCropRect={setCropRect}
                     cropRatio={cropRatio}
                     setCropRatio={setCropRatio}
+                    onFreeRotateChange={setFreeRotateDegrees}
+                    onResizeChange={handleResizeChange}
                   />
                 )}
                 {activeTab === "filter" && (

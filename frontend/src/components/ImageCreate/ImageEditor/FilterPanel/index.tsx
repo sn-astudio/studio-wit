@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 
 import { FILTER_RANGES } from "../const";
+import { FILTER_UNITS } from "../utils";
 import type { FilterValues } from "../types";
 import type { FilterPanelProps } from "./types";
 
@@ -34,7 +35,7 @@ export function FilterPanel({
               <div className="flex items-center justify-between">
                 <span className="text-[13px] font-[500] text-muted-foreground">{t(key)}</span>
                 <span className="text-[13px] font-[500] tabular-nums text-foreground">
-                  {values[key]}%
+                  {values[key]}{FILTER_UNITS[key] ?? "%"}
                 </span>
               </div>
               <input
