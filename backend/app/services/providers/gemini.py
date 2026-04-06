@@ -64,6 +64,10 @@ class GeminiProvider(BaseProvider):
                 json=body,
             )
 
+        return await self._parse_image_response(resp)
+
+    async def _parse_image_response(self, resp: httpx.Response) -> GenerationResult:
+        """generateContent 응답에서 이미지 데이터를 추출하는 공통 헬퍼"""
         if resp.status_code != 200:
             error_code = "PROVIDER_ERROR"
             error_message = f"Gemini API 오류: {resp.status_code}"
@@ -90,7 +94,6 @@ class GeminiProvider(BaseProvider):
                 error_message="이미지 생성 결과가 없습니다. 안전 필터에 의해 차단되었을 수 있습니다.",
             )
 
-        # candidates[0].content.parts 에서 inline_data 찾기
         parts = candidates[0].get("content", {}).get("parts", [])
         for part in parts:
             inline_data = part.get("inlineData") or part.get("inline_data")
@@ -105,6 +108,51 @@ class GeminiProvider(BaseProvider):
             error_code="PROVIDER_ERROR",
             error_message="응답에서 이미지 데이터를 찾을 수 없습니다.",
         )
+
+    async def _download_image_as_inline_data(self, url: str) -> dict:
+        """URL에서 이미지를 다운로드하여 inline_data 파트로 변환"""
+        async with httpx.AsyncClient(timeout=60, follow_redirects=True) as dl:
+            img_resp = await dl.get(url)
+            img_resp.raise_for_status()
+        img_b64 = base64.b64encode(img_resp.content).decode()
+        mime_type = img_resp.headers.get("content-type", "image/png")
+        return {"inline_data": {"mime_type": mime_type, "data": img_b64}}
+
+    async def compose_images(
+        self,
+        base_image_url: str,
+        reference_image_url: str,
+        prompt: str,
+    ) -> GenerationResult:
+        """두 이미지를 합성하여 새 이미지를 생성"""
+        parts = []
+        try:
+            for url in [base_image_url, reference_image_url]:
+                parts.append(await self._download_image_as_inline_data(url))
+        except Exception as e:
+            logger.error("Compose 이미지 다운로드 실패: %s", e)
+            return GenerationResult(
+                status="failed",
+                error_code="PROVIDER_ERROR",
+                error_message=f"이미지 다운로드 실패: {e}",
+            )
+        parts.append({"text": prompt})
+
+        body = {
+            "contents": [{"parts": parts}],
+            "generationConfig": {
+                "responseModalities": ["IMAGE"],
+            },
+        }
+
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                f"{self.BASE_URL}/models/gemini-3.1-flash-image-preview:generateContent",
+                headers={"x-goog-api-key": self.api_key},
+                json=body,
+            )
+
+        return await self._parse_image_response(resp)
 
     async def generate_video(
         self,

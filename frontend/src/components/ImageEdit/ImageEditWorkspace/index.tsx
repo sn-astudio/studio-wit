@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Scissors, SlidersHorizontal, Sparkle } from "lucide-react";
+import { Scissors, SlidersHorizontal, Sparkle, Layers } from "lucide-react";
 
 import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
@@ -28,12 +28,14 @@ import { ImageSourceSelector } from "../ImageSourceSelector";
 import { EditPanel } from "../EditPanel";
 import { ImageFilterPanel } from "../ImageFilterPanel";
 import { AIEditPanel } from "../AIEditPanel";
+import { ComposePanel } from "../ComposePanel";
 import type { EditTab, ImageSource, ImageEditWorkspaceProps } from "./types";
 
 const TABS: { id: EditTab; labelKey: string; icon: typeof Scissors }[] = [
   { id: "edit", labelKey: "tabEdit", icon: Scissors },
   { id: "filter", labelKey: "tabFilter", icon: SlidersHorizontal },
   { id: "ai", labelKey: "tabAI", icon: Sparkle },
+  { id: "compose", labelKey: "tabCompose", icon: Layers },
 ];
 
 const SHEET_MID = 50; // vh
@@ -434,6 +436,12 @@ export function ImageEditWorkspace({
                       onUseAsSource={handleUseAsSource}
                     />
                   )}
+                  {activeTab === "compose" && (
+                    <ComposePanel
+                      currentEditingImageUrl={source?.url ?? null}
+                      onUseAsSource={handleUseAsSource}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -467,6 +475,12 @@ export function ImageEditWorkspace({
             {activeTab === "ai" && (
               <AIEditPanel
                 sourceUrl={source?.url ?? null}
+                onUseAsSource={handleUseAsSource}
+              />
+            )}
+            {activeTab === "compose" && (
+              <ComposePanel
+                currentEditingImageUrl={source?.url ?? null}
                 onUseAsSource={handleUseAsSource}
               />
             )}

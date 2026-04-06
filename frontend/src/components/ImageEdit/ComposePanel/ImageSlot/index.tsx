@@ -13,6 +13,7 @@ export function ImageSlot({
   onSelect,
   onRemove,
   readOnly,
+  currentEditingImageUrl,
 }: ImageSlotProps) {
   const t = useTranslations("ImageEdit");
   const [showGallery, setShowGallery] = useState(false);
@@ -61,6 +62,7 @@ export function ImageSlot({
         <GalleryPopover
           onSelect={handleSelect}
           onClose={() => setShowGallery(false)}
+          currentEditingImageUrl={currentEditingImageUrl}
         />
       )}
     </div>

@@ -4,4 +4,5 @@ export interface ImageSlotProps {
   onSelect: (url: string) => void;
   onRemove?: () => void;
   readOnly?: boolean;
+  currentEditingImageUrl?: string | null;
 }

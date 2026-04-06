@@ -1,4 +1,4 @@
 export interface ComposePanelProps {
-  baseImageUrl: string | null;
-  onComposeComplete: (resultUrl: string) => void;
+  currentEditingImageUrl: string | null;
+  onUseAsSource: (url: string) => void;
 }

@@ -360,13 +360,14 @@ export interface BulkDownloadRequest { urls: string[]; filenames?: string[]; }
 // ── Compose ──
 
 export interface ComposeRequest {
-  baseImageUrl: string;
-  referenceImageUrl: string;
+  model_id?: string;
+  base_image_url: string;
+  reference_image_url: string;
   prompt: string;
 }
 
 export interface ComposeResponse {
-  resultUrl: string;
+  generation: Generation;
 }
 
 export interface SaveEditRequest {
