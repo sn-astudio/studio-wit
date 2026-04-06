@@ -24,6 +24,7 @@ class GoogleProvider(BaseProvider):
         self,
         prompt: str,
         negative_prompt: Optional[str] = None,
+        input_image_url: Optional[str] = None,
         **params,
     ) -> GenerationResult:
         """Imagen 4로 이미지 생성 (동기 — 즉시 결과 반환)"""
