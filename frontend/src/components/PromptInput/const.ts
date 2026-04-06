@@ -5,7 +5,7 @@ import {
   Ban,
   Gauge,
   Layers,
-  Dices,
+  Hash,
   Palette,
   Clock,
   Monitor,
@@ -172,8 +172,8 @@ export const PARAM_CONFIGS: Record<ParamType, ParamConfig> = {
     labelKey: "params.guidanceScale",
     min: 1,
     max: 20,
-    step: 0.5,
-    defaultValue: 7.5,
+    step: 1,
+    defaultValue: 7,
   },
   steps: {
     type: "slider",
@@ -186,7 +186,7 @@ export const PARAM_CONFIGS: Record<ParamType, ParamConfig> = {
   },
   seed: {
     type: "text",
-    icon: Dices,
+    icon: Hash,
     labelKey: "params.seed",
     defaultValue: "",
   },

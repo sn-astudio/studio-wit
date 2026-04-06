@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { Link2, Link2Off } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 import { RESIZE_PRESETS } from "../const";
 import type { ResizePanelProps } from "./types";
@@ -59,25 +59,34 @@ export function ResizePanel({
   );
 
   return (
-    <div className="border-t border-zinc-800 px-4 py-3">
-      <div className="space-y-3">
+    <div className="flex flex-1 flex-col gap-4">
+      {/* 크기 입력 */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-[13px] font-[600] text-foreground">
+            {t("resize")}
+          </p>
+          <span className="text-[12px] font-[500] tabular-nums text-muted-foreground">
+            {t("original")}: {currentWidth} × {currentHeight}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
-          <div className="flex-1 space-y-1">
-            <label className="text-xs text-zinc-400">{t("width")}</label>
+          <div className="flex-1 space-y-1.5">
+            <label className="text-[12px] font-[500] text-muted-foreground">{t("width")}</label>
             <input
               type="number"
               min={1}
               max={10000}
               value={width}
               onChange={(e) => handleWidthChange(Number(e.target.value))}
-              className="w-full rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-zinc-200 outline-none focus:border-primary"
+              className="w-full rounded-lg bg-neutral-50 px-3 py-2 text-[13px] tabular-nums text-foreground outline-none dark:bg-neutral-800/60"
             />
           </div>
 
           <button
             type="button"
             onClick={() => setLockAspect((v) => !v)}
-            className="mt-5 cursor-pointer text-zinc-400 hover:text-zinc-200"
+            className="mt-6 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
           >
             {lockAspect ? (
               <Link2 className="size-4" />
@@ -86,55 +95,58 @@ export function ResizePanel({
             )}
           </button>
 
-          <div className="flex-1 space-y-1">
-            <label className="text-xs text-zinc-400">{t("height")}</label>
+          <div className="flex-1 space-y-1.5">
+            <label className="text-[12px] font-[500] text-muted-foreground">{t("height")}</label>
             <input
               type="number"
               min={1}
               max={10000}
               value={height}
               onChange={(e) => handleHeightChange(Number(e.target.value))}
-              className="w-full rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-zinc-200 outline-none focus:border-primary"
+              className="w-full rounded-lg bg-neutral-50 px-3 py-2 text-[13px] tabular-nums text-foreground outline-none dark:bg-neutral-800/60"
             />
           </div>
         </div>
-
-        <div className="flex items-center gap-1">
-          {RESIZE_PRESETS.map((preset) => (
-            <Button
-              key={preset.label}
-              variant="ghost"
-              size="sm"
-              onClick={() => handlePreset(preset.factor)}
-              className="cursor-pointer text-xs"
-            >
-              {preset.label}
-            </Button>
-          ))}
-        </div>
-
-        <p className="text-xs text-zinc-500">
-          {t("original")}: {currentWidth} × {currentHeight}px
-        </p>
       </div>
 
-      <div className="mt-3 flex items-center justify-end gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
+      {/* 프리셋 */}
+      <div className="flex flex-wrap gap-1.5">
+        {RESIZE_PRESETS.map((preset) => {
+          const isActive =
+            width === Math.round(currentWidth * preset.factor) &&
+            height === Math.round(currentHeight * preset.factor);
+          return (
+            <button
+              key={preset.label}
+              onClick={() => handlePreset(preset.factor)}
+              className={cn(
+                "cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80",
+                isActive
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white",
+              )}
+            >
+              {preset.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 취소 / 적용 */}
+      <div className="sticky bottom-0 z-10 mt-auto -mx-5 flex items-center gap-2 bg-white px-5 pt-4 pb-4 dark:bg-[#161616]">
+        <button
           onClick={onCancel}
-          className="cursor-pointer"
+          className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
         >
-          {t("cancel")}
-        </Button>
-        <Button
-          size="sm"
+          {t("reset")}
+        </button>
+        <button
           onClick={() => onApply(width, height)}
           disabled={width === currentWidth && height === currentHeight}
-          className="cursor-pointer"
+          className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
         >
           {t("applyResize")}
-        </Button>
+        </button>
       </div>
     </div>
   );

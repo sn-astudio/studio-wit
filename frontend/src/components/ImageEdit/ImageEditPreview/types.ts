@@ -21,4 +21,8 @@ export interface ImageEditPreviewProps {
   resizePreviewScale?: { scaleX: number; scaleY: number };
   onExport: () => void;
   onGenerateVideo: () => void;
+  onUpload?: () => void;
+  onScrollToHistory?: () => void;
+  onRemoveImage?: () => void;
+  onFileDrop?: (file: File) => void;
 }

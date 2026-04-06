@@ -66,7 +66,27 @@ export default async function LocaleLayout({
               <QueryProvider>
                 <AuthSync />
                 {children}
-                <Toaster richColors position="bottom-right" />
+                <Toaster
+                  position="top-center"
+                  offset={76}
+                  toastOptions={{
+                    classNames: {
+                      toast:
+                        "!rounded-xl !bg-neutral-900 !px-5 !py-4 !shadow-2xl !border !border-neutral-800 !gap-2",
+                      title: "!text-[14px] !font-[500] !leading-snug !text-white",
+                      description: "!text-[13px] !text-white/50 !mt-0.5",
+                      icon: "!text-white/80",
+                      success: "[&_[data-icon]]:!text-green-500",
+                      error: "[&_[data-icon]]:!text-red-400",
+                      warning: "[&_[data-icon]]:!text-amber-400",
+                      info: "[&_[data-icon]]:!text-blue-400",
+                      actionButton:
+                        "!rounded-lg !bg-white/15 !px-3 !py-1.5 !text-[13px] !font-[500] !text-white",
+                      cancelButton:
+                        "!rounded-lg !bg-white/10 !px-3 !py-1.5 !text-[13px] !font-[500] !text-white/70",
+                    },
+                  }}
+                />
               </QueryProvider>
             </SessionProvider>
           </NextIntlClientProvider>

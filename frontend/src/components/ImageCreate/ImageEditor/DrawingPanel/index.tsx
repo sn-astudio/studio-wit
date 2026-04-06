@@ -3,8 +3,6 @@
 import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/Button";
-
 import type { DrawingPanelProps } from "./types";
 
 export function DrawingPanel({
@@ -25,74 +23,79 @@ export function DrawingPanel({
   );
 
   return (
-    <div className="border-t border-zinc-800 px-4 py-3">
-      <div className="space-y-3">
-        {!isEraser && !isMosaic && (
+    <div className="flex flex-1 flex-col gap-4">
+      {/* 색상 */}
+      {!isEraser && !isMosaic && (
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-[600] text-foreground">{t("color")}</span>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-400">{t("color")}</span>
+            <span className="text-[12px] font-[500] tabular-nums text-muted-foreground">{settings.color}</span>
             <input
               type="color"
               value={settings.color}
               onChange={(e) => handleChange("color", e.target.value)}
-              className="size-6 cursor-pointer rounded border border-zinc-700 bg-transparent"
+              className="size-6 cursor-pointer rounded-md border border-neutral-200 bg-transparent dark:border-neutral-700"
             />
-            <span className="text-xs text-zinc-300">{settings.color}</span>
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="space-y-1">
+      {/* 브러시 크기 */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-[600] text-foreground">
+            {t("brushSize")}
+          </span>
+          <span className="text-[12px] font-[500] tabular-nums text-muted-foreground">
+            {settings.size}px
+          </span>
+        </div>
+        <input
+          type="range"
+          min={1}
+          max={50}
+          step={1}
+          value={settings.size}
+          onChange={(e) => handleChange("size", Number(e.target.value))}
+          className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+        />
+      </div>
+
+      {/* 투명도 */}
+      {!isMosaic && (
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-400">
-              {t("brushSize")}
-            </span>
-            <span className="text-xs font-medium text-zinc-300">
-              {settings.size}px
+            <span className="text-[13px] font-[600] text-foreground">{t("opacity")}</span>
+            <span className="text-[12px] font-[500] tabular-nums text-muted-foreground">
+              {settings.opacity}%
             </span>
           </div>
           <input
             type="range"
             min={1}
-            max={50}
+            max={100}
             step={1}
-            value={settings.size}
-            onChange={(e) => handleChange("size", Number(e.target.value))}
-            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-zinc-800 accent-primary"
+            value={settings.opacity}
+            onChange={(e) => handleChange("opacity", Number(e.target.value))}
+            className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
           />
         </div>
+      )}
 
-        {!isMosaic && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-400">{t("opacity")}</span>
-              <span className="text-xs font-medium text-zinc-300">
-                {settings.opacity}%
-              </span>
-            </div>
-            <input
-              type="range"
-              min={1}
-              max={100}
-              step={1}
-              value={settings.opacity}
-              onChange={(e) => handleChange("opacity", Number(e.target.value))}
-              className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-zinc-800 accent-primary"
-            />
-          </div>
-        )}
-      </div>
-
-      <div className="mt-3 flex items-center justify-end gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
+      {/* 초기화 / 적용 */}
+      <div className="sticky bottom-0 z-10 mt-auto -mx-5 flex items-center gap-2 bg-white px-5 pt-4 pb-4 dark:bg-[#161616]">
+        <button
           onClick={onClear}
-          className="cursor-pointer"
+          className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
         >
           {t("clearDrawing")}
-        </Button>
-        <Button size="sm" onClick={onApply} className="cursor-pointer">
+        </button>
+        <button
+          onClick={onApply}
+          className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80"
+        >
           {t("applyDrawing")}
-        </Button>
+        </button>
       </div>
     </div>
   );

@@ -1,9 +1,17 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
+import { Undo2, Redo2 } from "lucide-react";
 
 import { useImageEditorStore } from "@/stores/imageEditor";
 import { EditorToolbar } from "@/components/ImageCreate/ImageEditor/EditorToolbar";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/Tooltip";
 import { CropOverlay } from "@/components/ImageCreate/ImageEditor/CropOverlay";
 import { ResizePanel } from "@/components/ImageCreate/ImageEditor/ResizePanel";
 import { DrawingPanel } from "@/components/ImageCreate/ImageEditor/DrawingPanel";
@@ -21,16 +29,18 @@ import {
   applyNoise,
 } from "@/components/ImageCreate/ImageEditor/utils";
 import { clampRect } from "@/components/ImageCreate/ImageEditor/CropOverlay/utils";
-
 import type { EditPanelProps } from "./types";
 
 export function EditPanel({
   canvasRef,
   cropRect,
   setCropRect,
+  cropRatio,
+  setCropRatio,
   onFreeRotateChange,
   onResizeChange,
 }: EditPanelProps) {
+  const t = useTranslations("ImageEdit");
   const activeTool = useImageEditorStore((s) => s.activeTool);
   const setActiveTool = useImageEditorStore((s) => s.setActiveTool);
   const historyIndex = useImageEditorStore((s) => s.historyIndex);
@@ -42,6 +52,7 @@ export function EditPanel({
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < historyLength - 1;
+  const ratioFromPanelRef = useRef(false);
 
   const handleRotate = useCallback(() => {
     const canvas = canvasRef.current?.getMainCanvas();
@@ -82,6 +93,32 @@ export function EditPanel({
     setCropRect(null);
     setActiveTool(null);
   }, [setCropRect, setActiveTool]);
+
+  // crop 모드 진입 시 초기화
+  const prevToolRef = useRef(activeTool);
+  useEffect(() => {
+    if (activeTool === "crop" && prevToolRef.current !== "crop") {
+      setCropRect(null);
+      setCropRatio("free");
+    }
+    prevToolRef.current = activeTool;
+  }, [activeTool, setCropRect]);
+
+  // 캔버스에서 cropRect 크기가 변경되면 (이동이 아닌 리사이즈/새 드래그) 자유로 리셋
+  const prevSizeRef = useRef<{ w: number; h: number } | null>(null);
+  useEffect(() => {
+    if (!ratioFromPanelRef.current && activeTool === "crop" && cropRect) {
+      const prev = prevSizeRef.current;
+      if (prev != null && cropRatio !== "free" && (Math.round(prev.w) !== Math.round(cropRect.width) || Math.round(prev.h) !== Math.round(cropRect.height))) {
+        setCropRatio("free");
+      }
+    }
+    prevSizeRef.current = cropRect ? { w: cropRect.width, h: cropRect.height } : null;
+    if (ratioFromPanelRef.current) {
+      const id = setTimeout(() => { ratioFromPanelRef.current = false; }, 100);
+      return () => clearTimeout(id);
+    }
+  }, [cropRect, activeTool]);
 
   const handleApplyResize = useCallback(
     (width: number, height: number) => {
@@ -181,7 +218,8 @@ export function EditPanel({
   const canvasHeight = currentCanvas?.height ?? 0;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-4">
+      {/* 도구 */}
       <EditorToolbar
         activeTool={activeTool}
         onToolChange={setActiveTool}
@@ -195,15 +233,63 @@ export function EditPanel({
         hideFilter
       />
 
+      {/* undo/redo */}
+      <TooltipProvider delay={0} closeDelay={0}>
+        <div className="flex items-center justify-center gap-1">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  onClick={() => canvasRef.current?.undo()}
+                  disabled={!canUndo}
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-800"
+                >
+                  <Undo2 className="size-4" />
+                </button>
+              }
+            />
+            <TooltipContent>{t("undo")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  onClick={() => canvasRef.current?.redo()}
+                  disabled={!canRedo}
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-800"
+                >
+                  <Redo2 className="size-4" />
+                </button>
+              }
+            />
+            <TooltipContent>{t("redo")}</TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
+
+      {/* 자르기 옵션 — 구분선 + 비율 프리셋 */}
       {activeTool === "crop" && (
-        <CropOverlay
-          cropRect={cropRect}
-          onApply={handleApplyCrop}
-          onCancel={handleCancelCrop}
-        />
+        <>
+          <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+          <CropOverlay
+            cropRect={cropRect}
+            canvasWidth={canvasRef.current?.getMainCanvas()?.width ?? 0}
+            canvasHeight={canvasRef.current?.getMainCanvas()?.height ?? 0}
+            selectedRatio={cropRatio}
+            onRatioChange={(ratio) => {
+              ratioFromPanelRef.current = true;
+              setCropRatio(ratio);
+            }}
+            onCropChange={setCropRect}
+            onApply={handleApplyCrop}
+            onCancel={handleCancelCrop}
+          />
+        </>
       )}
 
       {activeTool === "resize" && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <ResizePanel
           currentWidth={canvasWidth}
           currentHeight={canvasHeight}
@@ -211,9 +297,12 @@ export function EditPanel({
           onCancel={handleCancelResize}
           onChange={onResizeChange}
         />
+        </>
       )}
 
       {(activeTool === "draw" || activeTool === "eraser") && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <DrawingPanel
           settings={drawingSettings}
           onChange={setDrawingSettings}
@@ -221,35 +310,47 @@ export function EditPanel({
           onClear={handleClearDrawing}
           isEraser={activeTool === "eraser"}
         />
+        </>
       )}
 
       {activeTool === "text" && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <TextPanel
           settings={textSettings}
           onChange={setTextSettings}
           onApply={handleApplyDrawing}
           onClear={handleClearText}
         />
+        </>
       )}
 
       {activeTool === "freeRotate" && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <FreeRotatePanel
           onApply={handleApplyFreeRotate}
           onCancel={handleCancelFreeRotate}
           onChange={onFreeRotateChange}
         />
+        </>
       )}
 
       {activeTool === "effects" && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <EffectsPanel
           onApplySharpen={handleApplySharpen}
           onApplyVignette={handleApplyVignette}
           onApplyNoise={handleApplyNoise}
           onCancel={() => setActiveTool(null)}
         />
+        </>
       )}
 
       {activeTool === "mosaic" && (
+        <>
+        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <DrawingPanel
           settings={drawingSettings}
           onChange={setDrawingSettings}
@@ -260,6 +361,7 @@ export function EditPanel({
           }}
           isEraser={false}
         />
+        </>
       )}
     </div>
   );

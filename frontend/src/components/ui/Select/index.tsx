@@ -19,14 +19,14 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        "group/select-trigger inline-flex h-8 items-center justify-between gap-1.5 rounded-lg border border-input bg-transparent px-2.5 text-sm whitespace-nowrap transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30",
+        "group/select-trigger inline-flex h-8 cursor-pointer items-center justify-between gap-1.5 rounded-lg border-transparent px-2.5 text-sm whitespace-nowrap transition-colors outline-none focus-visible:ring-0 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon>
-        <ChevronDown className="size-4 opacity-50" />
+        <ChevronDown className="size-4 opacity-50 transition-transform duration-200 group-aria-expanded/select-trigger:rotate-180" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -35,11 +35,17 @@ function SelectTrigger({
 function SelectContent({
   className,
   children,
+  title,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Popup>) {
+}: React.ComponentProps<typeof SelectPrimitive.Popup> & { title?: string }) {
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   return (
     <SelectPrimitive.Portal>
-      <SelectPrimitive.Positioner sideOffset={4} className="z-[9999]">
+      <SelectPrimitive.Positioner sideOffset={8} side="top" align="start" className="z-[9999]">
         <SelectPrimitive.Popup
           data-slot="select-content"
           className={cn(
@@ -48,6 +54,11 @@ function SelectContent({
           )}
           {...props}
         >
+          {title && (
+            <div className="px-3 pt-1 pb-1.5 text-[13px] font-semibold tracking-wide text-foreground">
+              {title}
+            </div>
+          )}
           <SelectPrimitive.List>{children}</SelectPrimitive.List>
         </SelectPrimitive.Popup>
       </SelectPrimitive.Positioner>
@@ -64,15 +75,15 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:opacity-50",
+        "relative flex w-full cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:opacity-50",
         className,
       )}
       {...props}
     >
-      <SelectPrimitive.ItemIndicator className="flex size-4 shrink-0 items-center justify-center">
-        <Check className="size-3.5" />
-      </SelectPrimitive.ItemIndicator>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <SelectPrimitive.ItemIndicator className="flex size-4 shrink-0 items-center justify-center">
+        <Check className="size-4 text-neutral-800 dark:text-white" strokeWidth={2.5} />
+      </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
   );
 }

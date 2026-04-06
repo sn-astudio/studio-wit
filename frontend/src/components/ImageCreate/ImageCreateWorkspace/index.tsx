@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -18,10 +19,13 @@ import {
 import { queryKeys } from "@/hooks/queries/keys";
 
 import { ImagePreview } from "../ImagePreview";
-import { GenerationHistory } from "../GenerationHistory";
 import { toImageGenerateParams } from "./utils";
 
-export function ImageCreateWorkspace() {
+interface ImageCreateWorkspaceProps {
+  onSwitchToEdit?: (imageUrl?: string) => void;
+}
+
+export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspaceProps) {
   const t = useTranslations("ImageCreate");
   const token = useAuthStore((s) => s.token);
   const setPrompt = usePromptStore((s) => s.setPrompt);
@@ -33,7 +37,6 @@ export function ImageCreateWorkspace() {
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(
     null,
   );
-  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   const createMutation = useCreateGeneration();
 
@@ -120,6 +123,7 @@ export function ImageCreateWorkspace() {
             prevStatusRef.current = res.generation.status;
             setCurrentGenId(res.generation.id);
             usePromptStore.getState().setPrompt("");
+            setTimeout(() => contentTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
           },
           onError: (err) => {
             toast.error(err.message || t("generateFailed"));
@@ -145,48 +149,49 @@ export function ImageCreateWorkspace() {
     [setPrompt, setSelectedModel, setParam],
   );
 
-  const handleToggleHistory = useCallback(() => {
-    setHistoryExpanded((prev) => !prev);
-  }, []);
+  // 완료된 생성 이력만 추출
+  const completedGenerations =
+    historyPages?.pages
+      .flatMap((p) => p.generations)
+      .filter((g) => g.status === "completed" && g.result_url) ?? [];
+
+  const contentTopRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] flex-col overflow-hidden">
-      {/* Image preview / editor — 전체 보기 모드에서 숨김 */}
-      {!historyExpanded && (
-        <div className="min-h-[30vh] shrink-0 p-3 sm:min-h-[200px] sm:flex-1 sm:p-4">
+    <div className="relative bg-background">
+      <div ref={contentTopRef} />
+      {/* 프리뷰 + 히스토리 영역 (하단 입력창 높이만큼 패딩) */}
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
+        <div className="pt-5 pb-[240px] sm:pt-6">
           <ImagePreview
             imageUrl={imageUrl ?? undefined}
             isGenerating={isGenerating || createMutation.isPending}
             progress={progress}
+            generatingRatio={usePromptStore.getState().params.aspectRatio as string}
+            generatingCount={Number(usePromptStore.getState().params.numImages) || 1}
+            generations={completedGenerations}
+            onSelectGeneration={handleSelectGeneration}
+            onEdit={onSwitchToEdit}
+            onDelete={() => {
+              // TODO: API 삭제 연동
+            }}
           />
         </div>
-      )}
-
-      {/* PromptInput — 전체 보기 모드에서 숨김 */}
-      {!historyExpanded && (
-        <div className="shrink-0 px-3 pb-2 sm:px-4 sm:pb-3">
-          <PromptInput
-            mode="image"
-            disabled={isGenerating || createMutation.isPending}
-            onSubmit={handleSubmit}
-          />
-        </div>
-      )}
-
-      {/* Generation history — 전체 보기 모드에서 전체 화면 차지 */}
-      <div
-        className={
-          historyExpanded
-            ? "flex min-h-0 flex-1 flex-col overflow-hidden"
-            : "min-h-0 shrink-0 overflow-y-auto sm:max-h-[40vh]"
-        }
-      >
-        <GenerationHistory
-          onSelect={handleSelectGeneration}
-          expanded={historyExpanded}
-          onToggleExpand={handleToggleHistory}
-        />
       </div>
+
+      {/* PromptInput — 하단 플로팅 (createPortal로 body에 렌더링) */}
+      {typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-x-0 bottom-0 z-10 overscroll-none pt-6 pb-5 sm:pb-6" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }} onTouchMove={(e) => e.stopPropagation()}>
+          <div className="mx-auto max-w-7xl px-3 md:px-6">
+            <PromptInput
+              mode="image"
+              disabled={isGenerating || createMutation.isPending}
+              onSubmit={handleSubmit}
+            />
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

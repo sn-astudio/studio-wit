@@ -23,6 +23,7 @@ import type { CropRect } from "./types";
 import type { ImageEditorProps } from "./types";
 import type { EditorCanvasHandle } from "./EditorCanvas/types";
 import { clampRect } from "./CropOverlay/utils";
+import type { CropRatio } from "./CropOverlay/types";
 import { EditorCanvas } from "./EditorCanvas";
 import { EditorToolbar } from "./EditorToolbar";
 import { CropOverlay } from "./CropOverlay";
@@ -51,6 +52,8 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
   const reset = useImageEditorStore((s) => s.reset);
 
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
+  const [cropRatio, setCropRatio] = useState<CropRatio>("free");
+  const ratioFromPanelRef = useRef(false);
   const [freeRotateDegrees, setFreeRotateDegrees] = useState(0);
   const [resizePreviewScale, setResizePreviewScale] = useState<
     { scaleX: number; scaleY: number } | undefined
@@ -294,6 +297,20 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
       {activeTool === "crop" && (
         <CropOverlay
           cropRect={cropRect}
+          canvasWidth={canvasRef.current?.getMainCanvas()?.width ?? 0}
+          canvasHeight={canvasRef.current?.getMainCanvas()?.height ?? 0}
+          selectedRatio={cropRatio}
+          onRatioChange={(ratio) => {
+            ratioFromPanelRef.current = true;
+            setCropRatio(ratio);
+          }}
+          onCropChange={(rect) => {
+            setCropRect(rect);
+            if (!ratioFromPanelRef.current) {
+              setCropRatio("free");
+            }
+            ratioFromPanelRef.current = false;
+          }}
           onApply={handleApplyCrop}
           onCancel={handleCancelCrop}
         />

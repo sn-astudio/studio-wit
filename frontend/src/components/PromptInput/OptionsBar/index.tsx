@@ -3,8 +3,12 @@
 import { useTranslations } from "next-intl";
 import { Globe, Image, Lock, Minus, Plus } from "lucide-react";
 
-import { Separator } from "@/components/ui/Separator";
 import { usePromptStore } from "@/stores/promptStore";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/Tooltip";
 
 import { getModelsForMode, getOptionsForParam } from "../const";
 import { ModelSelector } from "../ModelSelector";
@@ -19,16 +23,16 @@ function VisibilityToggle() {
   return (
     <button
       type="button"
-      className="flex h-9 w-[4.5rem] items-center justify-center gap-1 rounded-lg bg-zinc-200/60 px-2 text-zinc-600 transition-colors hover:bg-zinc-300 sm:h-7 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+      className="flex h-10 w-[5rem] items-center justify-center gap-1.5 rounded-lg bg-neutral-100 px-2.5 text-sm text-muted-foreground transition-colors hover:bg-neutral-200 active:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:active:bg-neutral-700"
       onClick={() => setIsPublic(!isPublic)}
       title={isPublic ? t("publicTooltip") : t("privateTooltip")}
     >
       {isPublic ? (
-        <Globe className="size-3.5" />
+        <Globe className="size-4" />
       ) : (
-        <Lock className="size-3.5" />
+        <Lock className="size-4" />
       )}
-      <span className="text-xs">
+      <span className="text-[14px] font-[500]">
         {isPublic ? t("public") : t("private")}
       </span>
     </button>
@@ -46,29 +50,34 @@ function NumImagesCounter() {
   const current = Number(numImages ?? 1);
 
   return (
-    <div className="flex h-9 items-center gap-0.5 rounded-lg bg-zinc-200/60 px-1 sm:h-7 dark:bg-zinc-800/60">
+    <Tooltip>
+    <TooltipTrigger
+      render={<div className="flex h-10 shrink-0 cursor-default items-center gap-0 whitespace-nowrap rounded-lg bg-neutral-100 px-2 dark:bg-neutral-800" />}
+    >
       <button
-        className="flex size-6 items-center justify-center rounded text-zinc-500 transition-colors hover:text-zinc-700 disabled:opacity-30 dark:text-zinc-400 dark:hover:text-zinc-200"
+        className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-200/60 hover:text-foreground disabled:pointer-events-none disabled:opacity-20 dark:hover:bg-neutral-700/60"
         onClick={() => setParam("numImages", String(Math.max(1, current - 1)))}
         disabled={current <= 1}
         aria-label={t("params.numImages")}
       >
-        <Minus className="size-3.5" />
+        <Minus className="size-4" strokeWidth={2.5} />
       </button>
-      <span className="min-w-[2rem] text-center text-xs text-zinc-600 dark:text-zinc-300">
-        {current}/{maxVal}
+      <span className="min-w-[2rem] text-center text-[14px] font-[500] text-muted-foreground">
+        <span className="text-foreground">{current}</span><span className="opacity-50">/{maxVal}</span>
       </span>
       <button
-        className="flex size-6 items-center justify-center rounded text-zinc-500 transition-colors hover:text-zinc-700 disabled:opacity-30 dark:text-zinc-400 dark:hover:text-zinc-200"
+        className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-200/60 hover:text-foreground disabled:pointer-events-none disabled:opacity-20 dark:hover:bg-neutral-700/60"
         onClick={() =>
           setParam("numImages", String(Math.min(maxVal, current + 1)))
         }
         disabled={current >= maxVal}
         aria-label={t("params.numImages")}
       >
-        <Plus className="size-3.5" />
+        <Plus className="size-4" strokeWidth={2.5} />
       </button>
-    </div>
+    </TooltipTrigger>
+    <TooltipContent>{t("params.numImages")}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -94,48 +103,31 @@ export function OptionsBar({ mode }: OptionsBarProps) {
       return false;
     return true;
   });
-  const hasNumImages = supportedParams.includes("numImages");
+  const numImagesOptions = getOptionsForParam(selectedModel, "numImages");
+  const hasNumImages = supportedParams.includes("numImages") && numImagesOptions.length > 1;
 
   return (
     <div
-      className="flex items-center gap-1 overflow-x-auto scrollbar-none"
+      className="flex w-max items-center gap-2"
       role="toolbar"
       aria-label="Generation options"
     >
       <ModelSelector models={models} />
 
       {isImg2Vid && (
-        <>
-          <Separator orientation="vertical" className="mx-0.5 h-5" />
-          <span className="inline-flex items-center gap-1 rounded-md bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-300">
-            <Image className="size-3" />
-            {t("img2vidMode")}
-          </span>
-        </>
+        <span className="inline-flex items-center gap-1 rounded-md bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-300">
+          <Image className="size-3" />
+          {t("img2vidMode")}
+        </span>
       )}
 
-      {filteredParams.length > 0 && (
-        <>
-          <Separator orientation="vertical" className="mx-0.5 h-5" />
-          {filteredParams.map((paramType) => (
-            <OptionButton key={paramType} paramType={paramType} />
-          ))}
-        </>
-      )}
+      {filteredParams.map((paramType) => (
+        <OptionButton key={paramType} paramType={paramType} />
+      ))}
 
-      {hasNumImages && (
-        <>
-          <Separator orientation="vertical" className="mx-0.5 h-5" />
-          <NumImagesCounter />
-        </>
-      )}
+      {hasNumImages && <NumImagesCounter />}
 
-      {mode === "video" && (
-        <>
-          <Separator orientation="vertical" className="mx-0.5 h-5" />
-          <VisibilityToggle />
-        </>
-      )}
+      {mode === "video" && <VisibilityToggle />}
     </div>
   );
 }

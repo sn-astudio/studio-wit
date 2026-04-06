@@ -28,19 +28,19 @@ export function GenerationHistory({
 
   return (
     <div
-      className={`border-t border-zinc-800/80 ${expanded ? "flex flex-1 flex-col overflow-hidden" : ""}`}
+      className={`border-t border-border/60 ${expanded ? "flex flex-1 flex-col overflow-hidden" : ""}`}
     >
-      <div className="flex items-center justify-between px-4 py-2">
-        <div className="flex items-center gap-1.5">
-          <Clock className="size-3 text-zinc-600" />
-          <span className="text-[11px] font-medium text-zinc-500">
+      <div className="flex items-center justify-between px-4 py-3 sm:px-6">
+        <div className="flex items-center gap-2">
+          <Clock className="size-3.5 text-muted-foreground/50" />
+          <span className="text-xs font-medium tracking-wide text-muted-foreground">
             {t("recentGenerations")}
           </span>
         </div>
         {hasItems && onToggleExpand && (
           <button
             onClick={onToggleExpand}
-            className="cursor-pointer text-[11px] text-zinc-600 transition-colors hover:text-zinc-400"
+            className="cursor-pointer text-xs font-medium text-muted-foreground/60 transition-colors hover:text-foreground"
           >
             {expanded ? t("showLess") : t("viewAll")}
           </button>
@@ -48,19 +48,19 @@ export function GenerationHistory({
       </div>
 
       {!hasItems ? (
-        <div className="flex w-full items-center justify-center py-6">
+        <div className="flex w-full items-center justify-center py-10">
           <div className="text-center">
-            <ImageIcon className="mx-auto size-6 text-zinc-800" />
-            <p className="mt-1.5 text-xs text-zinc-600">{t("noHistory")}</p>
+            <ImageIcon className="mx-auto size-8 text-muted-foreground/20" />
+            <p className="mt-3 text-sm text-muted-foreground/50">{t("noHistory")}</p>
           </div>
         </div>
       ) : (
         <div className={expanded ? "min-h-0 flex-1 overflow-y-auto" : ""}>
           <div
-            className={`grid gap-2.5 px-4 pb-3 [grid-auto-flow:dense] ${
+            className={`grid gap-3 px-4 pb-5 sm:px-6 [grid-auto-flow:dense] ${
               expanded
-                ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
-                : "grid-cols-2 sm:grid-cols-3"
+                ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+                : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
             }`}
           >
             {generations.map((gen) => (
