@@ -7,4 +7,5 @@ export interface DrawingPanelProps {
   onClear: () => void;
   isEraser?: boolean;
   isMosaic?: boolean;
+  hasContent?: boolean;
 }

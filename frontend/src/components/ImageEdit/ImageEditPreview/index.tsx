@@ -142,7 +142,7 @@ export function ImageEditPreview({
 
   return (
     <div
-      className="relative flex h-[55vh] items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 sm:h-[65vh] dark:border-neutral-800 dark:bg-neutral-900/50"
+      className="relative flex h-[55vh] items-center justify-center overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white sm:h-[65vh] dark:border-neutral-800/80 dark:bg-neutral-950/85"
       style={{
         backgroundImage: "radial-gradient(circle, var(--canvas-checker) 1px, transparent 1px)",
         backgroundSize: "16px 16px",

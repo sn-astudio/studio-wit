@@ -130,7 +130,7 @@
   },
   "PromptInput": {
     "placeholder": "생성하고 싶은 이미지를 설명해 주세요",
-    "placeholderVideo": "생성하고 싶은 영상을 설명해주세요...",
+    "placeholderVideo": "생성하고 싶은 영상을 설명해 주세요",
     "submit": "생성",
     "attachImage": "이미지 첨부",
     "removeImage": "이미지 제거",
@@ -260,7 +260,17 @@
     "loginRequired": "로그인이 필요합니다",
     "generateSuccess": "영상 생성이 완료되었습니다!",
     "generateFailed": "영상 생성에 실패했습니다",
-    "imageNotSupported": "현재 선택된 모델은 이미지 입력을 지원하지 않습니다"
+    "cancelGeneration": "취소",
+    "generationCancelled": "생성이 취소되었습니다.",
+    "imageNotSupported": "현재 선택된 모델은 이미지 입력을 지원하지 않습니다",
+    "edit": "편집",
+    "download": "내려받기",
+    "delete": "삭제",
+    "deleteTitle": "영상을 삭제하시겠습니까?",
+    "deleteDesc": "삭제된 영상은 복구할 수 없습니다.",
+    "deleteCancel": "취소",
+    "deleteConfirm": "삭제",
+    "videoLoadError": "영상을 불러올 수 없습니다"
   },
   "ImagePage": {
     "tabCreate": "생성",
@@ -278,6 +288,8 @@
     "loginRequired": "로그인이 필요합니다",
     "generateSuccess": "이미지 생성이 완료되었습니다!",
     "generateFailed": "이미지 생성에 실패했습니다",
+    "cancelGeneration": "취소",
+    "generationCancelled": "생성이 취소되었습니다.",
     "deleteTitle": "이미지를 삭제하시겠습니까?",
     "deleteDesc": "삭제된 이미지는 복구할 수 없습니다.",
     "deleteCancel": "취소",
@@ -798,7 +810,15 @@
     "edit": "편집",
     "loginRequired": "로그인이 필요합니다",
     "loginRequiredDesc": "마이페이지를 이용하려면 로그인해주세요",
-    "signIn": "로그인"
+    "signIn": "로그인",
+    "signOut": "로그아웃",
+    "delete": "삭제",
+    "deleteImageTitle": "이미지를 삭제하시겠습니까?",
+    "deleteImageDesc": "삭제된 이미지는 복구할 수 없습니다.",
+    "deleteVideoTitle": "영상을 삭제하시겠습니까?",
+    "deleteVideoDesc": "삭제된 영상은 복구할 수 없습니다.",
+    "deleteCancel": "취소",
+    "deleteConfirm": "삭제"
   },
   "LanguageSwitcher": {
     "ko": "한국어",

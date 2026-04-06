@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Undo2, Redo2 } from "lucide-react";
 
@@ -53,6 +53,43 @@ export function EditPanel({
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < historyLength - 1;
   const ratioFromPanelRef = useRef(false);
+  const [hasDrawingContent, setHasDrawingContent] = useState(false);
+
+  // 도구 진입/해제 시 리셋
+  const prevDrawToolRef = useRef(activeTool);
+  useEffect(() => {
+    const prev = prevDrawToolRef.current;
+    prevDrawToolRef.current = activeTool;
+    if (prev !== activeTool) {
+      setHasDrawingContent(false);
+    }
+  }, [activeTool]);
+
+  // 그리기/지우개: pointerUp 시 내용 체크
+  useEffect(() => {
+    if (activeTool !== "draw" && activeTool !== "eraser") return;
+    const handler = () => {
+      if (activeTool === "eraser") {
+        // 지우개는 destination-out으로 알파=0이 되므로 픽셀 체크 불가, pointerUp 발생 시 true
+        setHasDrawingContent(true);
+      } else {
+        const has = canvasRef.current?.hasOverlayContent() ?? false;
+        setHasDrawingContent(has);
+      }
+    };
+    document.addEventListener("pointerup", handler);
+    return () => document.removeEventListener("pointerup", handler);
+  }, [activeTool, canvasRef]);
+
+  // 모자이크: historyIndex 변화로 감지
+  const mosaicEntryRef = useRef(historyIndex);
+  useEffect(() => {
+    if (activeTool === "mosaic" && prevDrawToolRef.current === "mosaic") {
+      setHasDrawingContent(historyIndex > mosaicEntryRef.current);
+    } else if (activeTool === "mosaic") {
+      mosaicEntryRef.current = historyIndex;
+    }
+  }, [activeTool, historyIndex]);
 
   const handleRotate = useCallback(() => {
     const canvas = canvasRef.current?.getMainCanvas();
@@ -148,7 +185,8 @@ export function EditPanel({
 
   const handleClearDrawing = useCallback(() => {
     canvasRef.current?.clearOverlay();
-  }, [canvasRef]);
+    setActiveTool(null);
+  }, [canvasRef, setActiveTool]);
 
   const handleTextPlace = useCallback(
     (x: number, y: number) => {
@@ -213,6 +251,30 @@ export function EditPanel({
     [canvasRef],
   );
 
+  const handleToolChange = useCallback(
+    (tool: typeof activeTool) => {
+      // 현재 도구의 미적용 내용 클리어
+      if (activeTool === "draw" || activeTool === "eraser" || activeTool === "text") {
+        canvasRef.current?.clearOverlay();
+      }
+      if (activeTool === "mosaic") {
+        canvasRef.current?.undo();
+      }
+      if (activeTool === "crop") {
+        setCropRect(null);
+      }
+      if (activeTool === "freeRotate") {
+        onFreeRotateChange?.(0);
+      }
+      if (activeTool === "resize") {
+        const canvas = canvasRef.current?.getMainCanvas();
+        if (canvas) onResizeChange?.(canvas.width, canvas.height);
+      }
+      setActiveTool(tool === activeTool ? null : tool);
+    },
+    [activeTool, canvasRef, setActiveTool, setCropRect, onFreeRotateChange, onResizeChange],
+  );
+
   const currentCanvas = canvasRef.current?.getMainCanvas();
   const canvasWidth = currentCanvas?.width ?? 0;
   const canvasHeight = currentCanvas?.height ?? 0;
@@ -222,7 +284,7 @@ export function EditPanel({
       {/* 도구 */}
       <EditorToolbar
         activeTool={activeTool}
-        onToolChange={setActiveTool}
+        onToolChange={handleToolChange}
         onRotate={handleRotate}
         onFlipH={handleFlipH}
         onFlipV={handleFlipV}
@@ -235,16 +297,16 @@ export function EditPanel({
 
       {/* undo/redo */}
       <TooltipProvider delay={0} closeDelay={0}>
-        <div className="flex items-center justify-center gap-1">
+        <div className="mx-auto flex w-fit items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-1.5 dark:bg-neutral-800/60">
           <Tooltip>
             <TooltipTrigger
               render={
                 <button
                   onClick={() => canvasRef.current?.undo()}
                   disabled={!canUndo}
-                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-800"
+                  className="flex size-9 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-neutral-200 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-700"
                 >
-                  <Undo2 className="size-4" />
+                  <Undo2 className="size-[18px]" />
                 </button>
               }
             />
@@ -256,9 +318,9 @@ export function EditPanel({
                 <button
                   onClick={() => canvasRef.current?.redo()}
                   disabled={!canRedo}
-                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-800"
+                  className="flex size-9 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-neutral-200 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-700"
                 >
-                  <Redo2 className="size-4" />
+                  <Redo2 className="size-[18px]" />
                 </button>
               }
             />
@@ -309,6 +371,7 @@ export function EditPanel({
           onApply={handleApplyDrawing}
           onClear={handleClearDrawing}
           isEraser={activeTool === "eraser"}
+          hasContent={hasDrawingContent}
         />
         </>
       )}
@@ -358,8 +421,10 @@ export function EditPanel({
           isMosaic
           onClear={() => {
             canvasRef.current?.undo();
+            setActiveTool(null);
           }}
           isEraser={false}
+          hasContent={hasDrawingContent}
         />
         </>
       )}

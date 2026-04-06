@@ -23,14 +23,14 @@ function VisibilityToggle() {
   return (
     <button
       type="button"
-      className="flex h-10 w-[5rem] items-center justify-center gap-1.5 rounded-lg bg-neutral-100 px-2.5 text-sm text-muted-foreground transition-colors hover:bg-neutral-200 active:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:active:bg-neutral-700"
+      className="flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-neutral-100 px-3 transition-colors hover:bg-neutral-200/60 active:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700/70 dark:active:bg-neutral-700"
       onClick={() => setIsPublic(!isPublic)}
       title={isPublic ? t("publicTooltip") : t("privateTooltip")}
     >
       {isPublic ? (
-        <Globe className="size-4" />
+        <Globe className="size-5 opacity-35" strokeWidth={2} />
       ) : (
-        <Lock className="size-4" />
+        <Lock className="size-5 opacity-35" strokeWidth={2} />
       )}
       <span className="text-[14px] font-[500]">
         {isPublic ? t("public") : t("private")}

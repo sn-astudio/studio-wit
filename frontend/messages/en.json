@@ -259,7 +259,17 @@
     "loginRequired": "Please sign in to generate videos",
     "generateSuccess": "Video generation complete!",
     "generateFailed": "Video generation failed",
-    "imageNotSupported": "The selected model does not support image input"
+    "cancelGeneration": "Cancel",
+    "generationCancelled": "Generation cancelled.",
+    "imageNotSupported": "The selected model does not support image input",
+    "edit": "Edit",
+    "download": "Download",
+    "delete": "Delete",
+    "deleteTitle": "Delete this video?",
+    "deleteDesc": "This action cannot be undone.",
+    "deleteCancel": "Cancel",
+    "deleteConfirm": "Delete",
+    "videoLoadError": "Unable to load video"
   },
   "VideoEdit": {
     "title": "Video Edit",
@@ -410,6 +420,8 @@
     "loginRequired": "Please sign in to generate images",
     "generateSuccess": "Image generation complete!",
     "generateFailed": "Image generation failed",
+    "cancelGeneration": "Cancel",
+    "generationCancelled": "Generation cancelled.",
     "deleteTitle": "Delete this image?",
     "deleteDesc": "This action cannot be undone.",
     "deleteCancel": "Cancel",
@@ -929,7 +941,15 @@
     "edit": "Edit",
     "loginRequired": "Sign in required",
     "loginRequiredDesc": "Please sign in to access My Page",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "delete": "Delete",
+    "deleteImageTitle": "Delete this image?",
+    "deleteImageDesc": "Deleted images cannot be recovered.",
+    "deleteVideoTitle": "Delete this video?",
+    "deleteVideoDesc": "Deleted videos cannot be recovered.",
+    "deleteCancel": "Cancel",
+    "deleteConfirm": "Delete"
   },
   "LanguageSwitcher": {
     "ko": "한국어",

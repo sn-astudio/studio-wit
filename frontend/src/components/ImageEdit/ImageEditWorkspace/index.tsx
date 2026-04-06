@@ -106,7 +106,7 @@ function MobileBottomSheet({
       />
       {/* 시트 */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 flex flex-col rounded-t-2xl bg-white shadow-[0_-4px_24px_rgba(0,0,0,0.15)] transition-[height] duration-200 ease-out sm:hidden dark:bg-[#161616]"
+        className="fixed inset-x-0 bottom-0 z-40 flex flex-col rounded-t-2xl bg-white shadow-[0_-4px_24px_rgba(0,0,0,0.15)] transition-[height] duration-200 ease-out sm:hidden dark:bg-transparent"
         style={{ height: `${sheetH}vh` }}
       >
         {/* 드래그 핸들 */}
@@ -120,7 +120,7 @@ function MobileBottomSheet({
         </div>
 
         {/* 탭 세그먼트 */}
-        <div className="shrink-0 bg-white px-4 pb-3 dark:bg-[#161616]">
+        <div className="shrink-0 bg-white px-4 pb-3 dark:bg-transparent">
           <div className="relative flex flex-1 rounded-lg bg-neutral-100 p-1.5 dark:bg-neutral-800/60">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -309,14 +309,32 @@ export function ImageEditWorkspace({
 
   const handleTabChange = useCallback(
     (tab: EditTab) => {
-      if (tab !== "edit" && activeTool === "crop") {
+      // 미적용 오버레이(그리기/지우개/텍스트) 클리어
+      canvasRef.current?.clearOverlay();
+
+      // crop 초기화
+      if (activeTool === "crop") {
         setCropRect(null);
         setCropRatio("free");
-        useImageEditorStore.getState().setActiveTool(null);
       }
+      // 자유 회전 초기화
+      if (activeTool === "freeRotate") {
+        setFreeRotateDegrees(0);
+      }
+      // 리사이즈 초기화
+      if (activeTool === "resize") {
+        setResizePreviewScale(undefined);
+      }
+      // 모자이크: 미적용 시 undo
+      if (activeTool === "mosaic") {
+        canvasRef.current?.undo();
+      }
+
       if (tab === "filter") {
         useImageEditorStore.getState().setActiveTool("filter");
       } else if (tab !== "edit") {
+        useImageEditorStore.getState().setActiveTool(null);
+      } else {
         useImageEditorStore.getState().setActiveTool(null);
       }
       setActiveTab(tab);
@@ -376,9 +394,9 @@ export function ImageEditWorkspace({
           {/* 우측 패널 — 데스크톱 고정 */}
           {source && (
             <div className="hidden sm:block sm:w-[360px] sm:shrink-0">
-              <div className="fixed top-[96px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-112px)] w-[360px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-[#161616]">
+              <div className="fixed top-[96px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-112px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
                 {/* 탭 세그먼트 — 상단 고정 */}
-                <div className="shrink-0 bg-white px-5 pt-5 pb-4 dark:bg-[#161616]">
+                <div className="shrink-0 bg-white px-5 pt-5 pb-4 dark:bg-transparent">
                   <div
                     ref={trackRef}
                     className="relative flex flex-1 rounded-lg bg-neutral-100 p-1.5 dark:bg-neutral-800/60"

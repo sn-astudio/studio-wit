@@ -41,6 +41,7 @@ export function ImagePreview({
   onSelectGeneration,
   onEdit,
   onDelete,
+  onCancel,
   generatingRatio,
   generatingCount = 1,
 }: ImagePreviewProps) {
@@ -144,31 +145,47 @@ export function ImagePreview({
 
   const hasHistory = generations.length > 0;
 
+  const getRowSpan = (ratio: string) => {
+    const [w, h] = ratio.split("/").map(Number);
+    if (!w || !h) return 7;
+    return Math.max(3, Math.round(7 * (h / w)));
+  };
+
   return (
     <div className="w-full">
       {/* 로딩 + 히스토리 동시 표시 가능 */}
       {hasHistory || isGenerating ? (
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+        <div className="grid auto-rows-[32px] grid-cols-2 gap-2 sm:auto-rows-[36px] sm:grid-cols-3" style={{ gridAutoFlow: "dense" }}>
           {/* 생성 중 카드 */}
           {isGenerating &&
             Array.from({ length: generatingCount }).map((_, i) => (
               <div
                 key={`loading-${i}`}
-                className="relative flex flex-col items-center justify-center overflow-hidden rounded-xl bg-neutral-100 sm:h-[280px] dark:bg-neutral-800/60"
-                style={{ aspectRatio: generatingRatio?.replace(":", "/") ?? "1/1" }}
+                className="relative flex flex-col items-center justify-center overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60"
+                style={{ gridRow: `span ${getRowSpan(generatingRatio?.replace(":", "/") ?? "1/1")}` }}
               >
-                <div className="relative flex items-center justify-center">
-                  <span
-                    className="absolute size-14 animate-ping rounded-full bg-neutral-300/30 dark:bg-neutral-600/20"
-                    style={{ animationDuration: "2s" }}
-                  />
-                  <div className="relative flex size-12 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-700">
-                    <Loader2
-                      className="size-5 animate-spin text-neutral-500 dark:text-neutral-400"
-                      style={{ animationDuration: "1.5s" }}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative flex items-center justify-center">
+                    <span
+                      className="absolute size-14 animate-ping rounded-full bg-neutral-300/30 dark:bg-neutral-600/20"
+                      style={{ animationDuration: "2s" }}
                     />
+                    <div className="relative flex size-12 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-700">
+                      <Loader2
+                        className="size-5 animate-spin text-neutral-500 dark:text-neutral-400"
+                        style={{ animationDuration: "1.5s" }}
+                      />
+                    </div>
                   </div>
                 </div>
+                {onCancel && i === 0 && (
+                  <button
+                    onClick={onCancel}
+                    className="absolute bottom-3 left-1/2 -translate-x-1/2 flex cursor-pointer items-center justify-center rounded-full p-1.5 text-muted-foreground/40 transition-colors hover:text-muted-foreground"
+                  >
+                    <X className="size-5" />
+                  </button>
+                )}
               </div>
             ))}
 
@@ -179,8 +196,8 @@ export function ImagePreview({
             return (
             <div
               key={gen.id}
-              className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 sm:h-[280px] dark:bg-neutral-800/60"
-              style={{ aspectRatio: ratio }}
+              className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60"
+              style={{ gridRow: `span ${getRowSpan(ratio)}` }}
               onClick={() => setLightboxGen(gen)}
             >
               {gen.result_url && !isFailed && (

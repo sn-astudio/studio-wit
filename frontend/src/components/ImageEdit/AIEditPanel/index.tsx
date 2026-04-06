@@ -206,7 +206,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
       </div>
 
       {/* 생성 버튼 — 하단 고정 */}
-      <div className="sticky bottom-0 z-10 mt-auto -mx-5 bg-white px-5 pt-6 pb-4 dark:bg-[#161616]">
+      <div className="sticky bottom-0 z-10 mt-auto -mx-5 bg-white px-5 pt-6 pb-4 dark:bg-transparent">
       <button
         onClick={handleGenerate}
         disabled={
