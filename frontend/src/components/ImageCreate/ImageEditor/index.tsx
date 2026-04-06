@@ -274,6 +274,10 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
         onRotate={handleRotate}
         onFlipH={handleFlipH}
         onFlipV={handleFlipV}
+        onUndo={() => canvasRef.current?.undo()}
+        onRedo={() => canvasRef.current?.redo()}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
 
       <EditorCanvas

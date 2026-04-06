@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 import type { EditorToolbarProps } from "./types";

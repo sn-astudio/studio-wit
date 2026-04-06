@@ -11,7 +11,6 @@ import { usePromptStore } from "@/stores/promptStore";
 import type { EditorCanvasHandle } from "@/components/ImageCreate/ImageEditor/EditorCanvas/types";
 import type { CropRect } from "@/components/ImageCreate/ImageEditor/types";
 import type { CropRatio } from "@/components/ImageCreate/ImageEditor/CropOverlay/types";
-import { DEFAULT_FILTER_VALUES } from "@/components/ImageCreate/ImageEditor/const";
 import {
   DEFAULT_DRAWING_SETTINGS,
   DEFAULT_TEXT_SETTINGS,

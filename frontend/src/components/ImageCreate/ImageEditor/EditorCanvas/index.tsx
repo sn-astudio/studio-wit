@@ -525,6 +525,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
           lastX: x,
           lastY: y,
           dragging: true,
+          mode: "draw",
         };
 
         // 모자이크: main canvas에 직접 적용
@@ -566,7 +567,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         if (isText && textSettings.text.trim()) {
           onTextPlace?.(x, y);
           renderTextOnOverlay(x, y, false);
-          dragRef.current.dragging = false; // 텍스트는 드래그 시작하지 않음
+          dragRef.current.dragging = false;
         }
       },
       [
