@@ -72,6 +72,8 @@ import type {
   SplitSceneRequest,
   SplitSceneResponse,
   BulkDownloadRequest,
+  ComposeRequest,
+  ComposeResponse,
   CreativePresetRequest,
   CreativePresetResponse,
   ShortsConvertRequest,
@@ -666,6 +668,17 @@ export const videoEditApi = {
     });
   },
 
+};
+
+// ── Compose API ──
+
+export const composeApi = {
+  create(body: ComposeRequest) {
+    return request<ComposeResponse>("/api/compose", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
 };
 
 export { ApiError };

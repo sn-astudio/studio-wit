@@ -17,10 +17,14 @@ export function ImageEditPreview({
   imageUrl,
   canvasRef,
   filterValues,
-  isCropping,
-  isFreeCrop,
+  activeTool,
   cropRect,
   onCropChange,
+  drawingSettings,
+  textSettings,
+  onTextPlace,
+  freeRotateDegrees,
+  resizePreviewScale,
   onExport,
   onGenerateVideo,
   onUpload,
@@ -102,10 +106,14 @@ export function ImageEditPreview({
         ref={canvasRef}
         imageUrl={imageUrl}
         filterValues={filterValues}
-        isCropping={isCropping}
-        isFreeCrop={isFreeCrop}
+        activeTool={activeTool}
         cropRect={cropRect}
         onCropChange={onCropChange}
+        drawingSettings={drawingSettings}
+        textSettings={textSettings}
+        onTextPlace={onTextPlace}
+        freeRotateDegrees={freeRotateDegrees}
+        resizePreviewScale={resizePreviewScale}
       />
 
       {/* 우하단 액션 버튼 */}

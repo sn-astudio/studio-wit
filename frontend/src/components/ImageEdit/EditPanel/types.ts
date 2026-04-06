@@ -8,4 +8,6 @@ export interface EditPanelProps {
   setCropRect: (rect: CropRect | null) => void;
   cropRatio: CropRatio;
   setCropRatio: (ratio: CropRatio) => void;
+  onFreeRotateChange?: (degrees: number) => void;
+  onResizeChange?: (width: number, height: number) => void;
 }
