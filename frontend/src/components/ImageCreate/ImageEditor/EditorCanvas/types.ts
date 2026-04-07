@@ -29,4 +29,5 @@ export interface EditorCanvasHandle {
   applyCrop: (rect: CropRect) => void;
   bakeOverlay: () => void;
   clearOverlay: () => void;
+  hasOverlayContent: () => boolean;
 }

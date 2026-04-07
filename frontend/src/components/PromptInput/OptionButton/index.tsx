@@ -138,7 +138,7 @@ export function OptionButton({ paramType }: OptionButtonProps) {
                 <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700">
                   <SliderPrimitive.Indicator className="rounded-full bg-foreground" />
                 </SliderPrimitive.Track>
-                <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-foreground bg-background shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 dark:focus-visible:ring-neutral-600" />
+                <SliderPrimitive.Thumb className="block size-4 rounded-full bg-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 dark:focus-visible:ring-neutral-600" />
               </SliderPrimitive.Control>
             </SliderPrimitive.Root>
           </div>

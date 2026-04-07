@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { ImageIcon, Plus, Upload, X } from "lucide-react";
@@ -60,19 +61,49 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
   const [showGalleryModal, setShowGalleryModal] = React.useState(false);
   const token = useAuthStore((s) => s.token);
 
+  // 갤러리 모달 열릴 때 배경 스크롤 잠금
+  React.useEffect(() => {
+    if (!showGalleryModal) return;
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [showGalleryModal]);
+
   const { data: imageHistoryData } = useGenerationHistory(
     mode === "video" && token
       ? { type: "image", status: "completed", limit: 20 }
       : undefined,
   );
 
-  const generatedImages = React.useMemo(
-    () =>
-      imageHistoryData?.pages
-        .flatMap((p) => p.generations)
-        .filter((g) => g.result_url) ?? [],
-    [imageHistoryData],
-  );
+  const [mockImages, setMockImages] = React.useState<import("@/types/api").Generation[]>([]);
+  React.useEffect(() => {
+    if (mode !== "video") return;
+    const load = () => {
+      try {
+        const saved = localStorage.getItem("mock-generations");
+        if (saved) setMockImages(JSON.parse(saved));
+      } catch { /* ignore */ }
+    };
+    load();
+    // 갤러리 열릴 때 최신 데이터 반영
+    if (showGalleryModal) load();
+  }, [mode, showGalleryModal]);
+
+  const generatedImages = React.useMemo(() => {
+    const api = imageHistoryData?.pages
+      .flatMap((p) => p.generations)
+      .filter((g) => g.result_url) ?? [];
+    return [...mockImages.filter((g) => g.result_url), ...api];
+  }, [imageHistoryData, mockImages]);
 
   // 드롭다운 외부 클릭 닫기
   React.useEffect(() => {
@@ -144,7 +175,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
   return (
     <TooltipProvider delay={300}>
       <div className="w-full">
-          <div className="overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
+          <div className="rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
             {/* Attached image thumbnails — 입력 영역 위에 표시 */}
             {attachedImages.length > 0 && (
               <div className="flex gap-2 overflow-x-auto px-3.5 pt-3.5 pb-1 pr-5 sm:px-5 sm:pt-4 sm:pb-1">
@@ -181,27 +212,29 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
 
                   {/* 비디오 모드 드롭다운 */}
                   {showDropdown && mode === "video" && (
-                    <div className="absolute top-full left-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-popover shadow-xl">
-                      <button
-                        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                        onClick={() => {
-                          fileInputRef.current?.click();
-                          setShowDropdown(false);
-                        }}
-                      >
-                        <Upload className="size-4 text-muted-foreground" />
-                        {t("uploadFile")}
-                      </button>
-                      <button
-                        className="flex w-full items-center gap-2.5 border-t border-neutral-200 dark:border-neutral-800 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                        onClick={() => {
-                          setShowDropdown(false);
-                          setShowGalleryModal(true);
-                        }}
-                      >
-                        <ImageIcon className="size-4 text-muted-foreground" />
-                        {t("selectFromGallery")}
-                      </button>
+                    <div className="absolute bottom-full left-0 z-50 mb-2 min-w-[220px] rounded-xl border border-border/50 bg-popover p-2.5 shadow-xl">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                          onClick={() => {
+                            fileInputRef.current?.click();
+                            setShowDropdown(false);
+                          }}
+                        >
+                          <Upload className="size-4 opacity-50" />
+                          {t("uploadFile")}
+                        </button>
+                        <button
+                          className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                          onClick={() => {
+                            setShowDropdown(false);
+                            setShowGalleryModal(true);
+                          }}
+                        >
+                          <ImageIcon className="size-4 opacity-50" />
+                          {t("selectFromGallery")}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -232,6 +265,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
               <div className="overflow-x-auto scrollbar-none px-3.5 pb-3.5 sm:px-5 sm:pb-[20px]">
                 <OptionsBar mode={mode} />
               </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white dark:from-neutral-950/85 sm:hidden" />
             </div>
             </div>{/* end left */}
 
@@ -258,54 +292,72 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
           </div>
       </div>
       {/* 이미지 갤러리 모달 */}
-      {showGalleryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="mx-4 w-full max-w-2xl rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-popover p-6 shadow-xl">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">
+      {showGalleryModal && typeof document !== "undefined" && createPortal(
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowGalleryModal(false)}
+        >
+          <div
+            className="flex w-full max-w-[880px] max-h-[85vh] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-[#161616]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 pt-4 pb-4 sm:px-5 sm:pt-5 sm:pb-5">
+              <h2 className="text-[15px] font-[600] text-foreground sm:text-[16px]">
                 {t("selectFromGallery")}
               </h2>
               <button
                 onClick={() => setShowGalleryModal(false)}
-                className="text-muted-foreground hover:text-foreground"
+                className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground dark:hover:bg-neutral-800"
               >
-                <X className="size-5" />
+                <X className="size-4.5" />
               </button>
             </div>
             {generatedImages.length > 0 ? (
-              <div className="grid max-h-[60vh] grid-cols-3 gap-2.5 overflow-y-auto sm:grid-cols-4 md:grid-cols-5">
-                {generatedImages.map((gen) => (
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-5 sm:pb-5">
+              <div className="grid auto-rows-[32px] grid-cols-2 gap-2 sm:auto-rows-[36px] sm:grid-cols-3" style={{ gridAutoFlow: "dense" }}>
+                {generatedImages.map((gen) => {
+                  const ratio = gen.aspect_ratio?.replace(":", "/") ?? "1/1";
+                  const [w, h] = ratio.split("/").map(Number);
+                  const rowSpan = w && h ? Math.max(3, Math.round(7 * (h / w))) : 7;
+                  return (
                   <button
                     key={gen.id}
                     onClick={() => {
                       handleSelectGeneratedImage(gen.result_url!);
                       setShowGalleryModal(false);
                     }}
-                    className="group relative aspect-square overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800 transition-colors hover:border-primary"
+                    className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60"
+                    style={{ gridRow: `span ${rowSpan}` }}
                   >
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={gen.result_url!}
                       alt={gen.prompt}
-                      fill
-                      className="object-cover"
-                      unoptimized
+                      className="size-full object-cover"
                     />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-1.5 pt-3 opacity-0 transition-opacity group-hover:opacity-100">
-                      <p className="truncate text-[11px] text-white/80">
+                    {/* 모바일: 항상 표시 / PC: 호버 시 */}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100" />
+                    <div className="pointer-events-none absolute inset-x-0 top-0 px-2 pt-2 pb-4 opacity-100 sm:px-2.5 sm:pt-2.5 sm:pb-6 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                      <p className="line-clamp-1 text-left text-[11px] font-[500] leading-snug text-white/90 sm:line-clamp-2 sm:text-[12px]">
                         {gen.prompt}
                       </p>
                     </div>
                   </button>
-                ))}
+                  );
+                })}
+              </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <ImageIcon className="mb-2 size-8" />
-                <p className="text-sm">{t("noGeneratedImages")}</p>
+              <div className="flex flex-col items-center justify-center px-4 pb-4 py-12 sm:px-5 sm:pb-5 sm:py-16">
+                <div className="flex size-12 items-center justify-center rounded-full bg-neutral-100 sm:size-14 dark:bg-neutral-800">
+                  <ImageIcon className="size-5 text-neutral-400 sm:size-6 dark:text-neutral-500" />
+                </div>
+                <p className="mt-3 text-[13px] font-[500] text-muted-foreground/60 sm:mt-4 sm:text-[14px]">{t("noGeneratedImages")}</p>
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </TooltipProvider>
   );

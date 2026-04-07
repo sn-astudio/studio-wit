@@ -69,6 +69,7 @@ export default async function LocaleLayout({
                 <Toaster
                   position="top-center"
                   offset={76}
+                  duration={3000}
                   toastOptions={{
                     classNames: {
                       toast:
