@@ -6,7 +6,7 @@ import { Download, Globe, Lock, Loader2, Merge, MessageCircle, Save, ScanSearch,
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { ChevronDown, ChevronUp, Clapperboard, Columns2, Crop, Film, ImageIcon, Maximize2, Palette, Pause, Play, Redo2, RotateCcw, Trash2, Undo2, Upload, Wand2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Columns2, Crop, Film, Gauge, ImageIcon, Layers, Maximize2, Palette, Pause, Play, Redo2, RotateCcw, Stamp, Timer, Trash2, Type, Undo2, Upload, Wand2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { useTrimVideo, useSaveEdit, useUploadVideo } from "@/hooks/queries/useVideoEdit";
@@ -37,6 +37,8 @@ import { useVideoEditStore } from "@/stores/videoEditStore";
 import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import type { VideoSource } from "./types";
 
+type MainTab = "edit" | "filter" | "overlay" | "ai";
+type SubTool = "trim" | "crop" | "merge" | "speed" | "reverse" | "rotate" | "resolution" | "fps" | "filter" | "creative" | "subtitles" | "text" | "watermark" | "audio" | "gif" | "scene" | "thumbnail" | null;
 type EditTab = "trim" | "ai" | "effects" | "filter" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop" | "scene" | "preset" | "creative";
 
 export function VideoEditWorkspace() {
@@ -55,6 +57,35 @@ export function VideoEditWorkspace() {
     if (tab === "ai" || tab === "trim" || tab === "effects" || tab === "merge" || tab === "subtitles") return tab;
     return "trim";
   });
+
+  // 4탭 구조
+  const [mainTab, setMainTab] = useState<MainTab>("edit");
+  const [subTool, setSubTool] = useState<SubTool>(null);
+
+  // mainTab 변경 시 subTool 초기화 + activeTab 매핑
+  const handleMainTabChange = useCallback((tab: MainTab) => {
+    setMainTab(tab);
+    setSubTool(null);
+    if (tab === "ai") setActiveTab("ai");
+    else if (tab === "filter") setActiveTab("filter");
+    else setActiveTab("trim");
+  }, []);
+
+  // subTool 변경 시 activeTab 매핑
+  const handleSubToolChange = useCallback((tool: SubTool) => {
+    setSubTool(tool);
+    if (tool === "trim") setActiveTab("trim");
+    else if (tool === "crop") setActiveTab("crop");
+    else if (tool === "merge") setActiveTab("merge");
+    else if (tool === "speed" || tool === "reverse" || tool === "rotate" || tool === "resolution" || tool === "fps" || tool === "text" || tool === "watermark") setActiveTab("effects");
+    else if (tool === "filter") setActiveTab("filter");
+    else if (tool === "creative") setActiveTab("creative");
+    else if (tool === "subtitles") setActiveTab("subtitles");
+    else if (tool === "audio") setActiveTab("audio");
+    else if (tool === "gif") setActiveTab("gif");
+    else if (tool === "scene") setActiveTab("scene");
+    else if (tool === "thumbnail") setActiveTab("thumbnail");
+  }, []);
 
   // 탭 전환 확인 모달
   const [pendingTab, setPendingTab] = useState<EditTab | null>(null);
@@ -638,19 +669,32 @@ export function VideoEditWorkspace() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasUnsavedWork]);
 
-  const TAB_ITEMS: { id: EditTab; icon: typeof Scissors; labelKey: string }[] = [
-    { id: "trim", icon: Scissors, labelKey: "tabTrim" },
+  const MAIN_TABS: { id: MainTab; icon: typeof Scissors; labelKey: string }[] = [
+    { id: "edit", icon: Scissors, labelKey: "tabEdit" },
     { id: "filter", icon: Palette, labelKey: "tabFilter" },
-    { id: "effects", icon: Wand2, labelKey: "tabEffects" },
-    { id: "crop", icon: Crop, labelKey: "tabCrop" },
+    { id: "overlay", icon: Layers, labelKey: "tabOverlay" },
     { id: "ai", icon: Sparkles, labelKey: "tabAI" },
+  ];
+
+  const EDIT_TOOLS: { id: SubTool; icon: typeof Scissors; labelKey: string }[] = [
+    { id: "trim", icon: Scissors, labelKey: "tabTrim" },
+    { id: "crop", icon: Crop, labelKey: "tabCrop" },
     { id: "merge", icon: Merge, labelKey: "tabMerge" },
+    { id: "speed", icon: Gauge, labelKey: "toolSpeed" },
+    { id: "reverse", icon: Undo2, labelKey: "toolReverse" },
+    { id: "rotate", icon: RotateCcw, labelKey: "toolRotate" },
+    { id: "resolution", icon: Maximize2, labelKey: "toolResolution" },
+    { id: "fps", icon: Timer, labelKey: "toolFps" },
+  ];
+
+  const OVERLAY_TOOLS: { id: SubTool; icon: typeof Scissors; labelKey: string }[] = [
     { id: "subtitles", icon: MessageCircle, labelKey: "tabSubtitles" },
+    { id: "text", icon: Type, labelKey: "toolText" },
+    { id: "watermark", icon: Stamp, labelKey: "toolWatermark" },
     { id: "audio", icon: Volume2, labelKey: "tabAudio" },
     { id: "gif", icon: Film, labelKey: "tabGif" },
     { id: "scene", icon: ScanSearch, labelKey: "tabScene" },
     { id: "thumbnail", icon: ImageIcon, labelKey: "tabThumbnail" },
-    { id: "creative", icon: Clapperboard, labelKey: "tabCreative" },
   ];
 
   return (
@@ -838,25 +882,24 @@ export function VideoEditWorkspace() {
                   onTimeUpdate={setCurrentTime}
                   onDurationLoaded={handleDurationLoaded}
                   videoRef={videoRef}
-                  cssFilter={(activeTab === "effects" || activeTab === "creative" || activeTab === "filter") ? previewCssFilter : undefined}
+                  cssFilter={(activeTab === "effects" || mainTab === "filter") ? previewCssFilter : undefined}
                   textOverlay={activeTab === "effects" ? previewTextOverlay : undefined}
                   watermark={activeTab === "effects" ? previewWatermark : undefined}
                   subtitles={activeTab === "subtitles" ? previewSubtitles : undefined}
                   playbackRate={activeTab === "effects" ? previewSpeed : 1}
                   creativeOverlay={activeTab === "creative" ? previewCreativeOverlay : undefined}
+                  sourceAspectRatio={source?.aspectRatio}
                   onClickEmpty={() => setHistoryModalOpen(true)}
                   onUpload={() => fileInputRef.current?.click()}
-                  onFileDrop={async (file) => {
-                    try {
-                      const result = await uploadMutation.mutateAsync(file);
-                      handleSourceSelected({
-                        url: result.url,
-                        duration: result.duration,
-                        width: result.width,
-                        height: result.height,
-                        name: file.name,
-                      });
-                    } catch {}
+                  onFileDrop={(file) => {
+                    const url = URL.createObjectURL(file);
+                    handleSourceSelected({
+                      url,
+                      duration: 0,
+                      width: 0,
+                      height: 0,
+                      name: file.name,
+                    });
                   }}
                 />
               )}
@@ -865,33 +908,82 @@ export function VideoEditWorkspace() {
 
 
           <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
+
+          {/* 서브 패널: 트림 컨트롤 + 타임라인 (캔버스 아래) */}
+          {subTool === "trim" && source && duration > 0 && !resultUrl && (
+            <div className="mt-3 overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white px-5 py-4 dark:border-neutral-800/80 dark:bg-neutral-950/85">
+              <TrimControls
+                trimStart={trimStart}
+                trimEnd={trimEnd}
+                duration={duration}
+                isTrimming={trimMutation.isPending}
+                onTrim={handleTrim}
+                onReset={handleTrimReset}
+              />
+              <div className="mt-4 border-t border-neutral-200 pt-4 dark:border-neutral-700/60">
+                <VideoTimeline
+                  duration={duration}
+                  currentTime={currentTime}
+                  trimStart={trimStart}
+                  trimEnd={trimEnd}
+                  onTrimStartChange={setTrimStart}
+                  onTrimEndChange={setTrimEnd}
+                  onSeek={handleSeek}
+                />
+              </div>
+            </div>
+          )}
           </div>
 
           {/* 우측 패널 — 데스크톱 고정 (소스 있을 때만) */}
           {source && <div className="hidden sm:block sm:w-[360px] sm:shrink-0">
             <div className="fixed top-[88px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-104px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
-              {/* 탭 그리드 — 상단 고정 */}
+              {/* 4탭 세그먼트 — 상단 고정 */}
               <div className="shrink-0 px-5 pt-5 pb-4">
-                <div className="grid grid-cols-4 gap-2">
-                  {TAB_ITEMS.map((tab) => {
+                <div className="relative flex flex-1 rounded-lg bg-neutral-100 p-1.5 dark:bg-neutral-800/60">
+                  {MAIN_TABS.map((tab) => {
                     const Icon = tab.icon;
-                    const isActive = activeTab === tab.id;
+                    const isActive = mainTab === tab.id;
                     return (
                       <button
                         key={tab.id}
-                        onClick={() => switchTab(tab.id)}
-                        className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl py-3.5 text-[12px] font-[500] transition-all active:opacity-80 ${
+                        onClick={() => handleMainTabChange(tab.id)}
+                        className={`relative z-10 flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md py-2 text-[13px] font-[500] transition-colors duration-200 ${
                           isActive
-                            ? "bg-foreground text-background"
-                            : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                            ? "bg-white text-foreground shadow-sm dark:bg-neutral-700"
+                            : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        <Icon className="size-5" strokeWidth={1.5} />
+                        <Icon className="size-3.5" strokeWidth={isActive ? 2 : 1.5} />
                         {t(tab.labelKey)}
                       </button>
                     );
                   })}
                 </div>
+
+                {/* 서브 도구 그리드 — 편집/오버레이 탭 */}
+                {(mainTab === "edit" || mainTab === "overlay") && (
+                  <div className="mt-4 grid grid-cols-4 gap-2">
+                    {(mainTab === "edit" ? EDIT_TOOLS : OVERLAY_TOOLS).map((tool) => {
+                      const Icon = tool.icon;
+                      const isActive = subTool === tool.id;
+                      return (
+                        <button
+                          key={tool.id}
+                          onClick={() => handleSubToolChange(tool.id)}
+                          className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl py-3.5 text-[12px] font-[500] transition-all active:opacity-80 ${
+                            isActive
+                              ? "bg-foreground text-background"
+                              : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                          }`}
+                        >
+                          <Icon className="size-5" strokeWidth={1.5} />
+                          {t(tool.labelKey)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* Undo/Redo */}
                 <div className="mt-4 flex justify-center">
@@ -928,7 +1020,7 @@ export function VideoEditWorkspace() {
               {aiIsGenerating && activeTab !== "ai" && (
                 <div
                   className="mx-5 mb-3 flex cursor-pointer items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 transition-colors hover:bg-primary/15"
-                  onClick={() => setActiveTab("ai")}
+                  onClick={() => handleMainTabChange("ai")}
                   role="button"
                   tabIndex={0}
                 >
@@ -945,7 +1037,7 @@ export function VideoEditWorkspace() {
               {aiIsCompleted && aiGeneration?.result_url && activeTab !== "ai" && (
                 <div
                   className="mx-5 mb-3 flex cursor-pointer items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 transition-colors hover:bg-primary/10"
-                  onClick={() => setActiveTab("ai")}
+                  onClick={() => handleMainTabChange("ai")}
                   role="button"
                   tabIndex={0}
                 >
@@ -959,17 +1051,17 @@ export function VideoEditWorkspace() {
               {/* 패널 콘텐츠 — 스크롤 영역 */}
               <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto scrollbar-none px-5 pb-5">
                 <div className="flex flex-col gap-3">
-          {/* 트리밍 탭 */}
-          {source && activeTab === "trim" && duration > 0 && (
+
+          {/* 편집/오버레이 탭 — 서브 도구 없으면 안내 */}
+          {(mainTab === "edit" || mainTab === "overlay") && !subTool && (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <p className="text-[14px] text-muted-foreground/60">{t("selectToolDesc")}</p>
+            </div>
+          )}
+
+          {/* 트리밍 — 결과만 패널에 표시 */}
+          {source && subTool === "trim" && duration > 0 && (
             <div className="space-y-2">
-              <TrimControls
-                trimStart={trimStart}
-                trimEnd={trimEnd}
-                duration={duration}
-                isTrimming={trimMutation.isPending}
-                onTrim={handleTrim}
-                onReset={handleTrimReset}
-              />
 
               {resultUrl && (
                 <div className="space-y-2 rounded-xl bg-primary/10 px-4 py-3">
@@ -1170,7 +1262,7 @@ export function VideoEditWorkspace() {
             </>
           )}
 
-          {source && activeTab === "filter" && (
+          {source && mainTab === "filter" && (
             <>
               <FilterPanel
                 sourceUrl={source.url}
@@ -1377,7 +1469,7 @@ export function VideoEditWorkspace() {
               />
           )}
 
-          {source && activeTab === "creative" && (
+          {source && mainTab === "filter" && (
               <CreativePresetPanel
                 sourceUrl={displayUrl}
                 onApplied={setResultUrl}
@@ -1400,26 +1492,24 @@ export function VideoEditWorkspace() {
           </div>}
         </div>
 
-        {/* 타임라인 (트림 탭, 소스 있고 결과 없을 때만) */}
-        {activeTab === "trim" && source && duration > 0 && !resultUrl && (
-          <div className="sm:mr-[384px]">
-            <VideoTimeline
-              duration={duration}
-              currentTime={currentTime}
-              trimStart={trimStart}
-              trimEnd={trimEnd}
-              onTrimStartChange={setTrimStart}
-              onTrimEndChange={setTrimEnd}
-              onSeek={handleSeek}
-            />
-          </div>
-        )}
 
         {/* 하단 비디오 히스토리 */}
         <div className={`mt-12 pb-10 ${source ? "sm:mr-[384px]" : ""}`}>
           <VideoSourceSelector
             onSourceSelected={handleSourceSelected}
             isLoading={uploadMutation.isPending}
+            onDelete={(gen) => {
+              if (gen.id.startsWith("mock-")) {
+                try {
+                  const saved = localStorage.getItem("mock-video-generations");
+                  if (saved) {
+                    const list = JSON.parse(saved).filter((g: { id: string }) => g.id !== gen.id);
+                    localStorage.setItem("mock-video-generations", JSON.stringify(list));
+                  }
+                } catch {}
+              }
+              // TODO: API 삭제 연동
+            }}
           />
         </div>
       </div>

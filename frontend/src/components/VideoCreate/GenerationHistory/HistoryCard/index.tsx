@@ -92,6 +92,11 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
         </div>
       )}
 
+      {/* 호버 오버레이 */}
+      {isCompleted && (
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100" />
+      )}
+
       {/* 호버 액션 버튼 — 모바일에서 항상 보이도록 */}
       {isCompleted && gen.result_url && (
         <div className="absolute top-1 right-1 flex gap-0.5 opacity-100 sm:top-1.5 sm:right-1.5 sm:gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
@@ -134,12 +139,12 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
         </div>
       )}
 
-      {/* Bottom gradient overlay with info — 모바일에서 항상 시간 표시 */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1 pt-3 sm:p-1.5 sm:pt-4 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
-        <p className="hidden truncate text-left text-[9px] leading-tight text-zinc-200 sm:block">
-          {gen.prompt}
-        </p>
-        <span className="text-[8px] text-zinc-400">{timeAgo}</span>
+      {/* Bottom: meta */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between px-3 pb-2.5 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[12px] font-[500] text-white/80">{gen.model_id}</span>
+          <span className="text-[11px] text-white/60">{timeAgo}</span>
+        </div>
       </div>
     </div>
   );

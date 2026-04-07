@@ -122,7 +122,6 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
         setMockProgress(0);
         setSelectedImageUrl(null);
         usePromptStore.getState().setPrompt("");
-        setTimeout(() => contentTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
         let p = 0;
         const interval = setInterval(() => {
           p += Math.floor(Math.random() * 15) + 5;
@@ -194,8 +193,7 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
             prevStatusRef.current = res.generation.status;
             setCurrentGenId(res.generation.id);
             usePromptStore.getState().setPrompt("");
-            setTimeout(() => contentTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-          },
+              },
           onError: (err) => {
             toast.error(err.message || t("generateFailed"));
           },

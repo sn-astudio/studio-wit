@@ -21,6 +21,7 @@ export function VideoEditPreview({
   onClickEmpty,
   onUpload,
   onFileDrop,
+  sourceAspectRatio,
 }: VideoEditPreviewProps) {
   const t = useTranslations("VideoEdit");
   const [isDragging, setIsDragging] = useState(false);
@@ -56,11 +57,26 @@ export function VideoEditPreview({
     }
   }, [videoRef, onTimeUpdate]);
 
+  const [isPortrait, setIsPortrait] = useState(false);
+
+  // sourceAspectRatio로 초기 portrait 판단
+  useEffect(() => {
+    if (sourceAspectRatio) {
+      const [w, h] = sourceAspectRatio.replace(":", "/").split("/").map(Number);
+      if (w && h) setIsPortrait(h > w);
+    }
+  }, [sourceAspectRatio]);
+
   const handleLoadedMetadata = useCallback(() => {
     if (videoRef.current) {
       onDurationLoaded(videoRef.current.duration);
+      const { videoWidth, videoHeight } = videoRef.current;
+      // 실제 영상 비율 감지 (sourceAspectRatio가 없을 때만)
+      if (!sourceAspectRatio) {
+        setIsPortrait(videoHeight > videoWidth);
+      }
     }
-  }, [videoRef, onDurationLoaded]);
+  }, [videoRef, onDurationLoaded, sourceAspectRatio]);
 
   // playbackRate 변경
   useEffect(() => {
@@ -102,13 +118,16 @@ export function VideoEditPreview({
   }
 
   return (
-    <div className="flex aspect-video max-h-[280px] w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white dark:border-neutral-800/80 dark:bg-neutral-950/85">
+    <div className={`relative flex items-center justify-center overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white dark:border-neutral-800/80 dark:bg-neutral-950/85 ${isPortrait ? "max-h-[65vh] min-h-[40vh]" : "max-h-[65vh] min-h-[30vh]"}`}>
       <div className="relative max-h-full max-w-full">
         <video
           ref={videoRef}
           src={videoUrl}
-          className="max-h-[280px] max-w-full object-contain transition-[filter] duration-200"
-          style={cssFilter ? { filter: cssFilter } : undefined}
+          className={`transition-[filter] duration-200 ${isPortrait ? "max-h-[65vh] max-w-[40vw] object-cover" : "max-h-[65vh] max-w-full object-contain"}`}
+          style={{
+            ...(cssFilter ? { filter: cssFilter } : {}),
+            ...(isPortrait && sourceAspectRatio ? { aspectRatio: sourceAspectRatio.replace(":", "/") } : {}),
+          }}
           controls
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}

@@ -43,11 +43,23 @@ export function VideoCreateWorkspace() {
   const createMutation = useCreateGeneration();
   const uploadImageMutation = useUploadImage();
 
-  // Load mock generations from localStorage
+  // Load mock generations from localStorage (seed defaults if empty)
   useEffect(() => {
     try {
       const saved = localStorage.getItem("mock-video-generations");
-      if (saved) setMockGenerations(JSON.parse(saved));
+      if (saved) {
+        setMockGenerations(JSON.parse(saved));
+      } else {
+        const defaults: Generation[] = [
+          { id: "mock-seed-1", prompt: "A dreamy forest scene", model_id: "Veo 3", type: "video", status: "completed", result_url: "https://assets.mixkit.co/videos/34487/34487-720.mp4", thumbnail_url: null, aspect_ratio: "16:9", created_at: new Date(Date.now() - 3600000).toISOString(), completed_at: new Date(Date.now() - 3600000).toISOString(), progress: null, error: null },
+          { id: "mock-seed-2", prompt: "Ocean waves at sunset", model_id: "Veo 3", type: "video", status: "completed", result_url: "https://assets.mixkit.co/videos/4883/4883-720.mp4", thumbnail_url: null, aspect_ratio: "16:9", created_at: new Date(Date.now() - 7200000).toISOString(), completed_at: new Date(Date.now() - 7200000).toISOString(), progress: null, error: null },
+          { id: "mock-seed-3", prompt: "City lights at night", model_id: "Runway Gen-4", type: "video", status: "completed", result_url: "https://assets.mixkit.co/videos/32647/32647-720.mp4", thumbnail_url: null, aspect_ratio: "9:16", created_at: new Date(Date.now() - 10800000).toISOString(), completed_at: new Date(Date.now() - 10800000).toISOString(), progress: null, error: null },
+          { id: "mock-seed-4", prompt: "Golden hour landscape", model_id: "Runway Gen-4", type: "video", status: "completed", result_url: "https://assets.mixkit.co/videos/4421/4421-720.mp4", thumbnail_url: null, aspect_ratio: "1:1", created_at: new Date(Date.now() - 14400000).toISOString(), completed_at: new Date(Date.now() - 14400000).toISOString(), progress: null, error: null },
+          { id: "mock-seed-5", prompt: "Abstract particles flowing", model_id: "Veo 3", type: "video", status: "completed", result_url: "https://assets.mixkit.co/videos/3123/3123-720.mp4", thumbnail_url: null, aspect_ratio: "16:9", created_at: new Date(Date.now() - 18000000).toISOString(), completed_at: new Date(Date.now() - 18000000).toISOString(), progress: null, error: null },
+        ];
+        setMockGenerations(defaults);
+        localStorage.setItem("mock-video-generations", JSON.stringify(defaults));
+      }
     } catch { /* ignore */ }
   }, []);
 
@@ -123,7 +135,6 @@ export function VideoCreateWorkspace() {
         setMockProgress(0);
         setSelectedVideoUrl(null);
         usePromptStore.getState().setPrompt("");
-        setTimeout(() => contentTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
         let p = 0;
         const interval = setInterval(() => {
           p += Math.floor(Math.random() * 15) + 5;
@@ -133,13 +144,18 @@ export function VideoCreateWorkspace() {
             setTimeout(() => {
               const ratio = state.params.aspectRatio ? String(state.params.aspectRatio) : "16:9";
               const seed = Date.now();
+              const mockUrls: Record<string, string> = {
+                "16:9": "https://assets.mixkit.co/videos/34487/34487-720.mp4",
+                "9:16": "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+                "1:1": "https://assets.mixkit.co/videos/34563/34563-720.mp4",
+              };
               const newGen: Generation = {
                 id: `mock-${seed}`,
                 prompt: state.prompt,
                 model_id: state.selectedModel,
                 type: "video",
                 status: "completed",
-                result_url: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
+                result_url: mockUrls[ratio] ?? mockUrls["16:9"],
                 thumbnail_url: null,
                 aspect_ratio: ratio,
                 created_at: new Date().toISOString(),
@@ -204,8 +220,7 @@ export function VideoCreateWorkspace() {
             prevStatusRef.current = res.generation.status;
             setCurrentGenId(res.generation.id);
             usePromptStore.getState().setPrompt("");
-            setTimeout(() => contentTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-          },
+              },
           onError: (err) => {
             toast.error(err.message || t("generateFailed"));
           },

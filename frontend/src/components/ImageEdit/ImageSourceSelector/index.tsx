@@ -28,6 +28,7 @@ import {
   TooltipContent,
 } from "@/components/ui/Tooltip";
 import { downloadImage } from "@/components/ImageCreate/ImagePreview/utils";
+import { formatTimeAgo } from "@/components/MyPage/GenerationCard/utils";
 
 import type { ImageSourceSelectorProps } from "./types";
 
@@ -222,14 +223,16 @@ export function ImageSourceSelector({
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <div className="grid auto-rows-[32px] grid-cols-2 gap-2 sm:auto-rows-[36px] sm:grid-cols-3" style={{ gridAutoFlow: "dense" }}>
             {generations.map((gen) => {
               const ratio = gen.aspect_ratio?.replace(":", "/") ?? "1/1";
+              const [w, h] = ratio.split("/").map(Number);
+              const rowSpan = (!w || !h) ? 7 : Math.max(3, Math.round(7 * (h / w)));
               return (
               <div
                 key={gen.id}
-                className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 text-left sm:h-[280px] dark:bg-neutral-800/60"
-                style={{ aspectRatio: ratio }}
+                className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60"
+                style={{ gridRow: `span ${rowSpan}` }}
                 onClick={() => setLightboxGen(gen)}
               >
                 {gen.result_url && (
@@ -248,8 +251,13 @@ export function ImageSourceSelector({
                         {gen.prompt}
                       </p>
                     </div>
-                    {/* 하단 액션 버튼 — 모바일 항상 표시, PC 호버 시 */}
-                    <div className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 opacity-100 sm:bottom-2.5 sm:right-2.5 sm:gap-1.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                    {/* 하단: 메타 + 액션 */}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between px-3 pb-2.5 opacity-100 sm:px-3 sm:pb-2.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[12px] font-[500] text-white/80">{gen.model_id}</span>
+                        <span className="text-[11px] text-white/60">{formatTimeAgo(gen.created_at)}</span>
+                      </div>
+                      <div className="pointer-events-auto flex items-center gap-1">
                       <TooltipProvider delay={0} closeDelay={0}>
                       <Tooltip>
                         <TooltipTrigger
@@ -306,6 +314,7 @@ export function ImageSourceSelector({
                         <TooltipContent>{t("delete")}</TooltipContent>
                       </Tooltip>
                       </TooltipProvider>
+                    </div>
                     </div>
                   </>
                 )}

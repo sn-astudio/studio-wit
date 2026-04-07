@@ -115,6 +115,7 @@ export function HistorySelectModal({
         width: 0,
         height: 0,
         name: gen.prompt?.slice(0, 30) || gen.model_id,
+        aspectRatio: gen.aspect_ratio ?? undefined,
       });
       onClose();
     },
