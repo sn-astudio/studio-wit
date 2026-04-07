@@ -1,11 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Pencil, Upload } from "lucide-react";
-
-import { useAuthStore } from "@/stores/auth";
-import { useGenerationHistory } from "@/hooks/queries/useGeneration";
+import { Wand2, Upload } from "lucide-react";
 
 import type { GalleryPopoverProps } from "./types";
 
@@ -13,35 +11,27 @@ export function GalleryPopover({
   onSelect,
   onClose,
   currentEditingImageUrl,
-}: GalleryPopoverProps) {
+  anchorRef,
+}: GalleryPopoverProps & { anchorRef: React.RefObject<HTMLButtonElement | null> }) {
   const t = useTranslations("ImageEdit");
-  const token = useAuthStore((s) => s.token);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const popoverRef = useRef<HTMLDivElement>(null);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useGenerationHistory(
-      token
-        ? { type: "image", status: "completed", limit: 20 }
-        : undefined,
-    );
-
-  const generations =
-    data?.pages.flatMap((page) => page.generations) ?? [];
-
-  const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      },
-      { threshold: 0.1 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+    const anchor = anchorRef?.current;
+    const popover = popoverRef.current;
+    if (!anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    const menuH = popover?.offsetHeight ?? 100;
+
+    // 아래 공간이 부족하면 위로
+    const spaceBelow = window.innerHeight - rect.bottom;
+    if (spaceBelow < menuH + 16) {
+      setPos({ top: rect.top - menuH - 8, left: rect.left });
+    } else {
+      setPos({ top: rect.bottom + 8, left: rect.left });
+    }
+  }, [anchorRef]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const handleFileChange = useCallback(
@@ -55,7 +45,6 @@ export function GalleryPopover({
     [onSelect],
   );
 
-  const popoverRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
@@ -69,29 +58,27 @@ export function GalleryPopover({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div
       ref={popoverRef}
-      className="absolute top-full right-0 left-0 z-10 mt-1 rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl"
+      className="fixed z-[100] w-[200px] rounded-xl border border-border/50 bg-popover p-2.5 shadow-lg"
+      style={{ top: pos.top, left: pos.left }}
     >
-      <div className="border-b border-zinc-800 p-2">
-        {/* 현재 편집 이미지 사용 */}
+      <div className="flex flex-col gap-1">
         {currentEditingImageUrl && (
           <button
             onClick={() => onSelect(currentEditingImageUrl)}
-            className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+            className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
-            <Pencil className="size-3.5" />
+            <Wand2 className="size-4 opacity-35" />
             {t("composeUseCurrentImage")}
           </button>
         )}
-
-        {/* 업로드 버튼 */}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+          className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
         >
-          <Upload className="size-3.5" />
+          <Upload className="size-4 opacity-35" />
           {t("composeUpload")}
         </button>
         <input
@@ -102,44 +89,7 @@ export function GalleryPopover({
           onChange={handleFileChange}
         />
       </div>
-
-      {/* 갤러리 그리드 */}
-      <div className="max-h-[200px] overflow-y-auto p-2">
-        {generations.length === 0 ? (
-          <div className="flex items-center justify-center py-4">
-            <div className="text-center">
-              <ImageIcon className="mx-auto size-5 text-zinc-700" />
-              <p className="mt-1 text-[10px] text-zinc-600">
-                {t("noHistory")}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-1.5">
-            {generations.map((gen) => (
-              <button
-                key={gen.id}
-                onClick={() => {
-                  if (gen.result_url) {
-                    onSelect(gen.result_url);
-                  }
-                }}
-                className="group relative aspect-square cursor-pointer overflow-hidden rounded-md border border-zinc-800/60 bg-zinc-900/60 transition-colors hover:border-zinc-600"
-              >
-                {gen.result_url && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={gen.result_url}
-                    alt={gen.prompt}
-                    className="absolute inset-0 size-full object-cover"
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-        <div ref={sentinelRef} className="h-1" />
-      </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

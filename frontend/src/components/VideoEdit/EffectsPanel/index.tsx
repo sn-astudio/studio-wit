@@ -634,7 +634,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
               className={`rounded-md px-2 py-1 text-xs transition-colors ${
                 speed === s
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-200/60 text-zinc-500 hover:text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  : "bg-neutral-200/60 text-neutral-500 hover:text-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-400 dark:hover:text-neutral-200"
               }`}
             >
               {s}x
@@ -702,7 +702,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
               className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
                 selectedFilter === f.id
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-200/60 text-zinc-500 hover:text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  : "bg-neutral-200/60 text-neutral-500 hover:text-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-400 dark:hover:text-neutral-200"
               }`}
             >
               {t(f.labelKey)}
@@ -751,10 +751,10 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
               className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-colors ${
                 selectedTextPreset === preset.id
                   ? "border-primary bg-primary/5"
-                  : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
+                  : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500"
               }`}
             >
-              <div className="flex h-7 w-full items-center justify-center rounded bg-zinc-200 dark:bg-zinc-800">
+              <div className="flex h-7 w-full items-center justify-center rounded bg-neutral-200 dark:bg-neutral-800">
                 <span
                   className="truncate text-[10px] font-bold leading-none"
                   style={{
@@ -770,7 +770,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
                   Aa가
                 </span>
               </div>
-              <span className="text-[10px] text-zinc-500">{t(preset.nameKey)}</span>
+              <span className="text-[10px] text-neutral-500">{t(preset.nameKey)}</span>
             </button>
           ))}
         </div>
@@ -789,7 +789,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
               className={`rounded-md px-1.5 py-1 text-[11px] transition-colors ${
                 textPosition === p.id
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-200/60 text-zinc-500 hover:text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  : "bg-neutral-200/60 text-neutral-500 hover:text-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-400 dark:hover:text-neutral-200"
               }`}
             >
               {t(p.labelKey)}
@@ -798,13 +798,13 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
         </div>
         <SliderControl label={t("fontSize")} value={fontSize} min={10} max={100} step={2} onChange={(v) => { setFontSize(v); setSelectedTextPreset("custom"); }} />
         <div className="flex items-center gap-1.5">
-          <span className="w-16 text-[11px] text-zinc-500">{t("textColor")}</span>
+          <span className="w-16 text-[11px] text-neutral-500">{t("textColor")}</span>
           <div className="flex items-center gap-1">
             {COLOR_PRESETS.map((c) => (
               <button
                 key={c.id}
                 onClick={() => { setTextColor(c.id); setSelectedTextPreset("custom"); }}
-                className={`size-6 rounded-full border-2 transition-colors ${textColor === c.id ? "border-primary" : "border-zinc-300 hover:border-zinc-500 dark:border-zinc-700 dark:hover:border-zinc-500"}`}
+                className={`size-6 rounded-full border-2 transition-colors ${textColor === c.id ? "border-primary" : "border-neutral-300 hover:border-neutral-500 dark:border-neutral-700 dark:hover:border-neutral-500"}`}
                 style={{ backgroundColor: c.css }}
                 aria-label={c.label}
               />
@@ -813,7 +813,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
               type="color"
               value={COLOR_PRESETS.find((c) => c.id === textColor)?.css ?? textColor}
               onChange={(e) => { setTextColor(e.target.value); setSelectedTextPreset("custom"); }}
-              className="size-6 cursor-pointer rounded-full border-2 border-zinc-300 bg-transparent p-0 dark:border-zinc-700"
+              className="size-6 cursor-pointer rounded-full border-2 border-neutral-300 bg-transparent p-0 dark:border-neutral-700"
             />
           </div>
         </div>
@@ -845,7 +845,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
             className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs transition-colors ${
               wmMode === "text"
                 ? "bg-primary text-primary-foreground"
-                : "bg-zinc-200/60 text-zinc-500 hover:text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:text-zinc-200"
+                : "bg-neutral-200/60 text-neutral-500 hover:text-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-400 dark:hover:text-neutral-200"
             }`}
           >
             <Type className="size-3" />
@@ -856,7 +856,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
             className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs transition-colors ${
               wmMode === "image"
                 ? "bg-primary text-primary-foreground"
-                : "bg-zinc-200/60 text-zinc-500 hover:text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:text-zinc-200"
+                : "bg-neutral-200/60 text-neutral-500 hover:text-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-400 dark:hover:text-neutral-200"
             }`}
           >
             <ImageIcon className="size-3" />
@@ -875,13 +875,13 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
             />
             <SliderControl label={t("fontSize")} value={wmFontSize} min={10} max={100} step={2} onChange={setWmFontSize} />
             <div className="flex items-center gap-1.5">
-              <span className="w-16 text-[11px] text-zinc-500">{t("textColor")}</span>
+              <span className="w-16 text-[11px] text-neutral-500">{t("textColor")}</span>
               <div className="flex items-center gap-1">
                 {COLOR_PRESETS.map((c) => (
                   <button
                     key={c.id}
                     onClick={() => setWmColor(c.id)}
-                    className={`size-6 rounded-full border-2 transition-colors ${wmColor === c.id ? "border-primary" : "border-zinc-300 hover:border-zinc-500 dark:border-zinc-700 dark:hover:border-zinc-500"}`}
+                    className={`size-6 rounded-full border-2 transition-colors ${wmColor === c.id ? "border-primary" : "border-neutral-300 hover:border-neutral-500 dark:border-neutral-700 dark:hover:border-neutral-500"}`}
                     style={{ backgroundColor: c.css }}
                     aria-label={c.label}
                   />
@@ -890,7 +890,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
                   type="color"
                   value={COLOR_PRESETS.find((c) => c.id === wmColor)?.css ?? wmColor}
                   onChange={(e) => setWmColor(e.target.value)}
-                  className="size-6 cursor-pointer rounded-full border-2 border-zinc-300 bg-transparent p-0 dark:border-zinc-700"
+                  className="size-6 cursor-pointer rounded-full border-2 border-neutral-300 bg-transparent p-0 dark:border-neutral-700"
                 />
               </div>
             </div>
@@ -899,7 +899,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
 
         {wmMode === "image" && (
           <>
-            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 py-2 text-xs text-zinc-500 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600">
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-neutral-300 px-3 py-2 text-xs text-neutral-500 transition-colors hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-600">
               <ImageIcon className="size-3.5" />
               {wmImageFile ? wmImageFile.name : t("wmSelectImage")}
               <input
@@ -932,7 +932,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
               className={`rounded-md px-2 py-1 text-[11px] transition-colors ${
                 wmPosition === p.id
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-200/60 text-zinc-500 hover:text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  : "bg-neutral-200/60 text-neutral-500 hover:text-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-400 dark:hover:text-neutral-200"
               }`}
             >
               {t(p.labelKey)}
@@ -971,7 +971,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                 resolution === r
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-200/60 text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  : "bg-neutral-200/60 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
               }`}
               onClick={() => { setResolution(r); onDirty?.(); }}
             >
@@ -1063,7 +1063,7 @@ export function EffectsPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onPr
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                 targetFps === f
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-200/60 text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  : "bg-neutral-200/60 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
               }`}
               onClick={() => { setTargetFps(f); onDirty?.(); }}
             >
@@ -1126,23 +1126,23 @@ function AccordionSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`rounded-lg border transition-colors ${checked ? "border-primary/40 bg-primary/5 dark:border-primary/30 dark:bg-primary/5" : "border-zinc-200/60 dark:border-zinc-800/60"}`}>
+    <div className={`rounded-lg border transition-colors ${checked ? "border-primary/40 bg-primary/5 dark:border-primary/30 dark:bg-primary/5" : "border-neutral-200/60 dark:border-neutral-800/60"}`}>
       <div className="flex items-center">
         {onCheckedChange && (
           <button
             onClick={(e) => { e.stopPropagation(); onCheckedChange(); }}
             className="flex items-center pl-3"
           >
-            <div className={`flex size-4 items-center justify-center rounded border transition-colors ${checked ? "border-primary bg-primary" : "border-zinc-300 dark:border-zinc-600"}`}>
+            <div className={`flex size-4 items-center justify-center rounded border transition-colors ${checked ? "border-primary bg-primary" : "border-neutral-300 dark:border-neutral-600"}`}>
               {checked && <Check className="size-3 text-white" />}
             </div>
           </button>
         )}
         <button
           onClick={onToggle}
-          className="flex flex-1 items-center gap-2 px-2 py-2.5 text-left transition-colors hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40"
+          className="flex flex-1 items-center gap-2 px-2 py-2.5 text-left transition-colors hover:bg-neutral-100/60 dark:hover:bg-neutral-800/40"
         >
-          <span className="text-zinc-400">{icon}</span>
+          <span className="text-neutral-400">{icon}</span>
           <span className="text-xs font-medium">{label}</span>
           {badge && (
             <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
@@ -1150,7 +1150,7 @@ function AccordionSection({
             </span>
           )}
           <ChevronDown
-            className={`ml-auto size-3.5 text-zinc-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            className={`ml-auto size-3.5 text-neutral-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           />
         </button>
       </div>
@@ -1177,7 +1177,7 @@ function SliderControl({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-16 text-[11px] text-zinc-500">{label}</span>
+      <span className="w-16 text-[11px] text-neutral-500">{label}</span>
       <SliderPrimitive.Root
         value={value}
         onValueChange={(v) => onChange(v as number)}
@@ -1187,13 +1187,13 @@ function SliderControl({
         className="flex-1"
       >
         <SliderPrimitive.Control className="relative flex h-4 w-full cursor-pointer items-center">
-          <SliderPrimitive.Track className="h-1 w-full rounded-full bg-zinc-200 dark:bg-zinc-800">
+          <SliderPrimitive.Track className="h-1 w-full rounded-full bg-neutral-200 dark:bg-neutral-800">
             <SliderPrimitive.Indicator className="rounded-full bg-primary" />
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb className="block size-3 rounded-full border-2 border-primary bg-background shadow-sm" />
         </SliderPrimitive.Control>
       </SliderPrimitive.Root>
-      <span className="w-8 text-right text-[11px] tabular-nums text-zinc-400">
+      <span className="w-8 text-right text-[11px] tabular-nums text-neutral-400">
         {value.toFixed(1)}
       </span>
     </div>

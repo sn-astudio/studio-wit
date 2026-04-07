@@ -173,17 +173,17 @@ export function CropPanel({
         open={openSection === "crop"}
         onToggle={() => toggle("crop")}
       >
-        <p className="text-[11px] text-zinc-500">{t("cropDesc")}</p>
+        <p className="text-[11px] text-neutral-500">{t("cropDesc")}</p>
 
         {/* 비율 프리셋 */}
         <div className="space-y-1">
-          <span className="text-[11px] text-zinc-500">{t("cropPreset")}</span>
+          <span className="text-[11px] text-neutral-500">{t("cropPreset")}</span>
           <div className="flex flex-wrap gap-1.5">
             {RATIO_PRESETS.map((r) => (
               <button
                 key={r}
                 type="button"
-                className="rounded-md bg-zinc-200/60 px-2 py-1 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="rounded-md bg-neutral-200/60 px-2 py-1 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
                 onClick={() => applyCropPreset(r)}
               >
                 {r}
@@ -195,7 +195,7 @@ export function CropPanel({
         {/* 좌표 입력 */}
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-[11px] text-zinc-500">X</label>
+            <label className="text-[11px] text-neutral-500">X</label>
             <Input
               type="number"
               min={0}
@@ -205,7 +205,7 @@ export function CropPanel({
             />
           </div>
           <div>
-            <label className="text-[11px] text-zinc-500">Y</label>
+            <label className="text-[11px] text-neutral-500">Y</label>
             <Input
               type="number"
               min={0}
@@ -215,7 +215,7 @@ export function CropPanel({
             />
           </div>
           <div>
-            <label className="text-[11px] text-zinc-500">{t("cropWidth")}</label>
+            <label className="text-[11px] text-neutral-500">{t("cropWidth")}</label>
             <Input
               type="number"
               min={1}
@@ -225,7 +225,7 @@ export function CropPanel({
             />
           </div>
           <div>
-            <label className="text-[11px] text-zinc-500">{t("cropHeight")}</label>
+            <label className="text-[11px] text-neutral-500">{t("cropHeight")}</label>
             <Input
               type="number"
               min={1}
@@ -236,7 +236,7 @@ export function CropPanel({
           </div>
         </div>
 
-        <p className="text-[10px] text-zinc-400">
+        <p className="text-[10px] text-neutral-400">
           {t("cropCurrentSize")}: {videoWidth} x {videoHeight}
         </p>
 
@@ -264,11 +264,11 @@ export function CropPanel({
         open={openSection === "letterbox"}
         onToggle={() => toggle("letterbox")}
       >
-        <p className="text-[11px] text-zinc-500">{t("letterboxDesc")}</p>
+        <p className="text-[11px] text-neutral-500">{t("letterboxDesc")}</p>
 
         {/* 비율 선택 */}
         <div className="space-y-1">
-          <span className="text-[11px] text-zinc-500">{t("letterboxRatio")}</span>
+          <span className="text-[11px] text-neutral-500">{t("letterboxRatio")}</span>
           <div className="flex flex-wrap gap-1.5">
             {RATIO_PRESETS.map((r) => (
               <button
@@ -277,7 +277,7 @@ export function CropPanel({
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   targetRatio === r
                     ? "bg-primary text-primary-foreground"
-                    : "bg-zinc-200/60 text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    : "bg-neutral-200/60 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
                 }`}
                 onClick={() => { setTargetRatio(r); onDirty?.(); }}
               >
@@ -289,7 +289,7 @@ export function CropPanel({
 
         {/* 패딩 색상 */}
         <div className="space-y-1">
-          <span className="text-[11px] text-zinc-500">{t("letterboxColor")}</span>
+          <span className="text-[11px] text-neutral-500">{t("letterboxColor")}</span>
           <div className="flex gap-2">
             {COLOR_PRESETS.map((c) => (
               <button
@@ -299,11 +299,11 @@ export function CropPanel({
                 className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${
                   padColor === c.id
                     ? "ring-2 ring-primary"
-                    : "ring-1 ring-zinc-300 dark:ring-zinc-700"
+                    : "ring-1 ring-neutral-300 dark:ring-neutral-700"
                 }`}
               >
                 <span
-                  className="inline-block size-3 rounded-full border border-zinc-400"
+                  className="inline-block size-3 rounded-full border border-neutral-400"
                   style={{ backgroundColor: c.hex }}
                 />
                 {c.label}
@@ -336,7 +336,7 @@ export function CropPanel({
         open={openSection === "shorts"}
         onToggle={() => toggle("shorts")}
       >
-        <p className="mb-2 text-[11px] text-zinc-500">{t("shortsDesc")}</p>
+        <p className="mb-2 text-[11px] text-neutral-500">{t("shortsDesc")}</p>
         <div className="space-y-2">
           <label className="text-xs font-medium">{t("shortsCropPosition")}</label>
           <div className="flex gap-2">
@@ -375,7 +375,7 @@ export function CropPanel({
             <button
               type="button"
               onClick={() => setIsPublicSave(!isPublicSave)}
-              className="flex items-center gap-1 rounded-lg bg-zinc-200/60 px-2 py-1 text-xs transition-colors hover:bg-zinc-300 dark:bg-zinc-800/60 dark:hover:bg-zinc-700"
+              className="flex items-center gap-1 rounded-lg bg-neutral-200/60 px-2 py-1 text-xs transition-colors hover:bg-neutral-300 dark:bg-neutral-800/60 dark:hover:bg-neutral-700"
             >
               {isPublicSave ? <Globe className="size-3" /> : <Lock className="size-3" />}
               {isPublicSave ? t("public") : t("private")}
@@ -411,15 +411,15 @@ function AccordionSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60">
+    <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60">
       <button
         onClick={onToggle}
-        className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition-colors hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40"
+        className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition-colors hover:bg-neutral-100/60 dark:hover:bg-neutral-800/40"
       >
-        <span className="text-zinc-400">{icon}</span>
+        <span className="text-neutral-400">{icon}</span>
         <span className="text-xs font-medium">{label}</span>
         <ChevronDown
-          className={`ml-auto size-3.5 text-zinc-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`ml-auto size-3.5 text-neutral-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open && <div className="space-y-2 px-3 pb-3">{children}</div>}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
-import { Film } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Scissors, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { VideoEditPreviewProps, TextOverlayPreview, WatermarkPreview, SubtitlePreviewItem } from "./types";
@@ -19,8 +19,36 @@ export function VideoEditPreview({
   playbackRate,
   creativeOverlay,
   onClickEmpty,
+  onUpload,
+  onFileDrop,
 }: VideoEditPreviewProps) {
   const t = useTranslations("VideoEdit");
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      const file = e.dataTransfer.files?.[0];
+      if (file && file.type.startsWith("video/")) {
+        onFileDrop?.(file);
+      }
+    },
+    [onFileDrop],
+  );
 
   const handleTimeUpdate = useCallback(() => {
     if (videoRef.current) {
@@ -44,17 +72,37 @@ export function VideoEditPreview({
   if (!videoUrl) {
     return (
       <div
-        onClick={onClickEmpty}
-        className={`flex aspect-video min-h-[200px] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-400 bg-zinc-100/40 sm:min-h-[280px] dark:border-zinc-700 dark:bg-zinc-900/40 ${onClickEmpty ? "cursor-pointer transition-colors hover:border-primary/50 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60" : ""}`}
+        className={`flex size-full min-h-[55vh] flex-col items-center justify-center rounded-2xl border border-dashed sm:min-h-[65vh] transition-colors ${
+          isDragging
+            ? "border-neutral-400 bg-neutral-100 dark:border-neutral-500 dark:bg-white/5"
+            : "border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900/50"
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
-        <Film className="mb-3 size-12 text-zinc-600 dark:text-zinc-600" />
-        <p className="text-sm text-zinc-600 dark:text-zinc-500">{t("selectVideo")}</p>
+        <div className="flex size-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+          <Scissors className="size-6 text-neutral-400 dark:text-neutral-500" />
+        </div>
+        <p className="mt-4 text-[16px] font-[600] text-foreground">
+          {isDragging ? t("dropVideo") : t("selectVideo")}
+        </p>
+        <p className="mt-2.5 text-[14px] text-muted-foreground/60">{t("selectVideoDesc")}</p>
+        {!isDragging && (
+        <button
+          onClick={onUpload}
+          className="mt-6 flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-neutral-100 px-5 text-[14px] font-[500] text-muted-foreground transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
+        >
+          <Upload className="size-4" />
+          {t("uploadVideo")}
+        </button>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex aspect-video max-h-[280px] w-full items-center justify-center overflow-hidden rounded-2xl border border-zinc-300 bg-zinc-50 dark:border-zinc-800 dark:bg-black">
+    <div className="flex aspect-video max-h-[280px] w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white dark:border-neutral-800/80 dark:bg-neutral-950/85">
       <div className="relative max-h-full max-w-full">
         <video
           ref={videoRef}

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/Select";
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
 import { useUploadVideo } from "@/hooks/queries/useVideoEdit";
+import type { Generation } from "@/types/api";
 import type { HistorySelectModalProps } from "./types";
 
 export function HistorySelectModal({
@@ -40,8 +41,21 @@ export function HistorySelectModal({
     limit: 20,
   });
 
-  const allGenerations =
+  const apiGenerations =
     historyData?.pages.flatMap((p) => p.generations) ?? [];
+
+  // localStorage mock video generations
+  const [mockGenerations] = useState<Generation[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem("mock-video-generations");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const allGenerations = [...mockGenerations, ...apiGenerations];
 
   const availableModels = [...new Set(allGenerations.map((g) => g.model_id))];
 
@@ -152,11 +166,11 @@ export function HistorySelectModal({
       onClick={onClose}
     >
       <div
-        className="mx-4 flex h-[80vh] w-full max-w-2xl flex-col rounded-2xl border border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900"
+        className="mx-4 flex h-[80vh] w-full max-w-2xl flex-col rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/95"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4 dark:border-neutral-800/60">
           <h3 className="text-base font-semibold text-foreground">
             {multiSelect ? t("selectVideosForMerge") : t("selectVideo")}
           </h3>
@@ -184,7 +198,7 @@ export function HistorySelectModal({
             </Button>
             <button
               onClick={onClose}
-              className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+              className="flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground dark:hover:bg-neutral-800"
             >
               <X className="size-5" />
             </button>
@@ -193,7 +207,7 @@ export function HistorySelectModal({
 
         {/* 모델 필터 */}
         {availableModels.length > 1 && (
-          <div className="border-b border-zinc-200 px-5 py-3 dark:border-zinc-800">
+          <div className="border-b border-neutral-200 px-5 py-3 dark:border-neutral-800">
             <Select value={modelFilter} onValueChange={setModelFilter}>
               <SelectTrigger className="h-9 w-full">
                 <span className="text-sm">
@@ -215,7 +229,7 @@ export function HistorySelectModal({
         {/* 비디오 그리드 */}
         <div className="flex-1 overflow-y-auto p-4">
           {filteredGenerations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
+            <div className="flex flex-col items-center justify-center py-12 text-neutral-500">
               <Film className="mb-3 size-12" />
               <p className="text-sm">{t("noVideos")}</p>
             </div>
@@ -234,7 +248,7 @@ export function HistorySelectModal({
                     className={`group relative overflow-hidden rounded-xl border transition-all ${
                       selectedIds.has(gen.id)
                         ? "border-primary ring-2 ring-primary/30"
-                        : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
+                        : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500"
                     }`}
                   >
                     <video
@@ -272,7 +286,7 @@ export function HistorySelectModal({
 
         {/* 다중 선택 확인 버튼 */}
         {multiSelect && selectedIds.size > 0 && (
-          <div className="border-t border-zinc-200 px-5 py-3 dark:border-zinc-800">
+          <div className="border-t border-neutral-200 px-5 py-3 dark:border-neutral-800">
             <Button className="w-full" onClick={handleMultiConfirm}>
               {t("selectedCount", { count: selectedIds.size })}
             </Button>

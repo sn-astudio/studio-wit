@@ -77,7 +77,7 @@ export function VideoTimeline({
   return (
     <div className="space-y-2 touch-none">
       {/* 시간 라벨 */}
-      <div className="flex items-center justify-between text-[10px] text-zinc-500">
+      <div className="flex items-center justify-between text-[10px] text-neutral-500">
         <span>{formatTime(trimStart)}</span>
         <span>{formatTime(currentTime)}</span>
         <span>{formatTime(trimEnd)}</span>
@@ -86,14 +86,14 @@ export function VideoTimeline({
       {/* 타임라인 트랙 */}
       <div
         ref={trackRef}
-        className="relative h-12 cursor-pointer select-none rounded-lg bg-zinc-200 sm:h-10 dark:bg-zinc-800"
+        className="relative h-12 cursor-pointer select-none rounded-lg bg-neutral-200 sm:h-10 dark:bg-neutral-800"
         onClick={handleTrackClick}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
         {/* 비활성 구간 (왼쪽) */}
         <div
-          className="absolute inset-y-0 left-0 rounded-l-lg bg-zinc-300/70 dark:bg-zinc-900/70"
+          className="absolute inset-y-0 left-0 rounded-l-lg bg-neutral-300/70 dark:bg-neutral-900/70"
           style={{ width: `${startPct}%` }}
         />
 
@@ -105,7 +105,7 @@ export function VideoTimeline({
 
         {/* 비활성 구간 (오른쪽) */}
         <div
-          className="absolute inset-y-0 right-0 rounded-r-lg bg-zinc-300/70 dark:bg-zinc-900/70"
+          className="absolute inset-y-0 right-0 rounded-r-lg bg-neutral-300/70 dark:bg-neutral-900/70"
           style={{ width: `${100 - endPct}%` }}
         />
 
@@ -116,7 +116,7 @@ export function VideoTimeline({
           onPointerDown={handlePointerDown("start")}
         >
           <div className="absolute inset-y-0 left-1/2 w-1.5 -translate-x-1/2 rounded-l bg-primary shadow-lg transition-colors hover:bg-primary/80 sm:w-3 sm:rounded-l" />
-          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-zinc-600/50 dark:bg-white/50" />
+          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-neutral-600/50 dark:bg-white/50" />
         </div>
 
         {/* 끝 핸들 — 터치 영역 확대 */}
@@ -126,7 +126,7 @@ export function VideoTimeline({
           onPointerDown={handlePointerDown("end")}
         >
           <div className="absolute inset-y-0 left-1/2 w-1.5 -translate-x-1/2 rounded-r bg-primary shadow-lg transition-colors hover:bg-primary/80 sm:w-3 sm:rounded-r" />
-          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-zinc-600/50 dark:bg-white/50" />
+          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-neutral-600/50 dark:bg-white/50" />
         </div>
 
         {/* 재생 헤드 — 터치 영역 확대 */}
@@ -135,13 +135,13 @@ export function VideoTimeline({
           style={{ left: `${playheadPct}%` }}
           onPointerDown={handlePointerDown("playhead")}
         >
-          <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-zinc-700 shadow-lg dark:bg-white" />
-          <div className="absolute -top-1.5 left-1/2 size-3.5 -translate-x-1/2 rounded-full bg-zinc-700 shadow sm:-top-1 sm:size-2 dark:bg-white" />
+          <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-neutral-700 shadow-lg dark:bg-white" />
+          <div className="absolute -top-1.5 left-1/2 size-3.5 -translate-x-1/2 rounded-full bg-neutral-700 shadow sm:-top-1 sm:size-2 dark:bg-white" />
         </div>
       </div>
 
       {/* 전체 duration */}
-      <div className="text-right text-[10px] text-zinc-600">
+      <div className="text-right text-[10px] text-neutral-600">
         {formatTime(duration)}
       </div>
     </div>

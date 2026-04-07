@@ -120,7 +120,7 @@ export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onM
     <div className="space-y-3">
       {!resultUrl && (
         <>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400">{t("mergeDescription")}</p>
+          <p className="text-xs text-neutral-600 dark:text-neutral-400">{t("mergeDescription")}</p>
 
           {/* 합치기 버튼 */}
           <Button
@@ -161,16 +161,16 @@ export function MergePanel({ onMergeComplete, onAddClipRef, onRemoveClipRef, onM
                   {t("mergeComplete")}
                 </span>
               </div>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+              <p className="text-xs text-neutral-600 dark:text-neutral-400">
                 {t("mergeResultReady")}
               </p>
               <button
                 type="button"
-                className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                className="flex w-full items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
                 onClick={() => setIsPublicSave(!isPublicSave)}
               >
-                {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
-                <span className="text-zinc-700 dark:text-zinc-300">{isPublicSave ? t("public") : t("private")}</span>
+                {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-neutral-500" />}
+                <span className="text-neutral-700 dark:text-neutral-300">{isPublicSave ? t("public") : t("private")}</span>
               </button>
               <div className="flex gap-1.5">
                 <Button

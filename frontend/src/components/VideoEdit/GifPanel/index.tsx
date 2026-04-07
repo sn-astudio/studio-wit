@@ -53,14 +53,14 @@ export function GifPanel({ sourceUrl, onDirty }: GifPanelProps) {
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-zinc-500">{t("gifDesc")}</p>
+      <p className="text-xs text-neutral-500">{t("gifDesc")}</p>
 
       {/* 구간 설정 */}
       <div className="space-y-2">
         <span className="text-xs font-medium">{t("gifRange")}</span>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-[11px] text-zinc-500">{t("gifStart")}</label>
+            <label className="text-[11px] text-neutral-500">{t("gifStart")}</label>
             <Input
               type="number"
               min={0}
@@ -74,7 +74,7 @@ export function GifPanel({ sourceUrl, onDirty }: GifPanelProps) {
             />
           </div>
           <div>
-            <label className="text-[11px] text-zinc-500">{t("gifEnd")}</label>
+            <label className="text-[11px] text-neutral-500">{t("gifEnd")}</label>
             <Input
               type="number"
               min={0}
@@ -94,7 +94,7 @@ export function GifPanel({ sourceUrl, onDirty }: GifPanelProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium">{t("gifWidth")}</span>
-          <span className="text-xs tabular-nums text-zinc-400">
+          <span className="text-xs tabular-nums text-neutral-400">
             {gifWidth}px
           </span>
         </div>
@@ -106,7 +106,7 @@ export function GifPanel({ sourceUrl, onDirty }: GifPanelProps) {
               className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
                 gifWidth === w
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-200/60 text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  : "bg-neutral-200/60 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
               }`}
               onClick={() => {
                 setGifWidth(w);
@@ -128,7 +128,7 @@ export function GifPanel({ sourceUrl, onDirty }: GifPanelProps) {
           step={10}
         >
           <SliderPrimitive.Control className="relative flex h-5 w-full cursor-pointer items-center">
-            <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-800">
               <SliderPrimitive.Indicator className="rounded-full bg-primary" />
             </SliderPrimitive.Track>
             <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-primary bg-background shadow-sm" />
@@ -140,7 +140,7 @@ export function GifPanel({ sourceUrl, onDirty }: GifPanelProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium">{t("gifFps")}</span>
-          <span className="text-xs tabular-nums text-zinc-400">{gifFps}</span>
+          <span className="text-xs tabular-nums text-neutral-400">{gifFps}</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {FPS_PRESETS.map((f) => (
@@ -150,7 +150,7 @@ export function GifPanel({ sourceUrl, onDirty }: GifPanelProps) {
               className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
                 gifFps === f
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-200/60 text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  : "bg-neutral-200/60 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
               }`}
               onClick={() => {
                 setGifFps(f);

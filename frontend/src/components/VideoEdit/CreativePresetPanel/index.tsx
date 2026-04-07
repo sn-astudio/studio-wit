@@ -622,7 +622,7 @@ export function CreativePresetPanel({ sourceUrl, onApplied, onPreviewOverlay, on
                   <button
                     type="button"
                     onClick={() => removePollQuestion(idx)}
-                    className="text-zinc-400 hover:text-red-500"
+                    className="text-neutral-400 hover:text-red-500"
                   >
                     <X className="size-3" />
                   </button>
@@ -716,7 +716,7 @@ export function CreativePresetPanel({ sourceUrl, onApplied, onPreviewOverlay, on
                   퀴즈 {qIdx + 1}
                 </span>
                 {quizQuestions.length > 1 && (
-                  <button type="button" onClick={() => removeQuizQuestion(qIdx)} className="text-zinc-400 hover:text-red-500">
+                  <button type="button" onClick={() => removeQuizQuestion(qIdx)} className="text-neutral-400 hover:text-red-500">
                     <X className="size-3" />
                   </button>
                 )}
@@ -738,7 +738,7 @@ export function CreativePresetPanel({ sourceUrl, onApplied, onPreviewOverlay, on
                       className={`flex size-5 shrink-0 items-center justify-center rounded text-[9px] font-bold ${
                         q.answer_index === cIdx
                           ? "bg-green-500 text-white"
-                          : "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
+                          : "bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300"
                       }`}
                     >
                       {["A", "B", "C", "D"][cIdx]}
@@ -761,7 +761,7 @@ export function CreativePresetPanel({ sourceUrl, onApplied, onPreviewOverlay, on
                           updateQuizQuestion(qIdx, "choices", next);
                           if (q.answer_index >= next.length) updateQuizQuestion(qIdx, "answer_index", 0);
                         }}
-                        className="text-zinc-400 hover:text-red-500"
+                        className="text-neutral-400 hover:text-red-500"
                       >
                         <X className="size-3" />
                       </button>

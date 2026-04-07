@@ -199,7 +199,7 @@ export function AudioPanel({ sourceUrl, onAudioApplied, onSave, onDirty }: Audio
     <div className="space-y-1">
       {/* 오디오 추출 */}
       <AccordionSection id="extract" icon={<Download className="size-3.5" />} label={t("audioExtract")} open={openSection === "extract"} onToggle={() => toggle("extract")}>
-        <p className="text-[11px] text-zinc-500">{t("audioExtractDesc")}</p>
+        <p className="text-[11px] text-neutral-500">{t("audioExtractDesc")}</p>
         <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={handleExtract} disabled={!sourceUrl || isPending}>
           {extractMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
           {t("audioExtractBtn")}
@@ -208,7 +208,7 @@ export function AudioPanel({ sourceUrl, onAudioApplied, onSave, onDirty }: Audio
 
       {/* 음소거 */}
       <AccordionSection id="remove" icon={<MicOff className="size-3.5" />} label={t("audioRemove")} open={openSection === "remove"} onToggle={() => toggle("remove")}>
-        <p className="text-[11px] text-zinc-500">{t("audioRemoveDesc")}</p>
+        <p className="text-[11px] text-neutral-500">{t("audioRemoveDesc")}</p>
         <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={handleRemove} disabled={!sourceUrl || isPending}>
           {removeMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <MicOff className="size-3.5" />}
           {t("audioRemoveBtn")}
@@ -225,12 +225,12 @@ export function AudioPanel({ sourceUrl, onAudioApplied, onSave, onDirty }: Audio
       </AccordionSection>
 
       {/* 오디오 파일 선택 (교체/믹싱 공용) */}
-      <div className="rounded-lg border border-zinc-200/60 px-3 py-2.5 dark:border-zinc-800/60">
+      <div className="rounded-lg border border-neutral-200/60 px-3 py-2.5 dark:border-neutral-800/60">
         <div className="flex items-center gap-2">
-          <Music className="size-3.5 text-zinc-400" />
+          <Music className="size-3.5 text-neutral-400" />
           <span className="text-xs font-medium">{t("audioFile")}</span>
         </div>
-        <label className="mt-1.5 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-zinc-300 px-3 py-2 text-xs text-zinc-500 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600">
+        <label className="mt-1.5 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-neutral-300 px-3 py-2 text-xs text-neutral-500 transition-colors hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-600">
           <Music className="size-3.5" />
           {audioFile ? audioFile.name : t("audioSelectFile")}
           <input
@@ -248,7 +248,7 @@ export function AudioPanel({ sourceUrl, onAudioApplied, onSave, onDirty }: Audio
 
       {/* 오디오 교체 */}
       <AccordionSection id="replace" icon={<Replace className="size-3.5" />} label={t("audioReplace")} open={openSection === "replace"} onToggle={() => toggle("replace")}>
-        <p className="text-[11px] text-zinc-500">{t("audioReplaceDesc")}</p>
+        <p className="text-[11px] text-neutral-500">{t("audioReplaceDesc")}</p>
         <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={handleReplace} disabled={!sourceUrl || !audioFile || isPending}>
           {replaceMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Replace className="size-3.5" />}
           {t("audioReplaceBtn")}
@@ -257,7 +257,7 @@ export function AudioPanel({ sourceUrl, onAudioApplied, onSave, onDirty }: Audio
 
       {/* BGM 믹싱 */}
       <AccordionSection id="mix" icon={<Mic className="size-3.5" />} label={t("audioMix")} open={openSection === "mix"} onToggle={() => toggle("mix")}>
-        <p className="text-[11px] text-zinc-500">{t("audioMixDesc")}</p>
+        <p className="text-[11px] text-neutral-500">{t("audioMixDesc")}</p>
         <SliderControl label={t("audioOriginalVol")} value={originalVolume} min={0} max={3} step={0.1} onChange={(v) => { setOriginalVolume(v); onDirty?.(); }} />
         <SliderControl label={t("audioMixVol")} value={mixVolume} min={0} max={3} step={0.1} onChange={(v) => { setMixVolume(v); onDirty?.(); }} />
         <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={handleMix} disabled={!sourceUrl || !audioFile || isPending}>
@@ -274,7 +274,7 @@ export function AudioPanel({ sourceUrl, onAudioApplied, onSave, onDirty }: Audio
             <button
               type="button"
               onClick={() => setIsPublicSave(!isPublicSave)}
-              className="flex items-center gap-1 rounded-lg bg-zinc-200/60 px-2 py-1 text-xs transition-colors hover:bg-zinc-300 dark:bg-zinc-800/60 dark:hover:bg-zinc-700"
+              className="flex items-center gap-1 rounded-lg bg-neutral-200/60 px-2 py-1 text-xs transition-colors hover:bg-neutral-300 dark:bg-neutral-800/60 dark:hover:bg-neutral-700"
             >
               {isPublicSave ? <Globe className="size-3" /> : <Lock className="size-3" />}
               {isPublicSave ? t("public") : t("private")}
@@ -296,12 +296,12 @@ export function AudioPanel({ sourceUrl, onAudioApplied, onSave, onDirty }: Audio
 
 function AccordionSection({ id, icon, label, badge, open, onToggle, children }: { id: string; icon: React.ReactNode; label: string; badge?: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60">
-      <button onClick={onToggle} className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition-colors hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40">
-        <span className="text-zinc-400">{icon}</span>
+    <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60">
+      <button onClick={onToggle} className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition-colors hover:bg-neutral-100/60 dark:hover:bg-neutral-800/40">
+        <span className="text-neutral-400">{icon}</span>
         <span className="text-xs font-medium">{label}</span>
         {badge && <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">{badge}</span>}
-        <ChevronDown className={`ml-auto size-3.5 text-zinc-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`ml-auto size-3.5 text-neutral-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
       {open && <div className="space-y-2 px-3 pb-3">{children}</div>}
     </div>
@@ -311,16 +311,16 @@ function AccordionSection({ id, icon, label, badge, open, onToggle, children }: 
 function SliderControl({ label, value, min, max, step, onChange }: { label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-16 text-[11px] text-zinc-500">{label}</span>
+      <span className="w-16 text-[11px] text-neutral-500">{label}</span>
       <SliderPrimitive.Root value={value} onValueChange={(v) => onChange(v as number)} min={min} max={max} step={step} className="flex-1">
         <SliderPrimitive.Control className="relative flex h-4 w-full cursor-pointer items-center">
-          <SliderPrimitive.Track className="h-1 w-full rounded-full bg-zinc-200 dark:bg-zinc-800">
+          <SliderPrimitive.Track className="h-1 w-full rounded-full bg-neutral-200 dark:bg-neutral-800">
             <SliderPrimitive.Indicator className="rounded-full bg-primary" />
           </SliderPrimitive.Track>
           <SliderPrimitive.Thumb className="block size-3 rounded-full border-2 border-primary bg-background shadow-sm" />
         </SliderPrimitive.Control>
       </SliderPrimitive.Root>
-      <span className="w-8 text-right text-[11px] tabular-nums text-zinc-400">{value.toFixed(1)}</span>
+      <span className="w-8 text-right text-[11px] tabular-nums text-neutral-400">{value.toFixed(1)}</span>
     </div>
   );
 }

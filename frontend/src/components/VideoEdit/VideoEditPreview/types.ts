@@ -38,4 +38,6 @@ export interface VideoEditPreviewProps {
   playbackRate?: number;
   creativeOverlay?: React.ReactNode;
   onClickEmpty?: () => void;
+  onUpload?: () => void;
+  onFileDrop?: (file: File) => void;
 }

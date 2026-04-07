@@ -353,19 +353,19 @@ export function SubtitlesPanel({
     <div className="space-y-3">
       {/* 자막 목록 */}
       {subtitles.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-zinc-300 py-6 dark:border-zinc-700">
-          <MessageCircle className="size-6 text-zinc-400" />
-          <span className="text-xs text-zinc-500">{t("noSubtitles")}</span>
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-neutral-300 py-6 dark:border-neutral-700">
+          <MessageCircle className="size-6 text-neutral-400" />
+          <span className="text-xs text-neutral-500">{t("noSubtitles")}</span>
         </div>
       ) : (
         <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
           {subtitles.map((sub, idx) => (
             <div
               key={sub.id}
-              className="space-y-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-700 dark:bg-zinc-900/50"
+              className="space-y-1.5 rounded-lg border border-neutral-200 bg-neutral-50 p-2 dark:border-neutral-700 dark:bg-neutral-900/50"
             >
               <div className="flex items-center gap-1.5">
-                <span className="w-5 text-center text-[10px] font-medium text-zinc-400">
+                <span className="w-5 text-center text-[10px] font-medium text-neutral-400">
                   {idx + 1}
                 </span>
                 <Input
@@ -380,13 +380,13 @@ export function SubtitlesPanel({
                 />
                 <button
                   onClick={() => handleRemove(sub.id)}
-                  className="flex size-7 shrink-0 items-center justify-center rounded text-zinc-400 transition-colors hover:text-red-500"
+                  className="flex size-7 shrink-0 items-center justify-center rounded text-neutral-400 transition-colors hover:text-red-500"
                 >
                   <Trash2 className="size-3.5" />
                 </button>
               </div>
               <div className="flex items-center gap-1.5 pl-5">
-                <span className="text-[10px] text-zinc-500">
+                <span className="text-[10px] text-neutral-500">
                   {t("subtitleStartTime")}
                 </span>
                 <Input
@@ -400,7 +400,7 @@ export function SubtitlesPanel({
                   max={duration}
                   step={0.1}
                 />
-                <span className="text-[10px] text-zinc-500">
+                <span className="text-[10px] text-neutral-500">
                   {t("subtitleEndTime")}
                 </span>
                 <Input
@@ -414,7 +414,7 @@ export function SubtitlesPanel({
                   max={duration}
                   step={0.1}
                 />
-                <span className="ml-auto text-[10px] tabular-nums text-zinc-400">
+                <span className="ml-auto text-[10px] tabular-nums text-neutral-400">
                   {formatTime(parseFloat(sub.startTime) || 0)} –{" "}
                   {formatTime(parseFloat(sub.endTime) || 0)}
                 </span>
@@ -458,7 +458,7 @@ export function SubtitlesPanel({
       {/* 스타일 프리셋 */}
       <div className="space-y-2">
         <div className="flex items-center gap-1.5">
-          <Type className="size-3.5 text-zinc-400" />
+          <Type className="size-3.5 text-neutral-400" />
           <span className="text-xs font-medium">{t("subtitleStylePreset")}</span>
         </div>
         <div className="grid grid-cols-3 gap-1.5">
@@ -469,10 +469,10 @@ export function SubtitlesPanel({
               className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-colors ${
                 selectedPreset === preset.id
                   ? "border-primary bg-primary/5"
-                  : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
+                  : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500"
               }`}
             >
-              <div className="flex h-7 w-full items-center justify-center rounded bg-zinc-200 dark:bg-zinc-800">
+              <div className="flex h-7 w-full items-center justify-center rounded bg-neutral-200 dark:bg-neutral-800">
                 <span
                   className="truncate text-[10px] font-bold leading-none"
                   style={{
@@ -488,7 +488,7 @@ export function SubtitlesPanel({
                   Aa가나
                 </span>
               </div>
-              <span className="text-[10px] text-zinc-500">
+              <span className="text-[10px] text-neutral-500">
                 {t(preset.nameKey)}
               </span>
             </button>
@@ -497,10 +497,10 @@ export function SubtitlesPanel({
       </div>
 
       {/* 커스텀 설정 */}
-      <div className="space-y-2 rounded-lg border border-zinc-200 p-2 dark:border-zinc-700">
+      <div className="space-y-2 rounded-lg border border-neutral-200 p-2 dark:border-neutral-700">
         {/* 폰트 크기 */}
         <div className="flex items-center gap-2">
-          <span className="w-16 text-[11px] text-zinc-500">
+          <span className="w-16 text-[11px] text-neutral-500">
             {t("fontSize")}
           </span>
           <SliderPrimitive.Root
@@ -515,20 +515,20 @@ export function SubtitlesPanel({
             className="flex-1"
           >
             <SliderPrimitive.Control className="relative flex h-4 w-full cursor-pointer items-center">
-              <SliderPrimitive.Track className="h-1 w-full rounded-full bg-zinc-200 dark:bg-zinc-800">
+              <SliderPrimitive.Track className="h-1 w-full rounded-full bg-neutral-200 dark:bg-neutral-800">
                 <SliderPrimitive.Indicator className="rounded-full bg-primary" />
               </SliderPrimitive.Track>
               <SliderPrimitive.Thumb className="block size-3 rounded-full border-2 border-primary bg-background shadow-sm" />
             </SliderPrimitive.Control>
           </SliderPrimitive.Root>
-          <span className="w-8 text-right text-[11px] tabular-nums text-zinc-400">
+          <span className="w-8 text-right text-[11px] tabular-nums text-neutral-400">
             {style.fontSize}
           </span>
         </div>
 
         {/* 위치 */}
         <div className="flex items-center gap-2">
-          <span className="w-16 text-[11px] text-zinc-500">
+          <span className="w-16 text-[11px] text-neutral-500">
             {t("subtitlePosition")}
           </span>
           <div className="flex gap-1">
@@ -542,7 +542,7 @@ export function SubtitlesPanel({
                 className={`rounded px-2 py-0.5 text-[10px] transition-colors ${
                   style.position === pos
                     ? "bg-primary text-primary-foreground"
-                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
                 }`}
               >
                 {t(`position_${pos}`)}
@@ -553,7 +553,7 @@ export function SubtitlesPanel({
 
         {/* 색상 */}
         <div className="flex items-center gap-2">
-          <span className="w-16 text-[11px] text-zinc-500">
+          <span className="w-16 text-[11px] text-neutral-500">
             {t("textColor")}
           </span>
           <div className="flex items-center gap-1">
@@ -567,7 +567,7 @@ export function SubtitlesPanel({
                 className={`size-5 rounded-full border-2 transition-colors ${
                   style.color === c
                     ? "border-primary"
-                    : "border-zinc-300 hover:border-zinc-500 dark:border-zinc-700 dark:hover:border-zinc-500"
+                    : "border-neutral-300 hover:border-neutral-500 dark:border-neutral-700 dark:hover:border-neutral-500"
                 }`}
                 style={{ backgroundColor: c }}
               />
@@ -579,7 +579,7 @@ export function SubtitlesPanel({
                 setStyle((s) => ({ ...s, color: e.target.value }));
                 setSelectedPreset("custom");
               }}
-              className="size-5 cursor-pointer rounded-full border-2 border-zinc-300 bg-transparent p-0 dark:border-zinc-700"
+              className="size-5 cursor-pointer rounded-full border-2 border-neutral-300 bg-transparent p-0 dark:border-neutral-700"
             />
           </div>
         </div>

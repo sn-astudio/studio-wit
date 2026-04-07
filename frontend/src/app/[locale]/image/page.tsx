@@ -16,7 +16,7 @@ export default function ImagePage() {
   return (
     <div>
       <Header />
-      <main className="pt-[72px]">
+      <main className="pt-16">
         <ImageCreateWorkspace />
       </main>
     </div>

@@ -24,10 +24,10 @@ export function VideoSourceSelectModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/50">
-      <div className="w-full max-w-md rounded-lg border border-zinc-200 bg-white p-6 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="w-full max-w-md rounded-lg border border-neutral-200 bg-white p-6 shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
         {/* 헤더 */}
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
             {t("selectVideoAction")}
           </h2>
         </div>
@@ -46,7 +46,7 @@ export function VideoSourceSelectModal({
 
         {/* 비디오 이름 */}
         {videoName && (
-          <p className="mb-4 text-xs text-zinc-600 dark:text-zinc-400">
+          <p className="mb-4 text-xs text-neutral-600 dark:text-neutral-400">
             {videoName.length > 50
               ? `${videoName.slice(0, 50)}...`
               : videoName}
@@ -56,18 +56,18 @@ export function VideoSourceSelectModal({
         {/* 공개/비공개 토글 */}
         <button
           type="button"
-          className="mb-4 flex w-full items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="mb-4 flex w-full items-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
           onClick={() => setIsPublic(!isPublic)}
         >
           {isPublic ? (
             <Globe className="size-4 text-blue-500" />
           ) : (
-            <Lock className="size-4 text-zinc-500" />
+            <Lock className="size-4 text-neutral-500" />
           )}
-          <span className="flex-1 text-left text-zinc-700 dark:text-zinc-300">
+          <span className="flex-1 text-left text-neutral-700 dark:text-neutral-300">
             {isPublic ? t("public") : t("private")}
           </span>
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-neutral-500">
             {isPublic ? t("publicDescription") : t("privateDescription")}
           </span>
         </button>

@@ -1,4 +1,4 @@
-export type EditTab = "edit" | "filter" | "ai" | "compose";
+export type EditTab = "edit" | "filter" | "ai";
 
 export interface ImageSource {
   url: string;

@@ -119,7 +119,7 @@ export function AIEditPanel({
       {/* 캡처 프리뷰 */}
       <div className="flex flex-col gap-3">
         <div
-          className="group relative aspect-video w-full cursor-pointer overflow-hidden rounded-lg border border-zinc-400 bg-zinc-100 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-500"
+          className="group relative aspect-video w-full cursor-pointer overflow-hidden rounded-lg border border-neutral-400 bg-neutral-100 transition-colors hover:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-neutral-500"
           onClick={handleCaptureFrame}
           role="button"
           tabIndex={0}
@@ -139,7 +139,7 @@ export function AIEditPanel({
                   e.stopPropagation();
                   downloadImage(capturedImageUrl, `frame_${Date.now()}.png`);
                 }}
-                className="absolute top-1.5 right-1.5 z-50 flex size-7 items-center justify-center rounded-full bg-black/60 text-zinc-200 opacity-0 transition-opacity hover:bg-black/80 hover:text-white group-hover:opacity-100"
+                className="absolute top-1.5 right-1.5 z-50 flex size-7 items-center justify-center rounded-full bg-black/60 text-neutral-200 opacity-0 transition-opacity hover:bg-black/80 hover:text-white group-hover:opacity-100"
               >
                 <Download className="size-3.5" />
               </button>
@@ -155,13 +155,13 @@ export function AIEditPanel({
               )}
             </>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-1 text-zinc-600 dark:text-zinc-600">
+            <div className="flex h-full flex-col items-center justify-center gap-1 text-neutral-600 dark:text-neutral-600">
               {captureMutation.isPending ? (
                 <Loader2 className="size-6 animate-spin" />
               ) : (
                 <>
                   <Camera className="size-6" />
-                  <span className="text-[10px] text-zinc-500">
+                  <span className="text-[10px] text-neutral-500">
                     {t("captureFrame")}
                   </span>
                 </>
@@ -177,7 +177,7 @@ export function AIEditPanel({
         value={prompt}
         onChange={(e) => { setPrompt(e.target.value); onDirty?.(); }}
         placeholder={t("aiPromptPlaceholder")}
-        className="min-h-[80px] border-zinc-400 bg-zinc-100/60 text-sm dark:border-zinc-700 dark:bg-zinc-900/60"
+        className="min-h-[80px] border-neutral-400 bg-neutral-100/60 text-sm dark:border-neutral-700 dark:bg-neutral-900/60"
         rows={3}
       />
 
@@ -263,11 +263,11 @@ export function AIEditPanel({
         {/* 공개/비공개 토글 */}
         <button
           type="button"
-          className="flex h-7 items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+          className="flex h-7 items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2 text-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
           onClick={() => setIsPublic(!isPublic)}
         >
-          {isPublic ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
-          <span className="text-zinc-700 dark:text-zinc-300">{isPublic ? t("public") : t("private")}</span>
+          {isPublic ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-neutral-500" />}
+          <span className="text-neutral-700 dark:text-neutral-300">{isPublic ? t("public") : t("private")}</span>
         </button>
 
         <Button
@@ -299,12 +299,12 @@ export function AIEditPanel({
               {t("aiGenerating")}
               {aiGeneration?.progress != null && ` (${aiGeneration.progress}%)`}
             </span>
-            <span className="text-xs tabular-nums text-zinc-400">
+            <span className="text-xs tabular-nums text-neutral-400">
               {Math.floor(aiElapsed / 60)}:{String(aiElapsed % 60).padStart(2, "0")}
             </span>
           </div>
           {/* 프로그레스 바 */}
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
             {aiGeneration?.progress != null ? (
               <div
                 className="h-full rounded-full bg-primary transition-all duration-500"

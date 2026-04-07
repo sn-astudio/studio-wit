@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 
 import { FILTER_RANGES } from "../const";
-import { FILTER_UNITS } from "../utils";
+import { FILTER_UNITS, hasFilterChanges } from "../utils";
 import type { FilterValues } from "../types";
 import type { FilterPanelProps } from "./types";
 
@@ -15,6 +15,8 @@ export function FilterPanel({
   onReset,
 }: FilterPanelProps) {
   const t = useTranslations("ImageEditor");
+
+  const hasChanges = hasFilterChanges(values);
 
   const handleChange = useCallback(
     (key: keyof FilterValues, val: number) => {
@@ -51,7 +53,7 @@ export function FilterPanel({
           );
         })}
       </div>
-      <div className="sticky bottom-0 z-10 mt-auto -mx-5 flex items-center gap-2 bg-white px-5 pt-4 pb-4 dark:bg-transparent">
+      <div className="sticky bottom-0 z-10 mt-auto -mx-5 flex items-center gap-2 bg-white px-5 pt-4 pb-4 dark:bg-neutral-950">
         <button
           onClick={onReset}
           className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
@@ -60,7 +62,8 @@ export function FilterPanel({
         </button>
         <button
           onClick={onApply}
-          className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80"
+          disabled={!hasChanges}
+          className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
         >
           {t("applyFilter")}
         </button>

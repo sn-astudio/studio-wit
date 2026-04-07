@@ -9,12 +9,6 @@ import { toast } from "sonner";
 import { ChevronDown, ChevronUp, Clapperboard, Columns2, Crop, Film, ImageIcon, Maximize2, Palette, Pause, Play, Redo2, RotateCcw, Trash2, Undo2, Upload, Wand2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
 import { useTrimVideo, useSaveEdit, useUploadVideo } from "@/hooks/queries/useVideoEdit";
 import { useGeneration } from "@/hooks/queries/useGeneration";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,6 +30,7 @@ import { ThumbnailPanel } from "../ThumbnailPanel";
 import { CropPanel } from "../CropPanel";
 import { CreativePresetPanel } from "../CreativePresetPanel";
 import { VideoSourceSelectModal } from "../VideoSourceSelectModal";
+import { VideoSourceSelector } from "../VideoSourceSelector";
 import type { MergeClip } from "../MergePanel/types";
 import { downloadVideo } from "../utils";
 import { useVideoEditStore } from "@/stores/videoEditStore";
@@ -643,152 +638,30 @@ export function VideoEditWorkspace() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasUnsavedWork]);
 
+  const TAB_ITEMS: { id: EditTab; icon: typeof Scissors; labelKey: string }[] = [
+    { id: "trim", icon: Scissors, labelKey: "tabTrim" },
+    { id: "filter", icon: Palette, labelKey: "tabFilter" },
+    { id: "effects", icon: Wand2, labelKey: "tabEffects" },
+    { id: "crop", icon: Crop, labelKey: "tabCrop" },
+    { id: "ai", icon: Sparkles, labelKey: "tabAI" },
+    { id: "merge", icon: Merge, labelKey: "tabMerge" },
+    { id: "subtitles", icon: MessageCircle, labelKey: "tabSubtitles" },
+    { id: "audio", icon: Volume2, labelKey: "tabAudio" },
+    { id: "gif", icon: Film, labelKey: "tabGif" },
+    { id: "scene", icon: ScanSearch, labelKey: "tabScene" },
+    { id: "thumbnail", icon: ImageIcon, labelKey: "tabThumbnail" },
+    { id: "creative", icon: Clapperboard, labelKey: "tabCreative" },
+  ];
+
   return (
-    <div className="flex h-[calc(100dvh-64px)] flex-col sm:p-4">
-      {/* 탭 전환 + Undo/Redo */}
-      <div className="flex shrink-0 items-center gap-1.5 bg-background px-2.5 pt-2 pb-1.5 sm:px-0 sm:pt-0 sm:pb-2">
-        <div className="flex gap-0.5">
-          <button
-            onClick={handleUndo}
-            disabled={!canUndo}
-            className="flex size-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200 disabled:opacity-30 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            title={`${t("undo")} (Ctrl+Z)`}
-          >
-            <Undo2 className="size-4" />
-          </button>
-          <button
-            onClick={handleRedo}
-            disabled={!canRedo}
-            className="flex size-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200 disabled:opacity-30 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            title={`${t("redo")} (Ctrl+Shift+Z)`}
-          >
-            <Redo2 className="size-4" />
-          </button>
-          <button
-            onClick={handleReset}
-            disabled={!canUndo && !canRedo}
-            className="flex size-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-red-500 disabled:opacity-30 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-red-400"
-            title={t("resetToOriginal")}
-          >
-            <RotateCcw className="size-4" />
-          </button>
-        </div>
-        <Select
-          value={activeTab}
-          onValueChange={(value) => switchTab(value)}
-        >
-          <SelectTrigger className="h-9 w-full gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium dark:border-zinc-700 dark:bg-zinc-900">
-            {activeTab === "trim" && <Scissors className="size-4" />}
-            {activeTab === "ai" && <Sparkles className="size-4" />}
-            {activeTab === "effects" && <Wand2 className="size-4" />}
-            {activeTab === "filter" && <Palette className="size-4" />}
-            {activeTab === "merge" && <Merge className="size-4" />}
-            {activeTab === "subtitles" && <MessageCircle className="size-4" />}
-            {activeTab === "audio" && <Volume2 className="size-4" />}
-            {activeTab === "gif" && <Film className="size-4" />}
-            {activeTab === "scene" && <ScanSearch className="size-4" />}
-            {activeTab === "thumbnail" && <ImageIcon className="size-4" />}
-            {activeTab === "crop" && <Crop className="size-4" />}
-            {activeTab === "creative" && <Clapperboard className="size-4" />}
-            {activeTab === "trim" && t("tabTrim")}
-            {activeTab === "ai" && t("tabAI")}
-            {activeTab === "effects" && t("tabEffects")}
-            {activeTab === "filter" && t("tabFilter")}
-            {activeTab === "merge" && t("tabMerge")}
-            {activeTab === "subtitles" && t("tabSubtitles")}
-            {activeTab === "audio" && t("tabAudio")}
-            {activeTab === "gif" && t("tabGif")}
-            {activeTab === "scene" && t("tabScene")}
-            {activeTab === "thumbnail" && t("tabThumbnail")}
-            {activeTab === "crop" && t("tabCrop")}
-            {activeTab === "creative" && t("tabCreative")}
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="trim">
-              <span className="flex items-center gap-2"><Scissors className="size-3.5" />{t("tabTrim")}</span>
-            </SelectItem>
-            <SelectItem value="ai">
-              <span className="flex items-center gap-2"><Sparkles className="size-3.5" />{t("tabAI")}</span>
-            </SelectItem>
-            <SelectItem value="effects">
-              <span className="flex items-center gap-2"><Wand2 className="size-3.5" />{t("tabEffects")}</span>
-            </SelectItem>
-            <SelectItem value="filter">
-              <span className="flex items-center gap-2"><Palette className="size-3.5" />{t("tabFilter")}</span>
-            </SelectItem>
-            <SelectItem value="merge">
-              <span className="flex items-center gap-2"><Merge className="size-3.5" />{t("tabMerge")}</span>
-            </SelectItem>
-            <SelectItem value="subtitles">
-              <span className="flex items-center gap-2"><MessageCircle className="size-3.5" />{t("tabSubtitles")}</span>
-            </SelectItem>
-            <SelectItem value="audio">
-              <span className="flex items-center gap-2"><Volume2 className="size-3.5" />{t("tabAudio")}</span>
-            </SelectItem>
-            <SelectItem value="gif">
-              <span className="flex items-center gap-2"><Film className="size-3.5" />{t("tabGif")}</span>
-            </SelectItem>
-            <SelectItem value="scene">
-              <span className="flex items-center gap-2"><ScanSearch className="size-3.5" />{t("tabScene")}</span>
-            </SelectItem>
-            <SelectItem value="thumbnail">
-              <span className="flex items-center gap-2"><ImageIcon className="size-3.5" />{t("tabThumbnail")}</span>
-            </SelectItem>
-            <SelectItem value="crop">
-              <span className="flex items-center gap-2"><Crop className="size-3.5" />{t("tabCrop")}</span>
-            </SelectItem>
-            <SelectItem value="creative">
-              <span className="flex items-center gap-2"><Clapperboard className="size-3.5" />{t("tabCreative")}</span>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* AI 생성 진행 미니 바 (AI 탭이 아닐 때 표시) */}
-      {aiIsGenerating && activeTab !== "ai" && (
-        <div
-          className="mx-2.5 mb-2 flex cursor-pointer items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 transition-colors hover:bg-primary/15 sm:mx-0"
-          onClick={() => setActiveTab("ai")}
-          role="button"
-          tabIndex={0}
-        >
-          <Loader2 className="size-3.5 animate-spin text-primary" />
-          <span className="flex-1 text-xs text-primary">
-            {t("aiGenerating")}
-            {aiGeneration?.progress != null && ` (${aiGeneration.progress}%)`}
-          </span>
-          <span className="text-[10px] tabular-nums text-zinc-400">
-            {Math.floor(aiElapsed / 60)}:{String(aiElapsed % 60).padStart(2, "0")}
-          </span>
-          <Sparkles className="size-3 text-primary/60" />
-        </div>
-      )}
-
-      {/* AI 생성 완료 미니 바 (AI 탭이 아닐 때 표시) */}
-      {aiIsCompleted && aiGeneration?.result_url && activeTab !== "ai" && (
-        <div
-          className="mx-2.5 mb-2 flex cursor-pointer items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 transition-colors hover:bg-primary/10 sm:mx-0"
-          onClick={() => setActiveTab("ai")}
-          role="button"
-          tabIndex={0}
-        >
-          <Sparkles className="size-3.5 text-primary" />
-          <span className="flex-1 text-xs font-medium text-primary">
-            {t("aiGenerateComplete")}
-          </span>
-          <span className="text-[10px] text-primary/60">{t("tabAI")} →</span>
-        </div>
-      )}
-
-      {/* 스크롤 영역 */}
-      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-2.5 sm:gap-3 sm:px-0 sm:pb-0">
-      {/* 메인: 모바일 세로 / PC 가로 */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-        {/* 프리뷰 + 타임라인 (PC에서 sticky) */}
-        <div className="flex flex-col gap-2 sm:w-1/2 sm:shrink-0 sm:gap-3">
+    <div className="relative">
+      <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 sm:pt-6 md:px-6">
+        <div className="flex min-h-0 flex-col gap-4 sm:flex-row sm:gap-6">
+          {/* 좌측: 프리뷰 */}
+          <div className="flex flex-1 flex-col">
           {activeTab === "merge" ? (
             /* 합치기: 결과 또는 클립 목록 */
-            <div className="min-h-[200px] w-full overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 sm:min-h-[280px] dark:border-zinc-800 dark:bg-black">
+            <div className="min-h-[200px] w-full overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 sm:min-h-[280px] dark:border-neutral-800 dark:bg-black">
               {resultUrl ? (
                 /* 합치기 완료 결과 */
                 <div className="flex h-full items-center justify-center">
@@ -801,14 +674,14 @@ export function VideoEditWorkspace() {
                 </div>
               ) : (
                 /* 클립 목록 */
-                <div className="flex h-full w-full flex-col border-dashed border-zinc-400 bg-zinc-100/40 dark:border-zinc-700 dark:bg-zinc-900/40">
+                <div className="flex h-full w-full flex-col border-dashed border-neutral-400 bg-neutral-100/40 dark:border-neutral-700 dark:bg-neutral-900/40">
                   {mergeClips.length === 0 ? (
                     <div
                       onClick={() => setHistoryModalOpen(true)}
-                      className="flex flex-1 cursor-pointer flex-col items-center justify-center gap-2 text-zinc-600 transition-colors hover:bg-zinc-200/60 dark:text-zinc-600 dark:hover:bg-zinc-800/60"
+                      className="flex flex-1 cursor-pointer flex-col items-center justify-center gap-2 text-neutral-600 transition-colors hover:bg-neutral-200/60 dark:text-neutral-600 dark:hover:bg-neutral-800/60"
                     >
                       <Film className="mb-3 size-12" />
-                      <p className="text-sm text-zinc-600 dark:text-zinc-500">{t("mergePreviewEmpty")}</p>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-500">{t("mergePreviewEmpty")}</p>
                     </div>
                   ) : (
                     <div
@@ -824,7 +697,7 @@ export function VideoEditWorkspace() {
                           onPointerDown={(e) =>
                             handleMergePointerDown(e, idx)
                           }
-                          className={`flex shrink-0 cursor-grab items-center gap-2 rounded-lg bg-zinc-100/60 px-2 py-1.5 transition-colors hover:bg-zinc-200/60 dark:bg-zinc-900/60 dark:hover:bg-zinc-800/60 ${
+                          className={`flex shrink-0 cursor-grab items-center gap-2 rounded-lg bg-neutral-100/60 px-2 py-1.5 transition-colors hover:bg-neutral-200/60 dark:bg-neutral-900/60 dark:hover:bg-neutral-800/60 ${
                             mergeDragIdx === idx
                               ? "opacity-50"
                               : ""
@@ -841,7 +714,7 @@ export function VideoEditWorkspace() {
                                 moveMergeClipRef.current?.(idx, -1);
                               }}
                               disabled={idx === 0}
-                              className="text-zinc-400 hover:text-zinc-700 disabled:opacity-20 dark:text-zinc-600 dark:hover:text-zinc-300"
+                              className="text-neutral-400 hover:text-neutral-700 disabled:opacity-20 dark:text-neutral-600 dark:hover:text-neutral-300"
                             >
                               <ChevronUp className="size-3" />
                             </button>
@@ -851,12 +724,12 @@ export function VideoEditWorkspace() {
                                 moveMergeClipRef.current?.(idx, 1);
                               }}
                               disabled={idx === mergeClips.length - 1}
-                              className="text-zinc-400 hover:text-zinc-700 disabled:opacity-20 dark:text-zinc-600 dark:hover:text-zinc-300"
+                              className="text-neutral-400 hover:text-neutral-700 disabled:opacity-20 dark:text-neutral-600 dark:hover:text-neutral-300"
                             >
                               <ChevronDown className="size-3" />
                             </button>
                           </div>
-                          <span className="w-4 text-center font-mono text-xs text-zinc-500">
+                          <span className="w-4 text-center font-mono text-xs text-neutral-500">
                             {idx + 1}
                           </span>
                           <video
@@ -865,7 +738,7 @@ export function VideoEditWorkspace() {
                             muted
                             preload="metadata"
                           />
-                          <span className="min-w-0 flex-1 truncate text-xs text-zinc-700 dark:text-zinc-300">
+                          <span className="min-w-0 flex-1 truncate text-xs text-neutral-700 dark:text-neutral-300">
                             {clip.name ?? `Clip ${idx + 1}`}
                           </span>
                           <button
@@ -873,7 +746,7 @@ export function VideoEditWorkspace() {
                               e.stopPropagation();
                               removeMergeClipRef.current?.(clip.id);
                             }}
-                            className="shrink-0 text-zinc-400 hover:text-red-400 dark:text-zinc-600"
+                            className="shrink-0 text-neutral-400 hover:text-red-400 dark:text-neutral-600"
                           >
                             <Trash2 className="size-3" />
                           </button>
@@ -913,7 +786,7 @@ export function VideoEditWorkspace() {
 
               {compareMode && resultUrl && source?.url && resultUrl !== source.url ? (
                 <div className="space-y-1.5">
-                  <div className="flex aspect-video max-h-[280px] w-full gap-1 overflow-hidden rounded-2xl border border-zinc-300 bg-zinc-50 dark:border-zinc-800 dark:bg-black">
+                  <div className="flex aspect-video max-h-[280px] w-full gap-1 overflow-hidden rounded-2xl border border-neutral-300 bg-neutral-50 dark:border-neutral-800 dark:bg-black">
                     {/* 원본 */}
                     <div className="relative flex flex-1 items-center justify-center overflow-hidden">
                       <video
@@ -949,7 +822,7 @@ export function VideoEditWorkspace() {
                   {/* 동시 재생 버튼 */}
                   <button
                     onClick={handleSyncPlayPause}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-zinc-200/60 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-neutral-200/60 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
                   >
                     {syncPlaying ? (
                       <><Pause className="size-3.5" />{t("syncPause")}</>
@@ -972,39 +845,120 @@ export function VideoEditWorkspace() {
                   playbackRate={activeTab === "effects" ? previewSpeed : 1}
                   creativeOverlay={activeTab === "creative" ? previewCreativeOverlay : undefined}
                   onClickEmpty={() => setHistoryModalOpen(true)}
+                  onUpload={() => fileInputRef.current?.click()}
+                  onFileDrop={async (file) => {
+                    try {
+                      const result = await uploadMutation.mutateAsync(file);
+                      handleSourceSelected({
+                        url: result.url,
+                        duration: result.duration,
+                        width: result.width,
+                        height: result.height,
+                        name: file.name,
+                      });
+                    } catch {}
+                  }}
                 />
               )}
             </div>
           )}
 
 
-          {/* 비디오 선택 / 업로드 버튼 */}
-          <div className="flex gap-2">
-            <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 gap-1.5 text-xs"
-              onClick={() => setHistoryModalOpen(true)}
-            >
-              <Film className="size-3.5" />
-              {t("selectVideo")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 gap-1.5 text-xs"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadMutation.isPending}
-            >
-              {uploadMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
-              {t("uploadVideo")}
-            </Button>
+          <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
           </div>
-        </div>
 
-        {/* 오른쪽(PC) / 아래(모바일): 편집 옵션 */}
-        <div className="flex min-w-0 flex-1 flex-col gap-2 pr-2 sm:gap-3 sm:pr-3">
+          {/* 우측 패널 — 데스크톱 고정 (소스 있을 때만) */}
+          {source && <div className="hidden sm:block sm:w-[360px] sm:shrink-0">
+            <div className="fixed top-[88px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-104px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
+              {/* 탭 그리드 — 상단 고정 */}
+              <div className="shrink-0 px-5 pt-5 pb-4">
+                <div className="grid grid-cols-4 gap-2">
+                  {TAB_ITEMS.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => switchTab(tab.id)}
+                        className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl py-3.5 text-[12px] font-[500] transition-all active:opacity-80 ${
+                          isActive
+                            ? "bg-foreground text-background"
+                            : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                        }`}
+                      >
+                        <Icon className="size-5" strokeWidth={1.5} />
+                        {t(tab.labelKey)}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Undo/Redo */}
+                <div className="mt-4 flex justify-center">
+                  <div className="flex items-center gap-1 rounded-full bg-neutral-100 px-1.5 py-1.5 dark:bg-neutral-800/60">
+                    <button
+                      onClick={handleUndo}
+                      disabled={!canUndo}
+                      className="flex size-9 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-neutral-200 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-700"
+                      title={`${t("undo")} (Ctrl+Z)`}
+                    >
+                      <Undo2 className="size-4" />
+                    </button>
+                    <button
+                      onClick={handleRedo}
+                      disabled={!canRedo}
+                      className="flex size-9 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-neutral-200 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-700"
+                      title={`${t("redo")} (Ctrl+Shift+Z)`}
+                    >
+                      <Redo2 className="size-4" />
+                    </button>
+                    <button
+                      onClick={handleReset}
+                      disabled={!canUndo && !canRedo}
+                      className="flex size-9 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-neutral-200 hover:text-red-500 disabled:pointer-events-none disabled:opacity-30 dark:hover:bg-neutral-700 dark:hover:text-red-400"
+                      title={t("resetToOriginal")}
+                    >
+                      <RotateCcw className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI 생성 미니 바 */}
+              {aiIsGenerating && activeTab !== "ai" && (
+                <div
+                  className="mx-5 mb-3 flex cursor-pointer items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 transition-colors hover:bg-primary/15"
+                  onClick={() => setActiveTab("ai")}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <Loader2 className="size-3.5 animate-spin text-primary" />
+                  <span className="flex-1 text-xs text-primary">
+                    {t("aiGenerating")}
+                    {aiGeneration?.progress != null && ` (${aiGeneration.progress}%)`}
+                  </span>
+                  <span className="text-[10px] tabular-nums text-neutral-400">
+                    {Math.floor(aiElapsed / 60)}:{String(aiElapsed % 60).padStart(2, "0")}
+                  </span>
+                </div>
+              )}
+              {aiIsCompleted && aiGeneration?.result_url && activeTab !== "ai" && (
+                <div
+                  className="mx-5 mb-3 flex cursor-pointer items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 transition-colors hover:bg-primary/10"
+                  onClick={() => setActiveTab("ai")}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <Sparkles className="size-3.5 text-primary" />
+                  <span className="flex-1 text-xs font-medium text-primary">
+                    {t("aiGenerateComplete")}
+                  </span>
+                </div>
+              )}
+
+              {/* 패널 콘텐츠 — 스크롤 영역 */}
+              <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto scrollbar-none px-5 pb-5">
+                <div className="flex flex-col gap-3">
           {/* 트리밍 탭 */}
           {source && activeTab === "trim" && duration > 0 && (
             <div className="space-y-2">
@@ -1024,11 +978,11 @@ export function VideoEditWorkspace() {
                   </span>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                    className="flex w-full items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
                     onClick={() => setIsPublicSave(!isPublicSave)}
                   >
-                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
-                    <span className="text-zinc-700 dark:text-zinc-300">{isPublicSave ? t("public") : t("private")}</span>
+                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-neutral-500" />}
+                    <span className="text-neutral-700 dark:text-neutral-300">{isPublicSave ? t("public") : t("private")}</span>
                   </button>
                   <div className="flex gap-2">
                     <Button
@@ -1099,11 +1053,11 @@ export function VideoEditWorkspace() {
                           {t("aiGenerating")}
                           {aiGeneration?.progress != null && ` (${aiGeneration.progress}%)`}
                         </span>
-                        <span className="text-xs tabular-nums text-zinc-400">
+                        <span className="text-xs tabular-nums text-neutral-400">
                           {Math.floor(aiElapsed / 60)}:{String(aiElapsed % 60).padStart(2, "0")}
                         </span>
                       </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
                         {aiGeneration?.progress != null ? (
                           <div
                             className="h-full rounded-full bg-primary transition-all duration-500"
@@ -1170,11 +1124,11 @@ export function VideoEditWorkspace() {
                   </span>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                    className="flex w-full items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
                     onClick={() => setIsPublicSave(!isPublicSave)}
                   >
-                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
-                    <span className="text-zinc-700 dark:text-zinc-300">{isPublicSave ? t("public") : t("private")}</span>
+                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-neutral-500" />}
+                    <span className="text-neutral-700 dark:text-neutral-300">{isPublicSave ? t("public") : t("private")}</span>
                   </button>
                   <div className="flex gap-2">
                     <Button
@@ -1232,11 +1186,11 @@ export function VideoEditWorkspace() {
                   </span>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                    className="flex w-full items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
                     onClick={() => setIsPublicSave(!isPublicSave)}
                   >
-                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-zinc-500" />}
-                    <span className="text-zinc-700 dark:text-zinc-300">{isPublicSave ? t("public") : t("private")}</span>
+                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-neutral-500" />}
+                    <span className="text-neutral-700 dark:text-neutral-300">{isPublicSave ? t("public") : t("private")}</span>
                   </button>
                   <div className="flex gap-2">
                     <Button
@@ -1440,25 +1394,35 @@ export function VideoEditWorkspace() {
               />
           )}
 
+                </div>
+              </div>
+            </div>
+          </div>}
+        </div>
+
+        {/* 타임라인 (트림 탭, 소스 있고 결과 없을 때만) */}
+        {activeTab === "trim" && source && duration > 0 && !resultUrl && (
+          <div className="sm:mr-[384px]">
+            <VideoTimeline
+              duration={duration}
+              currentTime={currentTime}
+              trimStart={trimStart}
+              trimEnd={trimEnd}
+              onTrimStartChange={setTrimStart}
+              onTrimEndChange={setTrimEnd}
+              onSeek={handleSeek}
+            />
+          </div>
+        )}
+
+        {/* 하단 비디오 히스토리 */}
+        <div className={`mt-12 pb-10 ${source ? "sm:mr-[384px]" : ""}`}>
+          <VideoSourceSelector
+            onSourceSelected={handleSourceSelected}
+            isLoading={uploadMutation.isPending}
+          />
         </div>
       </div>
-
-      {/* 타임라인 (트림 탭, 소스 있고 결과 없을 때만) — 전체 너비 */}
-      {activeTab === "trim" && source && duration > 0 && !resultUrl && (
-        <div className="px-2 sm:px-4">
-        <VideoTimeline
-          duration={duration}
-          currentTime={currentTime}
-          trimStart={trimStart}
-          trimEnd={trimEnd}
-          onTrimStartChange={setTrimStart}
-          onTrimEndChange={setTrimEnd}
-          onSeek={handleSeek}
-        />
-        </div>
-      )}
-
-      </div>{/* 스크롤 영역 끝 */}
 
       {/* 모달 */}
       <VideoSourceSelectModal
@@ -1487,11 +1451,11 @@ export function VideoEditWorkspace() {
       {/* 탭 전환 확인 모달 */}
       {isTabConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60">
-          <div className="mx-4 w-full max-w-sm space-y-4 rounded-2xl border border-zinc-300 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="mx-4 w-full max-w-sm space-y-4 rounded-2xl border border-neutral-300 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-900">
             <h3 className="text-base font-semibold text-foreground">
               {t("tabSwitchConfirmTitle")}
             </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">
               {t("tabSwitchConfirmMessage")}
             </p>
             <div className="flex gap-2">
@@ -1574,7 +1538,7 @@ export function VideoEditWorkspace() {
                   setModalSyncPlaying(true);
                 }
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-200/60 px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-neutral-200/60 px-4 py-2.5 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
             >
               {modalSyncPlaying ? (
                 <><Pause className="size-4" />{t("syncPause")}</>

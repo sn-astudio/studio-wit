@@ -152,10 +152,10 @@ export function SceneSplitPanel({
   return (
     <div className="space-y-3">
       {/* 설정 */}
-      <div className="space-y-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+      <div className="space-y-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-zinc-500">{t("sceneThreshold")}</span>
-          <span className="text-xs tabular-nums text-zinc-400">
+          <span className="text-xs text-neutral-500">{t("sceneThreshold")}</span>
+          <span className="text-xs tabular-nums text-neutral-400">
             {threshold.toFixed(1)}
           </span>
         </div>
@@ -167,19 +167,19 @@ export function SceneSplitPanel({
           step={0.05}
         >
           <SliderPrimitive.Control className="relative flex h-5 w-full cursor-pointer items-center">
-            <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-800">
               <SliderPrimitive.Indicator className="rounded-full bg-primary" />
             </SliderPrimitive.Track>
             <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-primary bg-background shadow-sm" />
           </SliderPrimitive.Control>
         </SliderPrimitive.Root>
-        <p className="text-[10px] text-zinc-400">{t("sceneThresholdHelp")}</p>
+        <p className="text-[10px] text-neutral-400">{t("sceneThresholdHelp")}</p>
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-neutral-500">
             {t("sceneMinDuration")}
           </span>
-          <span className="text-xs tabular-nums text-zinc-400">
+          <span className="text-xs tabular-nums text-neutral-400">
             {minDuration.toFixed(1)}s
           </span>
         </div>
@@ -191,7 +191,7 @@ export function SceneSplitPanel({
           step={0.5}
         >
           <SliderPrimitive.Control className="relative flex h-5 w-full cursor-pointer items-center">
-            <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-800">
               <SliderPrimitive.Indicator className="rounded-full bg-primary" />
             </SliderPrimitive.Track>
             <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-primary bg-background shadow-sm" />
@@ -221,7 +221,7 @@ export function SceneSplitPanel({
             <span className="text-xs font-medium">
               {t("scenesFound", { count: scenes.length })}
             </span>
-            <span className="text-[10px] text-zinc-400">
+            <span className="text-[10px] text-neutral-400">
               {t("totalDuration", {
                 duration: formatTime(duration),
               })}
@@ -236,7 +236,7 @@ export function SceneSplitPanel({
               return (
                 <div
                   key={scene.index}
-                  className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-700 dark:bg-zinc-900/50"
+                  className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 p-2 dark:border-neutral-700 dark:bg-neutral-900/50"
                 >
                   {/* 장면 정보 */}
                   <div className="flex-1 min-w-0">
@@ -244,15 +244,15 @@ export function SceneSplitPanel({
                       <span className="flex size-5 shrink-0 items-center justify-center rounded bg-primary/10 text-[10px] font-medium text-primary">
                         {scene.index + 1}
                       </span>
-                      <span className="text-[11px] tabular-nums text-zinc-600 dark:text-zinc-300">
+                      <span className="text-[11px] tabular-nums text-neutral-600 dark:text-neutral-300">
                         {formatTime(scene.start)} – {formatTime(scene.end)}
                       </span>
-                      <span className="text-[10px] text-zinc-400">
+                      <span className="text-[10px] text-neutral-400">
                         ({scene.duration.toFixed(1)}s)
                       </span>
                     </div>
                     {/* 타임라인 바 */}
-                    <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                    <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
                       <div
                         className="h-full rounded-full bg-primary/60"
                         style={{
@@ -268,7 +268,7 @@ export function SceneSplitPanel({
                     <button
                       onClick={() => handleExtract(scene)}
                       disabled={busy}
-                      className="flex size-7 items-center justify-center rounded text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-40 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                      className="flex size-7 items-center justify-center rounded text-neutral-400 transition-colors hover:bg-neutral-200 hover:text-neutral-700 disabled:opacity-40 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                       title={t("sceneExtract")}
                     >
                       {isExtracting && !isSaving ? (
@@ -280,7 +280,7 @@ export function SceneSplitPanel({
                     <button
                       onClick={() => handleSave(scene)}
                       disabled={busy}
-                      className="flex size-7 items-center justify-center rounded text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-40 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                      className="flex size-7 items-center justify-center rounded text-neutral-400 transition-colors hover:bg-neutral-200 hover:text-neutral-700 disabled:opacity-40 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                       title={t("sceneSave")}
                     >
                       {isSaving ? (
@@ -292,7 +292,7 @@ export function SceneSplitPanel({
                     <button
                       onClick={() => handleDownload(scene)}
                       disabled={busy}
-                      className="flex size-7 items-center justify-center rounded text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-40 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                      className="flex size-7 items-center justify-center rounded text-neutral-400 transition-colors hover:bg-neutral-200 hover:text-neutral-700 disabled:opacity-40 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                       title={t("sceneDownload")}
                     >
                       <Download className="size-3.5" />

@@ -123,7 +123,7 @@ function AccordionSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800">
+    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800">
       <button
         onClick={onToggle}
         className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium"
@@ -193,7 +193,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
           <div>
             <div className="mb-1 flex items-center justify-between">
               <span className="text-xs">{t("brightness")}</span>
-              <span className="text-xs text-zinc-500">{brightness.toFixed(2)}</span>
+              <span className="text-xs text-neutral-500">{brightness.toFixed(2)}</span>
             </div>
             <SliderPrimitive.Root
               value={brightness}
@@ -201,7 +201,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
               min={-0.5} max={0.5} step={0.05}
             >
               <SliderPrimitive.Control className="relative flex h-5 w-full cursor-pointer items-center">
-                <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+                <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700">
                   <SliderPrimitive.Indicator className="rounded-full bg-primary" />
                 </SliderPrimitive.Track>
                 <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-primary bg-background shadow-sm" />
@@ -212,7 +212,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
           <div>
             <div className="mb-1 flex items-center justify-between">
               <span className="text-xs">{t("contrast")}</span>
-              <span className="text-xs text-zinc-500">{contrast.toFixed(2)}</span>
+              <span className="text-xs text-neutral-500">{contrast.toFixed(2)}</span>
             </div>
             <SliderPrimitive.Root
               value={contrast}
@@ -220,7 +220,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
               min={0.5} max={2.0} step={0.05}
             >
               <SliderPrimitive.Control className="relative flex h-5 w-full cursor-pointer items-center">
-                <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+                <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700">
                   <SliderPrimitive.Indicator className="rounded-full bg-primary" />
                 </SliderPrimitive.Track>
                 <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-primary bg-background shadow-sm" />
@@ -231,7 +231,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
           <div>
             <div className="mb-1 flex items-center justify-between">
               <span className="text-xs">{t("saturation")}</span>
-              <span className="text-xs text-zinc-500">{saturation.toFixed(2)}</span>
+              <span className="text-xs text-neutral-500">{saturation.toFixed(2)}</span>
             </div>
             <SliderPrimitive.Root
               value={saturation}
@@ -239,7 +239,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
               min={0} max={2.0} step={0.05}
             >
               <SliderPrimitive.Control className="relative flex h-5 w-full cursor-pointer items-center">
-                <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+                <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700">
                   <SliderPrimitive.Indicator className="rounded-full bg-primary" />
                 </SliderPrimitive.Track>
                 <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-primary bg-background shadow-sm" />
@@ -256,7 +256,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
                 className={`rounded-md border px-2.5 py-1 text-xs transition-colors ${
                   selectedFilter === f.id
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
+                    : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500"
                 }`}
               >
                 {selectedFilter === f.id && <Check className="mr-1 inline size-3" />}
@@ -284,7 +284,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
                 className={`rounded-md border px-2.5 py-1 text-xs transition-colors ${
                   selectedFilter === f.id
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
+                    : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500"
                 }`}
               >
                 {selectedFilter === f.id && <Check className="mr-1 inline size-3" />}
