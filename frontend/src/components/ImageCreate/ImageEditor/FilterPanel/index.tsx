@@ -48,6 +48,7 @@ export function FilterPanel({
                 value={values[key]}
                 onChange={(e) => handleChange(key, Number(e.target.value))}
                 className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+                style={{ "--slider-pct": `${((values[key] - range.min) / (range.max - range.min)) * 100}%` } as React.CSSProperties}
               />
             </div>
           );

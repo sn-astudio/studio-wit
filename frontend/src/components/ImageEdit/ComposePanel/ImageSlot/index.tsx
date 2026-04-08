@@ -14,6 +14,7 @@ export function ImageSlot({
   onRemove,
   readOnly,
   currentEditingImageUrl,
+  compact,
 }: ImageSlotProps) {
   const t = useTranslations("ImageEdit");
   const [showGallery, setShowGallery] = useState(false);
@@ -33,7 +34,7 @@ export function ImageSlot({
           <img
             src={imageUrl}
             alt={label}
-            className="aspect-video w-full object-cover"
+            className={`w-full object-cover ${compact ? "aspect-square" : "aspect-video"}`}
           />
           {!readOnly && onRemove && (
             <button
@@ -54,7 +55,7 @@ export function ImageSlot({
       <button
         ref={btnRef}
         onClick={() => setShowGallery(!showGallery)}
-        className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 py-8 text-muted-foreground transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900/50 dark:hover:border-neutral-500 dark:hover:bg-white/5"
+        className={`flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 text-muted-foreground transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900/50 dark:hover:border-neutral-500 dark:hover:bg-white/5 ${compact ? "aspect-square" : "py-8 rounded-2xl"}`}
       >
         <Plus className="size-5 opacity-40" />
         <span className="text-[13px] font-[500]">{t("composeAddImage")}</span>

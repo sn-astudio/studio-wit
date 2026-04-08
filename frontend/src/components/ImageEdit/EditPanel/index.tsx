@@ -57,20 +57,23 @@ export function EditPanel({
 
   // 도구 진입/해제 시 리셋
   const prevDrawToolRef = useRef(activeTool);
+  const mosaicEntryRef = useRef(historyIndex);
   useEffect(() => {
     const prev = prevDrawToolRef.current;
     prevDrawToolRef.current = activeTool;
     if (prev !== activeTool) {
       setHasDrawingContent(false);
+      if (activeTool === "mosaic") {
+        mosaicEntryRef.current = historyIndex;
+      }
     }
-  }, [activeTool]);
+  }, [activeTool, historyIndex]);
 
   // 그리기/지우개: pointerUp 시 내용 체크
   useEffect(() => {
     if (activeTool !== "draw" && activeTool !== "eraser") return;
     const handler = () => {
       if (activeTool === "eraser") {
-        // 지우개는 destination-out으로 알파=0이 되므로 픽셀 체크 불가, pointerUp 발생 시 true
         setHasDrawingContent(true);
       } else {
         const has = canvasRef.current?.hasOverlayContent() ?? false;
@@ -81,13 +84,10 @@ export function EditPanel({
     return () => document.removeEventListener("pointerup", handler);
   }, [activeTool, canvasRef]);
 
-  // 모자이크: historyIndex 변화로 감지
-  const mosaicEntryRef = useRef(historyIndex);
+  // 모자이크: historyIndex 변화로 감지 (도구 유지 중일 때만)
   useEffect(() => {
     if (activeTool === "mosaic" && prevDrawToolRef.current === "mosaic") {
       setHasDrawingContent(historyIndex > mosaicEntryRef.current);
-    } else if (activeTool === "mosaic") {
-      mosaicEntryRef.current = historyIndex;
     }
   }, [activeTool, historyIndex]);
 
@@ -123,13 +123,12 @@ export function EditPanel({
     if (clamped.width < 2 || clamped.height < 2) return;
     canvasRef.current?.applyCrop(clamped);
     setCropRect(null);
-    setActiveTool(null);
-  }, [canvasRef, cropRect, setCropRect, setActiveTool]);
+  }, [canvasRef, cropRect, setCropRect]);
 
   const handleCancelCrop = useCallback(() => {
     setCropRect(null);
-    setActiveTool(null);
-  }, [setCropRect, setActiveTool]);
+    setCropRatio("free");
+  }, [setCropRect]);
 
   // crop 모드 진입 시 초기화
   const prevToolRef = useRef(activeTool);
@@ -165,9 +164,8 @@ export function EditPanel({
       const resized = resizeCanvas(canvas, width, height);
       canvasRef.current?.replaceMainCanvas(resized);
       onResizeChange?.(width, height);
-      setActiveTool(null);
     },
-    [canvasRef, setActiveTool, onResizeChange],
+    [canvasRef, onResizeChange],
   );
 
   const handleCancelResize = useCallback(() => {
@@ -175,18 +173,17 @@ export function EditPanel({
     if (canvas) {
       onResizeChange?.(canvas.width, canvas.height);
     }
-    setActiveTool(null);
-  }, [canvasRef, setActiveTool, onResizeChange]);
+  }, [canvasRef, onResizeChange]);
 
   const handleApplyDrawing = useCallback(() => {
     canvasRef.current?.bakeOverlay();
-    setActiveTool(null);
-  }, [canvasRef, setActiveTool]);
+    setHasDrawingContent(false);
+  }, [canvasRef]);
 
   const handleClearDrawing = useCallback(() => {
     canvasRef.current?.clearOverlay();
-    setActiveTool(null);
-  }, [canvasRef, setActiveTool]);
+    setHasDrawingContent(false);
+  }, [canvasRef]);
 
   const handleTextPlace = useCallback(
     (x: number, y: number) => {
@@ -208,15 +205,13 @@ export function EditPanel({
       const rotated = rotateCanvasFree(canvas, degrees);
       canvasRef.current?.replaceMainCanvas(rotated);
       onFreeRotateChange?.(0);
-      setActiveTool(null);
     },
-    [canvasRef, setActiveTool, onFreeRotateChange],
+    [canvasRef, onFreeRotateChange],
   );
 
   const handleCancelFreeRotate = useCallback(() => {
     onFreeRotateChange?.(0);
-    setActiveTool(null);
-  }, [setActiveTool, onFreeRotateChange]);
+  }, [onFreeRotateChange]);
 
   const handleApplySharpen = useCallback(
     (amount: number) => {
@@ -295,8 +290,8 @@ export function EditPanel({
         hideFilter
       />
 
-      {/* undo/redo */}
-      <TooltipProvider delay={0} closeDelay={0}>
+      {/* undo/redo — 도구 선택 시만, 필터 제외 */}
+      {activeTool && activeTool !== "filter" && <TooltipProvider delay={0} closeDelay={0}>
         <div className="mx-auto flex w-fit items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-1.5 dark:bg-neutral-800/60">
           <Tooltip>
             <TooltipTrigger
@@ -327,7 +322,7 @@ export function EditPanel({
             <TooltipContent>{t("redo")}</TooltipContent>
           </Tooltip>
         </div>
-      </TooltipProvider>
+      </TooltipProvider>}
 
       {/* 자르기 옵션 — 구분선 + 비율 프리셋 */}
       {activeTool === "crop" && (
@@ -382,7 +377,7 @@ export function EditPanel({
         <TextPanel
           settings={textSettings}
           onChange={setTextSettings}
-          onApply={handleApplyDrawing}
+          onApply={() => { handleApplyDrawing(); setTextSettings({ ...textSettings, placedX: null, placedY: null }); }}
           onClear={handleClearText}
         />
         </>
@@ -406,7 +401,7 @@ export function EditPanel({
           onApplySharpen={handleApplySharpen}
           onApplyVignette={handleApplyVignette}
           onApplyNoise={handleApplyNoise}
-          onCancel={() => setActiveTool(null)}
+          onCancel={() => {}}
         />
         </>
       )}
@@ -417,11 +412,12 @@ export function EditPanel({
         <DrawingPanel
           settings={drawingSettings}
           onChange={setDrawingSettings}
-          onApply={() => setActiveTool(null)}
+          onApply={() => { canvasRef.current?.bakeOverlay(); setHasDrawingContent(false); mosaicEntryRef.current = historyIndex + 1; }}
           isMosaic
           onClear={() => {
             canvasRef.current?.undo();
-            setActiveTool(null);
+            setHasDrawingContent(false);
+            mosaicEntryRef.current = historyIndex - 1;
           }}
           isEraser={false}
           hasContent={hasDrawingContent}

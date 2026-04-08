@@ -259,13 +259,14 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
 
       {/* 합성 모드: 이미지 슬롯 */}
       {mode === "compose" && (
-        <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-2 gap-3">
           <ImageSlot
             label={t("composeBaseImage")}
             imageUrl={baseImageUrl}
             onSelect={setBaseImageUrl}
             onRemove={() => setBaseImageUrl(null)}
             currentEditingImageUrl={sourceUrl}
+            compact
           />
           <ImageSlot
             label={t("composeReferenceImage")}
@@ -273,6 +274,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
             onSelect={setReferenceImageUrl}
             onRemove={() => setReferenceImageUrl(null)}
             currentEditingImageUrl={sourceUrl}
+            compact
           />
         </div>
       )}
@@ -340,7 +342,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
       />
 
       {/* 생성 버튼 — 하단 고정 */}
-      <div className="sticky bottom-0 z-10 mt-auto -mx-5 bg-white px-5 pt-6 pb-4 dark:bg-neutral-950">
+      <div className="sticky bottom-0 z-10 mt-auto -mx-5 bg-white px-5 pt-4 pb-4 dark:bg-neutral-950">
         <button
           onClick={handleGenerate}
           disabled={!canGenerate}

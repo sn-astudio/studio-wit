@@ -42,6 +42,7 @@ export function FreeRotatePanel({
           value={degrees}
           onChange={(e) => updateDegrees(Number(e.target.value))}
           className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+          style={{ "--slider-pct": `${((degrees - (-180)) / (180 - (-180))) * 100}%` } as React.CSSProperties}
         />
       </div>
 
@@ -66,13 +67,13 @@ export function FreeRotatePanel({
       {/* 취소 / 적용 */}
       <div className="sticky bottom-0 z-10 mt-auto -mx-5 flex items-center gap-2 bg-white px-5 pt-4 pb-4 dark:bg-neutral-950">
         <button
-          onClick={onCancel}
+          onClick={() => { updateDegrees(0); onCancel(); }}
           className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
         >
           {t("reset")}
         </button>
         <button
-          onClick={() => onApply(degrees)}
+          onClick={() => { onApply(degrees); updateDegrees(0); }}
           disabled={degrees === 0}
           className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
         >

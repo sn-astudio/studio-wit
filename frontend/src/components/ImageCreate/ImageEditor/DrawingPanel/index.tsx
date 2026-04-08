@@ -59,6 +59,7 @@ export function DrawingPanel({
           value={settings.size}
           onChange={(e) => handleChange("size", Number(e.target.value))}
           className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+          style={{ "--slider-pct": `${((settings.size - 1) / (50 - 1)) * 100}%` } as React.CSSProperties}
         />
       </div>
 
@@ -79,6 +80,7 @@ export function DrawingPanel({
             value={settings.opacity}
             onChange={(e) => handleChange("opacity", Number(e.target.value))}
             className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+            style={{ "--slider-pct": `${((settings.opacity - 1) / (100 - 1)) * 100}%` } as React.CSSProperties}
           />
         </div>
       )}

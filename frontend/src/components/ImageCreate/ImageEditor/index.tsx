@@ -98,14 +98,12 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
     if (clamped.width < 2 || clamped.height < 2) return;
     canvasRef.current?.applyCrop(clamped);
     setCropRect(null);
-    setActiveTool(null);
-  }, [cropRect, setActiveTool]);
+  }, [cropRect]);
 
   // 크롭 취소
   const handleCancelCrop = useCallback(() => {
     setCropRect(null);
-    setActiveTool(null);
-  }, [setActiveTool]);
+  }, []);
 
   // 필터 적용 (bake)
   const handleApplyFilter = useCallback(() => {
@@ -115,8 +113,7 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
     const baked = applyFilterToCanvas(canvas, filterValues);
     canvasRef.current?.replaceMainCanvas(baked);
     resetFilterValues();
-    setActiveTool(null);
-  }, [filterValues, resetFilterValues, setActiveTool]);
+  }, [filterValues, resetFilterValues]);
 
   // 필터 리셋
   const handleResetFilter = useCallback(() => {
@@ -145,22 +142,19 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
       const resized = resizeCanvas(canvas, width, height);
       canvasRef.current?.replaceMainCanvas(resized);
       setResizePreviewScale(undefined);
-      setActiveTool(null);
     },
-    [setActiveTool],
+    [],
   );
 
   // 리사이즈 취소
   const handleCancelResize = useCallback(() => {
     setResizePreviewScale(undefined);
-    setActiveTool(null);
-  }, [setActiveTool]);
+  }, []);
 
   // 그리기/도형 적용 (overlay → main bake)
   const handleApplyDrawing = useCallback(() => {
     canvasRef.current?.bakeOverlay();
-    setActiveTool(null);
-  }, [setActiveTool]);
+  }, []);
 
   // 그리기/도형 클리어
   const handleClearDrawing = useCallback(() => {
@@ -190,9 +184,8 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
       const rotated = rotateCanvasFree(canvas, degrees);
       canvasRef.current?.replaceMainCanvas(rotated);
       setFreeRotateDegrees(0);
-      setActiveTool(null);
     },
-    [setActiveTool],
+    [],
   );
 
   // 자유 회전 미리보기
@@ -203,8 +196,7 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
   // 자유 회전 취소
   const handleCancelFreeRotate = useCallback(() => {
     setFreeRotateDegrees(0);
-    setActiveTool(null);
-  }, [setActiveTool]);
+  }, []);
 
   // 효과 적용 (Sharpen/Vignette/Noise)
   const handleApplySharpen = useCallback(
@@ -359,7 +351,9 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
           onApplySharpen={handleApplySharpen}
           onApplyVignette={handleApplyVignette}
           onApplyNoise={handleApplyNoise}
-          onCancel={() => setActiveTool(null)}
+          onCancel={() => {
+            // 값만 초기화, 도구는 유지
+          }}
         />
       )}
 

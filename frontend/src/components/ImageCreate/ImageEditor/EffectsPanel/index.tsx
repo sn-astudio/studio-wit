@@ -28,7 +28,7 @@ export function EffectsPanel({
     if (sharpen > 0) onApplySharpen(sharpen);
     if (vignette > 0) onApplyVignette(vignette);
     if (noise > 0) onApplyNoise(noise);
-    onCancel();
+    handleReset();
   };
 
   const effects = [
@@ -57,6 +57,7 @@ export function EffectsPanel({
             value={fx.value}
             onChange={(e) => fx.set(Number(e.target.value))}
             className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+            style={{ "--slider-pct": `${((fx.value - fx.min) / (fx.max - fx.min)) * 100}%` } as React.CSSProperties}
           />
         </div>
       ))}
