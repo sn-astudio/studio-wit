@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import NextImage from "next/image";
 import {
   AlertCircle,
   Download,
   Film,
   ImageIcon,
   Loader2,
-  Pencil,
-  Play,
+  Wand2,
+  Scissors,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
@@ -21,9 +21,16 @@ import {
 } from "@/components/ui/Tooltip";
 
 import type { GenerationCardProps } from "./types";
-import { getAspectStyle, formatTimeAgo, downloadFile } from "./utils";
+import { formatTimeAgo, downloadFile } from "./utils";
 
-export function GenerationCard({ gen }: GenerationCardProps) {
+function getRowSpan(ratio: string | null): number {
+  if (!ratio) return 7;
+  const [w, h] = ratio.split(":").map(Number);
+  if (!w || !h) return 7;
+  return Math.max(3, Math.round(7 * (h / w)));
+}
+
+export function GenerationCard({ gen, onClick, onDelete }: GenerationCardProps) {
   const router = useRouter();
   const t = useTranslations("MyPage");
   const isProcessing =
@@ -33,17 +40,14 @@ export function GenerationCard({ gen }: GenerationCardProps) {
   const isVideo = gen.type === "video";
   const isImage = gen.type === "image";
 
-  const [hovering, setHovering] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleMouseEnter = useCallback(() => {
     if (!isCompleted || !isVideo) return;
-    setHovering(true);
     videoRef.current?.play().catch(() => {});
   }, [isCompleted, isVideo]);
 
   const handleMouseLeave = useCallback(() => {
-    setHovering(false);
     const v = videoRef.current;
     if (v) {
       v.pause();
@@ -52,7 +56,7 @@ export function GenerationCard({ gen }: GenerationCardProps) {
   }, []);
 
   const timeAgo = formatTimeAgo(gen.created_at);
-  const aspectStyle = getAspectStyle(gen.aspect_ratio);
+  const rowSpan = getRowSpan(gen.aspect_ratio);
 
   const handleEdit = useCallback(
     (e: React.MouseEvent) => {
@@ -63,7 +67,7 @@ export function GenerationCard({ gen }: GenerationCardProps) {
         );
       } else {
         router.push(
-          `/image-edit?url=${encodeURIComponent(gen.result_url!)}`,
+          `/image-edit?img=${encodeURIComponent(gen.result_url!)}`,
         );
       }
     },
@@ -86,13 +90,14 @@ export function GenerationCard({ gen }: GenerationCardProps) {
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{ aspectRatio: aspectStyle }}
+      onClick={isCompleted ? onClick : undefined}
+      style={{ gridRow: `span ${rowSpan}` }}
       className={`group relative w-full overflow-hidden rounded-xl ${
         isProcessing
-          ? "border border-primary/20 bg-primary/5"
+          ? "bg-neutral-100 dark:bg-neutral-800/60"
           : isFailed
-            ? "border border-red-300/40 bg-red-50/20 opacity-60 dark:border-red-900/40 dark:bg-red-950/20"
-            : "border border-zinc-200/60 bg-zinc-100/60 transition-all hover:border-zinc-300 hover:shadow-lg dark:border-zinc-800/60 dark:bg-zinc-900/60 dark:hover:border-zinc-700"
+            ? "bg-neutral-100 opacity-60 dark:bg-neutral-800/60"
+            : "cursor-pointer bg-neutral-100 dark:bg-neutral-800/60"
       }`}
     >
       {/* Media */}
@@ -102,97 +107,115 @@ export function GenerationCard({ gen }: GenerationCardProps) {
           src={gen.result_url}
           poster={gen.thumbnail_url ?? undefined}
           preload="metadata"
-          className="absolute inset-0 size-full object-cover"
+          className="size-full object-cover"
           muted
           loop
           playsInline
         />
       )}
       {isCompleted && isImage && gen.result_url && (
-        <NextImage
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
           src={gen.result_url}
           alt={gen.prompt}
-          fill
-          className="object-cover"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="size-full object-cover sm:transition-transform sm:duration-300 sm:group-hover:scale-105"
         />
       )}
 
       {/* Status icons */}
       {isProcessing && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <Loader2 className="size-5 animate-spin text-primary" />
+          <div className="relative flex items-center justify-center">
+            <span
+              className="absolute size-14 animate-ping rounded-full bg-neutral-300/30 dark:bg-neutral-600/20"
+              style={{ animationDuration: "2s" }}
+            />
+            <div className="relative flex size-12 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-700">
+              <Loader2
+                className="size-5 animate-spin text-neutral-500 dark:text-neutral-400"
+                style={{ animationDuration: "1.5s" }}
+              />
+            </div>
+          </div>
         </div>
       )}
       {isFailed && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <AlertCircle className="size-4 text-red-500" />
-        </div>
-      )}
-      {isCompleted && isVideo && !hovering && !gen.thumbnail_url && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Play className="size-5 text-zinc-400 dark:text-zinc-600" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+          <AlertCircle className="size-5 text-red-400 dark:text-red-500" />
+          <p className="text-[11px] text-muted-foreground/60">{t("failed")}</p>
         </div>
       )}
 
-      {/* Type badge */}
+      {/* Completed overlay */}
       {isCompleted && (
-        <div className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-          {isVideo ? (
-            <Film className="size-3" />
-          ) : (
-            <ImageIcon className="size-3" />
-          )}
-          {gen.type}
-        </div>
-      )}
+        <>
+          {/* Overlay — mobile always, PC on hover */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100" />
 
-      {/* Hover action buttons */}
-      {isCompleted && gen.result_url && (
-        <div className="absolute top-2 right-2 flex gap-1 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
-          <TooltipProvider delay={200}>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    onClick={handleEdit}
-                    className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-black/60 text-zinc-200 transition-colors hover:bg-primary/80 hover:text-white"
-                  />
-                }
-              >
-                <Pencil className="size-3.5" />
-              </TooltipTrigger>
-              <TooltipContent>{t("edit")}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <TooltipProvider delay={200}>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    onClick={handleDownload}
-                    className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-black/60 text-zinc-200 transition-colors hover:bg-black/80 hover:text-white"
-                  />
-                }
-              >
-                <Download className="size-3.5" />
-              </TooltipTrigger>
-              <TooltipContent>{t("download")}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      )}
+          {/* Top: prompt */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 px-3 pt-3 pb-8 opacity-100 sm:px-4 sm:pt-4 sm:pb-10 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+            <p className="line-clamp-1 text-[13px] font-[500] leading-relaxed text-white/90 sm:line-clamp-2 sm:text-[15px]">
+              {gen.prompt}
+            </p>
+          </div>
 
-      {/* Bottom gradient info */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2.5 pt-6 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
-        <p className="line-clamp-2 text-xs leading-snug text-zinc-200">
-          {gen.prompt}
-        </p>
-        <div className="mt-1 flex items-center justify-between">
-          <span className="text-[10px] text-zinc-400">{gen.model_id}</span>
-          <span className="text-[10px] text-zinc-400">{timeAgo}</span>
-        </div>
-      </div>
+          {/* Bottom: meta + actions */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between px-3 pb-2.5 opacity-100 sm:px-3 sm:pb-2.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[12px] font-[500] text-white/80">{gen.model_id}</span>
+              <span className="text-[11px] text-white/60">{timeAgo}</span>
+            </div>
+            <div className="pointer-events-auto flex items-center gap-1">
+              <TooltipProvider delay={0} closeDelay={0}>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        onClick={handleEdit}
+                        className="flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                      >
+                        {isVideo ? <Scissors className="size-4" /> : <Wand2 className="size-4" />}
+                      </button>
+                    }
+                  />
+                  <TooltipContent>{t("edit")}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        onClick={handleDownload}
+                        className="flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                      >
+                        <Download className="size-4" />
+                      </button>
+                    }
+                  />
+                  <TooltipContent>{t("download")}</TooltipContent>
+                </Tooltip>
+                {onDelete && (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete();
+                          }}
+                          className="flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-red-500/80"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      }
+                    />
+                    <TooltipContent>{t("delete")}</TooltipContent>
+                  </Tooltip>
+                )}
+              </TooltipProvider>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

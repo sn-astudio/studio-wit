@@ -246,6 +246,14 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         applyCrop,
         bakeOverlay,
         clearOverlay,
+        hasOverlayContent: () => {
+          const overlay = overlayRef.current;
+          if (!overlay) return false;
+          const ctx = overlay.getContext("2d");
+          if (!ctx) return false;
+          const data = ctx.getImageData(0, 0, overlay.width, overlay.height);
+          return data.data.some((v, i) => i % 4 === 3 && v > 0);
+        },
       }),
       [
         pushSnapshot,
