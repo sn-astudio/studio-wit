@@ -24,6 +24,7 @@ dist/
 
 # Claude
 .claude/
+.agents/
 
 # Node.js / Frontend
 node_modules/
