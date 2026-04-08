@@ -3,6 +3,7 @@ export interface VideoTimelineProps {
   currentTime: number;
   trimStart: number;
   trimEnd: number;
+  isTrimming?: boolean;
   onTrimStartChange: (time: number) => void;
   onTrimEndChange: (time: number) => void;
   onSeek: (time: number) => void;

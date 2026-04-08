@@ -8,4 +8,10 @@ export interface EffectsPanelProps {
   onPreviewWatermark?: (wm: WatermarkPreview | null) => void;
   onPreviewSpeed?: (speed: number) => void;
   onDirty?: () => void;
+  onStateChange?: (state: { canApply: boolean; isPending: boolean }) => void;
+}
+
+export interface EffectsPanelRef {
+  reset: () => void;
+  apply: () => void;
 }

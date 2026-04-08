@@ -1,9 +1,7 @@
 "use client";
 
-import { Scissors, RotateCcw, Download, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-
-import { Button } from "@/components/ui/Button";
 
 import { formatTime } from "../VideoTimeline/utils";
 import type { TrimControlsProps } from "./types";
@@ -48,8 +46,8 @@ export function TrimControls({
       <div className="flex items-center gap-2">
         <button
           onClick={onReset}
-          disabled={isFullRange || isTrimming}
-          className="flex h-9 cursor-pointer items-center rounded-lg bg-neutral-100 px-4 text-[13px] font-[500] text-muted-foreground transition-colors hover:bg-neutral-200 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+          disabled={isTrimming}
+          className="flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-neutral-100 px-4 text-[13px] font-[500] text-muted-foreground transition-colors hover:bg-neutral-200 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
         >
           {t("reset")}
         </button>

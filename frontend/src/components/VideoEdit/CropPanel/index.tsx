@@ -1,64 +1,55 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { ChevronDown, Crop, Download, Globe, Loader2, Lock, RectangleHorizontal, Save, Smartphone } from "lucide-react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
+import { Check, Download, Globe, Loader2, Lock, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
-import { useCropVideo, useLetterbox } from "@/hooks/queries/useVideoEdit";
-import { videoEditApi } from "@/services/api";
+import { useCropVideo } from "@/hooks/queries/useVideoEdit";
 
-import type { CropPanelProps } from "./types";
+import type { CropPanelProps, CropPanelRef } from "./types";
 
 const RATIO_PRESETS = ["16:9", "9:16", "4:3", "3:4", "1:1", "21:9"];
-const COLOR_PRESETS = [
-  { id: "black", label: "Black", hex: "#000000" },
-  { id: "white", label: "White", hex: "#ffffff" },
-  { id: "0x1a1a2e", label: "Dark Blue", hex: "#1a1a2e" },
-];
 
-export function CropPanel({
+export const CropPanel = forwardRef<CropPanelRef, CropPanelProps>(function CropPanel({
   sourceUrl,
   videoWidth,
   videoHeight,
   onCropApplied,
   onSave,
   onDirty,
-}: CropPanelProps) {
+  onStateChange,
+}, ref) {
   const t = useTranslations("VideoEdit");
   const notify = useNotifyOnComplete();
   const cropMutation = useCropVideo();
-  const letterboxMutation = useLetterbox();
-
-  const [shortsLoading, setShortsLoading] = useState(false);
-  const [shortsCropX, setShortsCropX] = useState("center");
-
-  const isPending = cropMutation.isPending || letterboxMutation.isPending || shortsLoading;
 
   // 크롭 좌표
   const [cropX, setCropX] = useState(0);
   const [cropY, setCropY] = useState(0);
   const [cropW, setCropW] = useState(videoWidth || 1280);
   const [cropH, setCropH] = useState(videoHeight || 720);
-
-  // 레터박스
-  const [targetRatio, setTargetRatio] = useState("16:9");
-  const [padColor, setPadColor] = useState("black");
+  const [activePreset, setActivePreset] = useState<string | null>(() => {
+    const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+    const d = gcd(videoWidth, videoHeight);
+    const ratio = `${videoWidth / d}:${videoHeight / d}`;
+    return RATIO_PRESETS.includes(ratio) ? ratio : null;
+  });
 
   // 결과 저장
   const [pendingResult, setPendingResult] = useState<string | null>(null);
   const [isPublicSave, setIsPublicSave] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // 아코디언
-  const [openSection, setOpenSection] = useState<string | null>("crop");
-  const toggle = (id: string) =>
-    setOpenSection((prev) => (prev === id ? null : id));
+  const isOriginal = cropX === 0 && cropY === 0 && cropW === videoWidth && cropH === videoHeight;
 
-  // 크롭 프리셋: 원본에서 비율에 맞게 중앙 크롭 좌표 계산
+  useEffect(() => {
+    onStateChange?.({ isOriginal, isPending: cropMutation.isPending });
+  }, [isOriginal, cropMutation.isPending, onStateChange]);
+
+  // 크롭 프리셋
   const applyCropPreset = useCallback(
     (ratio: string) => {
       const [rw, rh] = ratio.split(":").map(Number);
@@ -70,10 +61,19 @@ export function CropPanel({
       setCropY(Math.floor((videoHeight - finalH) / 2));
       setCropW(finalW);
       setCropH(finalH);
+      setActivePreset(ratio);
       onDirty?.();
     },
     [videoWidth, videoHeight, onDirty],
   );
+
+  const handleReset = useCallback(() => {
+    setCropX(0);
+    setCropY(0);
+    setCropW(videoWidth || 1280);
+    setCropH(videoHeight || 720);
+    setActivePreset(null);
+  }, [videoWidth, videoHeight]);
 
   const handleCrop = useCallback(async () => {
     if (!sourceUrl) return;
@@ -94,42 +94,10 @@ export function CropPanel({
     }
   }, [sourceUrl, cropX, cropY, cropW, cropH, cropMutation, onCropApplied, t, notify]);
 
-  const handleLetterbox = useCallback(async () => {
-    if (!sourceUrl) return;
-    try {
-      const result = await letterboxMutation.mutateAsync({
-        source_url: sourceUrl,
-        target_ratio: targetRatio,
-        color: padColor,
-      });
-      setPendingResult(result.result_url);
-      onCropApplied?.(result.result_url);
-      toast.success(t("letterboxApplied"));
-      notify(t("letterboxApplied"));
-    } catch {
-      toast.error(t("cropError"));
-    }
-  }, [sourceUrl, targetRatio, padColor, letterboxMutation, onCropApplied, t, notify]);
-
-  // 쇼츠 변환 (16:9 → 9:16)
-  const handleShortsConvert = useCallback(async () => {
-    if (!sourceUrl) return;
-    setShortsLoading(true);
-    try {
-      const res = await videoEditApi.shortsConvert({
-        source_url: sourceUrl,
-        crop_x: shortsCropX,
-      });
-      setPendingResult(res.result_url);
-      onCropApplied?.(res.result_url);
-      toast.success(t("shortsSuccess"));
-      notify(t("shortsSuccess"));
-    } catch {
-      toast.error(t("shortsError"));
-    } finally {
-      setShortsLoading(false);
-    }
-  }, [sourceUrl, shortsCropX, onCropApplied, t, notify]);
+  useImperativeHandle(ref, () => ({
+    reset: handleReset,
+    apply: handleCrop,
+  }));
 
   // DB 저장
   const handleSave = useCallback(async () => {
@@ -164,218 +132,94 @@ export function CropPanel({
   }, [pendingResult, t]);
 
   return (
-    <div className="space-y-1">
-      {/* 크롭 */}
-      <AccordionSection
-        id="crop"
-        icon={<Crop className="size-3.5" />}
-        label={t("cropTitle")}
-        open={openSection === "crop"}
-        onToggle={() => toggle("crop")}
-      >
-        <p className="text-[11px] text-neutral-500">{t("cropDesc")}</p>
-
-        {/* 비율 프리셋 */}
-        <div className="space-y-1">
-          <span className="text-[11px] text-neutral-500">{t("cropPreset")}</span>
-          <div className="flex flex-wrap gap-1.5">
-            {RATIO_PRESETS.map((r) => (
-              <button
-                key={r}
-                type="button"
-                className="rounded-md bg-neutral-200/60 px-2 py-1 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                onClick={() => applyCropPreset(r)}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 좌표 입력 */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-[11px] text-neutral-500">X</label>
-            <Input
-              type="number"
-              min={0}
-              value={cropX}
-              onChange={(e) => { setCropX(Number(e.target.value)); onDirty?.(); }}
-              className="h-7 text-xs"
-            />
-          </div>
-          <div>
-            <label className="text-[11px] text-neutral-500">Y</label>
-            <Input
-              type="number"
-              min={0}
-              value={cropY}
-              onChange={(e) => { setCropY(Number(e.target.value)); onDirty?.(); }}
-              className="h-7 text-xs"
-            />
-          </div>
-          <div>
-            <label className="text-[11px] text-neutral-500">{t("cropWidth")}</label>
-            <Input
-              type="number"
-              min={1}
-              value={cropW}
-              onChange={(e) => { setCropW(Number(e.target.value)); onDirty?.(); }}
-              className="h-7 text-xs"
-            />
-          </div>
-          <div>
-            <label className="text-[11px] text-neutral-500">{t("cropHeight")}</label>
-            <Input
-              type="number"
-              min={1}
-              value={cropH}
-              onChange={(e) => { setCropH(Number(e.target.value)); onDirty?.(); }}
-              className="h-7 text-xs"
-            />
-          </div>
-        </div>
-
-        <p className="text-[10px] text-neutral-400">
+    <div className="flex min-h-full flex-col gap-4">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <p className="text-[13px] font-[600] text-foreground">{t("cropTitle")}</p>
+        <span className="text-[12px] font-[500] tabular-nums text-muted-foreground">
           {t("cropCurrentSize")}: {videoWidth} x {videoHeight}
-        </p>
+        </span>
+      </div>
 
-        <Button
-          size="sm"
-          variant="outline"
-          className="w-full gap-1.5"
-          onClick={handleCrop}
-          disabled={!sourceUrl || isPending}
-        >
-          {cropMutation.isPending ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Crop className="size-3.5" />
-          )}
-          {t("applyCrop")}
-        </Button>
-      </AccordionSection>
-
-      {/* 레터박스 */}
-      <AccordionSection
-        id="letterbox"
-        icon={<RectangleHorizontal className="size-3.5" />}
-        label={t("letterboxTitle")}
-        open={openSection === "letterbox"}
-        onToggle={() => toggle("letterbox")}
-      >
-        <p className="text-[11px] text-neutral-500">{t("letterboxDesc")}</p>
-
-        {/* 비율 선택 */}
-        <div className="space-y-1">
-          <span className="text-[11px] text-neutral-500">{t("letterboxRatio")}</span>
-          <div className="flex flex-wrap gap-1.5">
-            {RATIO_PRESETS.map((r) => (
-              <button
-                key={r}
-                type="button"
-                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                  targetRatio === r
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-neutral-200/60 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                }`}
-                onClick={() => { setTargetRatio(r); onDirty?.(); }}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 패딩 색상 */}
-        <div className="space-y-1">
-          <span className="text-[11px] text-neutral-500">{t("letterboxColor")}</span>
-          <div className="flex gap-2">
-            {COLOR_PRESETS.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => { setPadColor(c.id); onDirty?.(); }}
-                className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${
-                  padColor === c.id
-                    ? "ring-2 ring-primary"
-                    : "ring-1 ring-neutral-300 dark:ring-neutral-700"
-                }`}
-              >
-                <span
-                  className="inline-block size-3 rounded-full border border-neutral-400"
-                  style={{ backgroundColor: c.hex }}
-                />
-                {c.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <Button
-          size="sm"
-          variant="outline"
-          className="w-full gap-1.5"
-          onClick={handleLetterbox}
-          disabled={!sourceUrl || isPending}
-        >
-          {letterboxMutation.isPending ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <RectangleHorizontal className="size-3.5" />
-          )}
-          {t("applyLetterbox")}
-        </Button>
-      </AccordionSection>
-
-      {/* 쇼츠/릴스 변환 */}
-      <AccordionSection
-        id="shorts"
-        icon={<Smartphone className="size-3.5" />}
-        label={t("shortsConvertBtn")}
-        open={openSection === "shorts"}
-        onToggle={() => toggle("shorts")}
-      >
-        <p className="mb-2 text-[11px] text-neutral-500">{t("shortsDesc")}</p>
+      {/* 좌표 입력 */}
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <label className="text-xs font-medium">{t("shortsCropPosition")}</label>
-          <div className="flex gap-2">
-            {(["left", "center", "right"] as const).map((pos) => (
-              <Button
-                key={pos}
-                size="sm"
-                variant={shortsCropX === pos ? "default" : "outline"}
-                className="flex-1 text-xs"
-                onClick={() => setShortsCropX(pos)}
-              >
-                {t(pos === "left" ? "shortsCropLeft" : pos === "center" ? "shortsCropCenter" : "shortsCropRight")}
-              </Button>
-            ))}
-          </div>
+          <label className="text-[12px] font-[500] text-muted-foreground">X</label>
+          <input
+            type="number"
+            min={0}
+            value={cropX}
+            onChange={(e) => { setCropX(Number(e.target.value)); setActivePreset(null); onDirty?.(); }}
+            className="w-full rounded-lg bg-neutral-50 px-3 py-2 text-[13px] tabular-nums text-foreground outline-none dark:bg-neutral-800/60"
+          />
         </div>
-        <Button
-          className="mt-2 w-full gap-1.5"
-          onClick={handleShortsConvert}
-          disabled={!sourceUrl || isPending}
-        >
-          {shortsLoading ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Smartphone className="size-3.5" />
-          )}
-          {t("shortsConvertBtn")}
-        </Button>
-      </AccordionSection>
+        <div className="space-y-2">
+          <label className="text-[12px] font-[500] text-muted-foreground">Y</label>
+          <input
+            type="number"
+            min={0}
+            value={cropY}
+            onChange={(e) => { setCropY(Number(e.target.value)); setActivePreset(null); onDirty?.(); }}
+            className="w-full rounded-lg bg-neutral-50 px-3 py-2 text-[13px] tabular-nums text-foreground outline-none dark:bg-neutral-800/60"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[12px] font-[500] text-muted-foreground">{t("cropWidth")}</label>
+          <input
+            type="number"
+            min={1}
+            value={cropW}
+            onChange={(e) => { setCropW(Number(e.target.value)); setActivePreset(null); onDirty?.(); }}
+            className="w-full rounded-lg bg-neutral-50 px-3 py-2 text-[13px] tabular-nums text-foreground outline-none dark:bg-neutral-800/60"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[12px] font-[500] text-muted-foreground">{t("cropHeight")}</label>
+          <input
+            type="number"
+            min={1}
+            value={cropH}
+            onChange={(e) => { setCropH(Number(e.target.value)); setActivePreset(null); onDirty?.(); }}
+            className="w-full rounded-lg bg-neutral-50 px-3 py-2 text-[13px] tabular-nums text-foreground outline-none dark:bg-neutral-800/60"
+          />
+        </div>
+      </div>
+
+      {/* 비율 프리셋 */}
+      <div className="space-y-2.5">
+        <label className="text-[12px] font-[500] text-muted-foreground">{t("cropPreset")}</label>
+        <div className="flex flex-wrap gap-1.5">
+          {RATIO_PRESETS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => applyCropPreset(r)}
+              className={`cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
+                activePreset === r
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* 결과 저장/다운로드 */}
       {pendingResult && (
-        <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
-          <p className="text-xs font-medium text-primary">{t("cropResultReady")}</p>
+        <div className="animate-in fade-in slide-in-from-bottom-2 space-y-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-3 duration-200">
+          <div className="flex items-center gap-2">
+            <div className="flex size-5 items-center justify-center rounded-full bg-primary/20">
+              <Check className="size-3 text-primary" />
+            </div>
+            <p className="text-[12px] font-[500] text-primary">{t("cropResultReady")}</p>
+          </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setIsPublicSave(!isPublicSave)}
-              className="flex items-center gap-1 rounded-lg bg-neutral-200/60 px-2 py-1 text-xs transition-colors hover:bg-neutral-300 dark:bg-neutral-800/60 dark:hover:bg-neutral-700"
+              className="flex items-center gap-1 rounded-lg bg-neutral-50 px-2.5 py-1.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
             >
               {isPublicSave ? <Globe className="size-3" /> : <Lock className="size-3" />}
               {isPublicSave ? t("public") : t("private")}
@@ -391,38 +235,7 @@ export function CropPanel({
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-function AccordionSection({
-  id,
-  icon,
-  label,
-  open,
-  onToggle,
-  children,
-}: {
-  id: string;
-  icon: React.ReactNode;
-  label: string;
-  open: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60">
-      <button
-        onClick={onToggle}
-        className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition-colors hover:bg-neutral-100/60 dark:hover:bg-neutral-800/40"
-      >
-        <span className="text-neutral-400">{icon}</span>
-        <span className="text-xs font-medium">{label}</span>
-        <ChevronDown
-          className={`ml-auto size-3.5 text-neutral-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-      {open && <div className="space-y-2 px-3 pb-3">{children}</div>}
     </div>
   );
-}
+});
