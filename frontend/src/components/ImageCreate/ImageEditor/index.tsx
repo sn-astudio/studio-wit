@@ -314,6 +314,9 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
           onChange={setFilterValues}
           onApply={handleApplyFilter}
           onReset={handleResetFilter}
+          onApplySharpen={handleApplySharpen}
+          onApplyVignette={handleApplyVignette}
+          onApplyNoise={handleApplyNoise}
         />
       )}
 
@@ -343,17 +346,6 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
           onChange={setTextSettings}
           onApply={handleApplyDrawing}
           onClear={handleClearText}
-        />
-      )}
-
-      {activeTool === "effects" && (
-        <EffectsPanel
-          onApplySharpen={handleApplySharpen}
-          onApplyVignette={handleApplyVignette}
-          onApplyNoise={handleApplyNoise}
-          onCancel={() => {
-            // 값만 초기화, 도구는 유지
-          }}
         />
       )}
 

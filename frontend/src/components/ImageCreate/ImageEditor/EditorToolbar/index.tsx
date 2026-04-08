@@ -48,7 +48,6 @@ export function EditorToolbar({
     ...(!hideFilter
       ? [{ id: "filter" as const, icon: SlidersHorizontal, label: t("filter"), onClick: () => onToolChange("filter"), isActive: activeTool === "filter" }]
       : []),
-    { id: "effects" as const, icon: Sparkles, label: t("effects"), onClick: () => onToolChange("effects"), isActive: activeTool === "effects" },
     { id: "mosaic" as const, icon: Grid3x3, label: t("mosaic"), onClick: () => onToolChange("mosaic"), isActive: activeTool === "mosaic" },
   ];
 

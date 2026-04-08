@@ -133,7 +133,7 @@ export function VideoPreview({
   return (
     <div className="w-full">
       {hasHistory || isGenerating ? (
-        <div className="grid grid-cols-2 gap-1.5 sm:columns-3 sm:block sm:gap-2 lg:columns-4">
+        <div className="grid grid-cols-2 gap-1.5 sm:columns-3 sm:block sm:gap-2">
           {/* Generating card */}
           {isGenerating && (
             <div

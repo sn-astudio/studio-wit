@@ -603,8 +603,7 @@ export function VideoEditWorkspace() {
     setTrimStart(0);
     setTrimEnd(duration);
     setResultUrl(null);
-    handleSubToolChange(null);
-  }, [duration, handleSubToolChange]);
+  }, [duration]);
 
   // 모달 열기
   const openModal = useCallback((url: string, name?: string) => {
@@ -738,7 +737,13 @@ export function VideoEditWorkspace() {
           <div className="flex flex-1 flex-col">
           {activeTab === "merge" ? (
             /* 합치기: 결과 또는 클립 목록 */
-            <div className="min-h-[200px] w-full overflow-hidden rounded-2xl border-2 border-neutral-200 bg-neutral-50 sm:min-h-[280px] dark:border-neutral-800/80 dark:bg-black">
+            <div
+              className="min-h-[200px] w-full overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white sm:min-h-[280px] dark:border-neutral-800/80 dark:bg-neutral-950/85"
+              style={{
+                backgroundImage: "radial-gradient(circle, var(--canvas-checker) 1px, transparent 1px)",
+                backgroundSize: "16px 16px",
+              }}
+            >
               {resultUrl ? (
                 /* 합치기 완료 결과 */
                 <div className="flex h-full items-center justify-center p-4">
@@ -1012,7 +1017,7 @@ export function VideoEditWorkspace() {
                       return (
                         <button
                           key={tool.id}
-                          onClick={() => handleSubToolChange(tool.id)}
+                          onClick={() => handleSubToolChange(subTool === tool.id ? null : tool.id)}
                           className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl py-3.5 text-[12px] font-[500] transition-all active:opacity-80 ${
                             isActive
                               ? "bg-foreground text-background"
@@ -1027,7 +1032,8 @@ export function VideoEditWorkspace() {
                   </div>
                 )}
 
-                {/* Undo/Redo */}
+                {/* Undo/Redo — 서브도구 선택 시만, 필터 탭 제외 */}
+                {subTool && mainTab !== "filter" && (
                 <div className="mt-4 flex justify-center">
                   <div className="flex items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-1.5 dark:bg-neutral-800/60">
                     <button
@@ -1048,6 +1054,7 @@ export function VideoEditWorkspace() {
                     </button>
                   </div>
                 </div>
+                )}
 
                 {/* 디바이더 — 서브도구 선택 시 (트리밍 제외) */}
                 {subTool && subTool !== "trim" && <div className="my-4 border-t border-neutral-200 dark:border-neutral-800" />}
@@ -1562,7 +1569,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { mergePanelRef.current?.reset(); handleSubToolChange(null); }}
+                      onClick={() => mergePanelRef.current?.reset()}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1584,7 +1591,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { effectsPanelRef.current?.reset(); handleSubToolChange(null); }}
+                      onClick={() => effectsPanelRef.current?.reset()}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1606,7 +1613,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { cropPanelRef.current?.reset(); handleSubToolChange(null); }}
+                      onClick={() => cropPanelRef.current?.reset()}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1628,7 +1635,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { ratioPanelRef.current?.reset(); handleSubToolChange(null); }}
+                      onClick={() => ratioPanelRef.current?.reset()}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1650,7 +1657,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { rotatePanelRef.current?.reset(); handleSubToolChange(null); }}
+                      onClick={() => rotatePanelRef.current?.reset()}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
                     >
                       {t("reset")}

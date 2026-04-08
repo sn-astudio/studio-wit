@@ -136,15 +136,15 @@ export const MergePanel = forwardRef<MergePanelRef, MergePanelProps>(function Me
       </div>
 
       {/* 클립 추가 버튼 */}
-      <div className="flex flex-col gap-2">
+      <div className={clips.length < 2 ? "grid grid-cols-2 gap-3" : ""}>
         {Array.from({ length: clips.length < 2 ? 2 - clips.length : 1 }).map((_, i) => (
           <button
             key={i}
             onClick={onAddClipClick}
-            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-neutral-300 py-3 text-[12px] font-[500] text-muted-foreground transition-all hover:border-neutral-400 hover:text-foreground active:opacity-80 dark:border-neutral-700 dark:hover:border-neutral-600 dark:hover:text-white"
+            className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 text-muted-foreground transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900/50 dark:hover:border-neutral-500 dark:hover:bg-white/5 ${clips.length < 2 ? "aspect-square" : "w-full py-3"}`}
           >
-            <Plus className="size-4" />
-            {t("addClip")} {clips.length < 2 && `${clips.length + i + 1}`}
+            <Plus className="size-5 opacity-40" />
+            <span className="text-[13px] font-[500]">{t("addClip")} {clips.length < 2 && `${clips.length + i + 1}`}</span>
           </button>
         ))}
       </div>

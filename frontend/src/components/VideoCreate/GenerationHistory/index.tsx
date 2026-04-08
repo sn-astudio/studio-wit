@@ -196,7 +196,7 @@ export function GenerationHistory({
         </div>
       ) : (
         <div className="px-2.5 pb-3 sm:px-4">
-          <div className="grid grid-cols-2 gap-1.5 sm:columns-3 sm:block sm:gap-2 lg:columns-4">
+          <div className="grid grid-cols-2 gap-1.5 sm:columns-3 sm:block sm:gap-2">
             {generations.map((gen) => (
               <div key={gen.id} className="relative sm:mb-2 sm:break-inside-avoid">
                 {selectMode && (

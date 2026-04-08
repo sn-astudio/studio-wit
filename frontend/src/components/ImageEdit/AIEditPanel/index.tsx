@@ -281,7 +281,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
 
       {/* 모델 선택 */}
       {models.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <p className="text-[13px] font-[600] text-foreground">
             {mode === "edit" ? t("modelLabel") : t("composeModelLabel")}
           </p>
@@ -306,7 +306,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
 
       {/* 비율 선택 (편집 모드만) */}
       {mode === "edit" && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <p className="text-[13px] font-[600] text-foreground">
             {t("aspectRatio")}
           </p>
@@ -330,16 +330,20 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
       )}
 
       {/* 프롬프트 */}
-      <div className="pt-2" />
-      <textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        placeholder={
-          mode === "edit" ? t("aiPromptPlaceholder") : t("composePrompt")
-        }
-        rows={3}
-        className="w-full resize-none rounded-xl bg-neutral-50 px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none dark:bg-neutral-800/60"
-      />
+      <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">
+          {t("promptLabel")}
+        </p>
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder={
+            mode === "edit" ? t("aiPromptPlaceholder") : t("composePrompt")
+          }
+          rows={3}
+          className="w-full resize-none rounded-lg bg-neutral-50 px-3 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none dark:bg-neutral-800/60"
+        />
+      </div>
 
       {/* 생성 버튼 — 하단 고정 */}
       <div className="sticky bottom-0 z-10 mt-auto -mx-5 bg-white px-5 pt-4 pb-4 dark:bg-neutral-950">

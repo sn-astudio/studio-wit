@@ -45,6 +45,9 @@ export interface FilterValues {
   blur: number;
   invert: number;
   opacity: number;
+  sharpen: number;
+  vignette: number;
+  noise: number;
 }
 
 export interface CropRect {

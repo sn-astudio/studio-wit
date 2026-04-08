@@ -394,17 +394,6 @@ export function EditPanel({
         </>
       )}
 
-      {activeTool === "effects" && (
-        <>
-        <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
-        <EffectsPanel
-          onApplySharpen={handleApplySharpen}
-          onApplyVignette={handleApplyVignette}
-          onApplyNoise={handleApplyNoise}
-          onCancel={() => {}}
-        />
-        </>
-      )}
 
       {activeTool === "mosaic" && (
         <>

@@ -118,7 +118,13 @@ export function VideoEditPreview({
   }
 
   return (
-    <div className={`relative flex items-center justify-center overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white dark:border-neutral-800/80 dark:bg-neutral-950/85 ${isPortrait ? "max-h-[65vh] min-h-[40vh]" : "max-h-[65vh] min-h-[30vh]"}`}>
+    <div
+      className={`relative flex items-center justify-center overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white dark:border-neutral-800/80 dark:bg-neutral-950/85 ${isPortrait ? "max-h-[65vh] min-h-[40vh]" : "max-h-[65vh] min-h-[30vh]"}`}
+      style={{
+        backgroundImage: "radial-gradient(circle, var(--canvas-checker) 1px, transparent 1px)",
+        backgroundSize: "16px 16px",
+      }}
+    >
       <div className="relative max-h-full max-w-full">
         <video
           ref={videoRef}

@@ -113,11 +113,11 @@ export function VideoTimeline({
           <div
             className={`absolute inset-y-0 left-1/2 -translate-x-1/2 rounded-l shadow-lg transition-all ${
               dragging === "start"
-                ? "w-2.5 bg-primary sm:w-4"
-                : "w-1.5 bg-primary hover:bg-primary/80 sm:w-3 sm:rounded-l"
+                ? "w-3.5 bg-primary sm:w-5"
+                : "w-2.5 bg-primary hover:bg-primary/80 sm:w-4 sm:rounded-l"
             }`}
           />
-          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-neutral-600/50 dark:bg-white/50" />
+          <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-neutral-600/50 dark:bg-white/50" />
 
           {/* 시작 핸들 툴팁 */}
           <div
@@ -138,11 +138,11 @@ export function VideoTimeline({
           <div
             className={`absolute inset-y-0 left-1/2 -translate-x-1/2 rounded-r shadow-lg transition-all ${
               dragging === "end"
-                ? "w-2.5 bg-primary sm:w-4"
-                : "w-1.5 bg-primary hover:bg-primary/80 sm:w-3 sm:rounded-r"
+                ? "w-3.5 bg-primary sm:w-5"
+                : "w-2.5 bg-primary hover:bg-primary/80 sm:w-4 sm:rounded-r"
             }`}
           />
-          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-neutral-600/50 dark:bg-white/50" />
+          <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-neutral-600/50 dark:bg-white/50" />
 
           {/* 끝 핸들 툴팁 */}
           <div
@@ -160,8 +160,8 @@ export function VideoTimeline({
           style={{ left: `${playheadPct}%` }}
           onPointerDown={handlePointerDown("playhead")}
         >
-          <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-neutral-700 shadow-lg dark:bg-white" />
-          <div className="absolute -top-1.5 left-1/2 size-3.5 -translate-x-1/2 rounded-full bg-neutral-700 shadow sm:-top-1 sm:size-2 dark:bg-white" />
+          <div className="absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 bg-neutral-700 shadow-lg dark:bg-white" />
+          <div className="absolute -top-2 left-1/2 size-4 -translate-x-1/2 rounded-full bg-neutral-700 shadow sm:-top-1.5 sm:size-3 dark:bg-white" />
 
           {/* 재생 헤드 툴팁 */}
           <div

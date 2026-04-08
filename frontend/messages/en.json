@@ -558,6 +558,7 @@
     "tabEdit": "Edit",
     "tabFilter": "Filter",
     "tabAI": "AI Edit",
+    "promptLabel": "Prompt",
     "aiPromptPlaceholder": "Describe the image you want to generate based on this reference",
     "aiGenerate": "Apply",
     "aiGenerateStarted": "AI image generation started",

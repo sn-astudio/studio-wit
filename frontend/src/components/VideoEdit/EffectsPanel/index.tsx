@@ -108,6 +108,7 @@ export const EffectsPanel = forwardRef<EffectsPanelRef, EffectsPanelProps>(funct
       onEffectApplied?.(currentUrl);
       toast.success(t("effectApplied"));
       notify(t("effectApplied"));
+      handleReset();
     } catch {
       toast.error(t("effectError"));
     }

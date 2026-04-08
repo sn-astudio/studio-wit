@@ -405,6 +405,7 @@
     "tabEdit": "편집",
     "tabFilter": "필터",
     "tabAI": "AI 편집",
+    "promptLabel": "프롬프트",
     "aiPromptPlaceholder": "이 이미지를 참고하여 생성할 이미지를 설명하세요",
     "aiGenerate": "적용",
     "aiGenerateStarted": "AI 이미지 생성을 시작했습니다",

@@ -184,7 +184,7 @@ export function VideoSourceSelector({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-1.5 sm:columns-3 sm:block sm:gap-2 lg:columns-4">
+          <div className="grid grid-cols-2 gap-1.5 sm:columns-3 sm:block sm:gap-2">
             {completedVideos.map((gen) => {
               const ratio = gen.aspect_ratio?.replace(":", "/") ?? "16/9";
               return (
