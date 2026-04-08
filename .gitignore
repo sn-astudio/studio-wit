@@ -25,6 +25,10 @@ dist/
 # Claude
 .claude/
 .agents/
+skills-lock.json
+
+# npm (yarn 프로젝트)
+package-lock.json
 
 # Node.js / Frontend
 node_modules/
