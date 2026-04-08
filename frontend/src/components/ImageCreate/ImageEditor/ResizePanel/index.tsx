@@ -71,7 +71,7 @@ export function ResizePanel({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex-1 space-y-1.5">
+          <div className="flex-1 space-y-2">
             <label className="text-[12px] font-[500] text-muted-foreground">{t("width")}</label>
             <input
               type="number"
@@ -95,7 +95,7 @@ export function ResizePanel({
             )}
           </button>
 
-          <div className="flex-1 space-y-1.5">
+          <div className="flex-1 space-y-2">
             <label className="text-[12px] font-[500] text-muted-foreground">{t("height")}</label>
             <input
               type="number"

@@ -1,93 +1,113 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { Wand2, Upload } from "lucide-react";
+import { X } from "lucide-react";
 
-import type { GalleryPopoverProps } from "./types";
+import { useAuthStore } from "@/stores/auth";
+import { useGenerationHistory } from "@/hooks/queries/useGeneration";
+import { formatTimeAgo } from "@/components/MyPage/GenerationCard/utils";
 
-export function GalleryPopover({
-  onSelect,
-  onClose,
-  currentEditingImageUrl,
-  anchorRef,
-}: GalleryPopoverProps & { anchorRef: React.RefObject<HTMLButtonElement | null> }) {
+interface GalleryModalProps {
+  onSelect: (url: string) => void;
+  onClose: () => void;
+}
+
+interface GalleryItem {
+  id: string;
+  result_url: string | null;
+  prompt?: string;
+  model_id?: string;
+  created_at?: string;
+}
+
+export function GalleryModal({ onSelect, onClose }: GalleryModalProps) {
   const t = useTranslations("ImageEdit");
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const token = useAuthStore((s) => s.token);
 
-  useEffect(() => {
-    const anchor = anchorRef?.current;
-    const popover = popoverRef.current;
-    if (!anchor) return;
-    const rect = anchor.getBoundingClientRect();
-    const menuH = popover?.offsetHeight ?? 100;
-
-    // 아래 공간이 부족하면 위로
-    const spaceBelow = window.innerHeight - rect.bottom;
-    if (spaceBelow < menuH + 16) {
-      setPos({ top: rect.top - menuH - 8, left: rect.left });
-    } else {
-      setPos({ top: rect.bottom + 8, left: rect.left });
-    }
-  }, [anchorRef]);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const url = URL.createObjectURL(file);
-      onSelect(url);
-      e.target.value = "";
-    },
-    [onSelect],
+  const { data } = useGenerationHistory(
+    token ? { type: "image", status: "completed", limit: 40 } : undefined,
   );
+  const apiGenerations = data?.pages.flatMap((page) => page.generations) ?? [];
 
+  // localStorage mock generations
+  const [mockGenerations, setMockGenerations] = useState<GalleryItem[]>([]);
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        popoverRef.current &&
-        !popoverRef.current.contains(e.target as Node)
-      ) {
-        onClose();
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+    try {
+      const saved = localStorage.getItem("mock-generations");
+      if (saved) setMockGenerations(JSON.parse(saved));
+    } catch { /* ignore */ }
+  }, []);
+
+  const allImages: GalleryItem[] = [...mockGenerations, ...apiGenerations].filter((g) => g.result_url);
 
   return createPortal(
     <div
-      ref={popoverRef}
-      className="fixed z-[100] w-[200px] rounded-xl border border-border/50 bg-popover p-2.5 shadow-lg"
-      style={{ top: pos.top, left: pos.left }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
     >
-      <div className="flex flex-col gap-1">
-        {currentEditingImageUrl && (
+      <div
+        className="mx-4 flex h-[80vh] w-full max-w-[800px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/95"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 헤더 */}
+        <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 px-5 py-4 dark:border-neutral-800/60">
+          <h3 className="text-[15px] font-[600] text-foreground">
+            {t("composeSelectImage")}
+          </h3>
           <button
-            onClick={() => onSelect(currentEditingImageUrl)}
-            className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            onClick={onClose}
+            className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground dark:hover:bg-neutral-800"
           >
-            <Wand2 className="size-4 opacity-35" />
-            {t("composeUseCurrentImage")}
+            <X className="size-4" />
           </button>
-        )}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
-        >
-          <Upload className="size-4 opacity-35" />
-          {t("composeUpload")}
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
+        </div>
+
+        {/* 갤러리 그리드 */}
+        <div className="flex-1 overflow-y-auto scrollbar-none p-5">
+          {allImages.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2">
+              <p className="text-[14px] text-muted-foreground/50">
+                {t("composeNoImages")}
+              </p>
+            </div>
+          ) : (
+            <div className="columns-3 gap-2">
+              {allImages.map((gen) => (
+                <button
+                  key={gen.id}
+                  onClick={() => onSelect(gen.result_url!)}
+                  className="group relative mb-2 block w-full cursor-pointer overflow-hidden rounded-xl bg-neutral-100 break-inside-avoid transition-all active:scale-[0.97] dark:bg-neutral-800/60"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={gen.result_url!}
+                    alt={gen.prompt ?? ""}
+                    className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {/* 호버 오버레이 */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                  {/* 상단 프롬프트 */}
+                  <div className="pointer-events-none absolute inset-x-0 top-0 px-3 pt-3 pb-8 text-left opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    <p className="line-clamp-2 text-[13px] font-[500] leading-relaxed text-white/90">
+                      {gen.prompt}
+                    </p>
+                  </div>
+                  {/* 하단 메타 */}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-start gap-0.5 px-3 pb-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    {gen.model_id && (
+                      <span className="text-[12px] font-[500] text-white/80">{gen.model_id}</span>
+                    )}
+                    {gen.created_at && (
+                      <span className="text-[11px] text-white/60">{formatTimeAgo(gen.created_at)}</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>,
     document.body,
