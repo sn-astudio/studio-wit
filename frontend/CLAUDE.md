@@ -9,7 +9,7 @@ yarn dev          # 개발 서버 실행
 yarn build        # 프로덕션 빌드
 yarn lint         # ESLint 실행
 yarn format       # Prettier로 코드 포맷팅
-yarn format:check # 포맷팅 검사만 수행
+yarn format:check # 포맷팅 검사만 수행 
 ```
 
 패키지 매니저는 Yarn 4+ (corepack)이며, `.yarnrc.yml`에서 `nodeLinker: node-modules`로 설정되어 있다.
