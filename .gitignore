@@ -26,6 +26,8 @@ dist/
 .claude/
 .agents/*
 !.agents/skills/
+.kiro/
+skills-lock.json
 
 # Node.js / Frontend
 node_modules/
