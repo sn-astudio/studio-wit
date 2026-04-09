@@ -26,6 +26,7 @@ export const WatermarkPanel = forwardRef<WatermarkPanelRef, WatermarkPanelProps>
   onEffectApplied,
   onDirty,
   onStateChange,
+  onPreviewWatermark,
 }, ref) {
   const t = useTranslations("VideoEdit");
   const notify = useNotifyOnComplete();
@@ -49,6 +50,19 @@ export const WatermarkPanel = forwardRef<WatermarkPanelRef, WatermarkPanelProps>
     onStateChange?.({ canApply, isPending: watermarkMutation.isPending });
   }, [canApply, watermarkMutation.isPending, onStateChange]);
 
+  // 실시간 프리뷰
+  useEffect(() => {
+    if (wmMode === "text" && wmText.trim()) {
+      onPreviewWatermark?.({ mode: "text", text: wmText, position: wmPosition, opacity: wmOpacity, fontSize: wmFontSize, color: wmColor });
+    } else if (wmMode === "image" && wmImageFile) {
+      const url = URL.createObjectURL(wmImageFile);
+      onPreviewWatermark?.({ mode: "image", imageUrl: url, position: wmPosition, opacity: wmOpacity, imageScale: wmImageScale });
+      return () => URL.revokeObjectURL(url);
+    } else {
+      onPreviewWatermark?.(null);
+    }
+  }, [wmMode, wmText, wmPosition, wmOpacity, wmFontSize, wmColor, wmImageFile, wmImageScale, onPreviewWatermark]);
+
   const handleReset = useCallback(() => {
     setEffect("wmMode", "text");
     setEffect("wmText", "");
@@ -58,7 +72,8 @@ export const WatermarkPanel = forwardRef<WatermarkPanelRef, WatermarkPanelProps>
     setEffect("wmColor", "white");
     setEffect("wmImageScale", 20);
     setWmImageFile(null);
-  }, [setEffect]);
+    onPreviewWatermark?.(null);
+  }, [setEffect, onPreviewWatermark]);
 
   const handleApply = useCallback(async () => {
     if (!sourceUrl) return;

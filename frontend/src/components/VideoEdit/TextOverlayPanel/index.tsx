@@ -48,6 +48,7 @@ export const TextOverlayPanel = forwardRef<TextOverlayPanelRef, TextOverlayPanel
   onEffectApplied,
   onDirty,
   onStateChange,
+  onPreviewTextOverlay,
 }, ref) {
   const t = useTranslations("VideoEdit");
   const notify = useNotifyOnComplete();
@@ -66,13 +67,23 @@ export const TextOverlayPanel = forwardRef<TextOverlayPanelRef, TextOverlayPanel
     onStateChange?.({ canApply, isPending: textMutation.isPending });
   }, [canApply, textMutation.isPending, onStateChange]);
 
+  // 실시간 프리뷰
+  useEffect(() => {
+    if (overlayText.trim()) {
+      onPreviewTextOverlay?.({ text: overlayText, position: textPosition, fontSize, color: textColor });
+    } else {
+      onPreviewTextOverlay?.(null);
+    }
+  }, [overlayText, textPosition, fontSize, textColor, onPreviewTextOverlay]);
+
   const handleReset = useCallback(() => {
     setEffect("overlayText", "");
     setEffect("textPosition", "bottom");
     setEffect("fontSize", 36);
     setEffect("textColor", "white");
     setEffect("selectedTextPreset", "default");
-  }, [setEffect]);
+    onPreviewTextOverlay?.(null);
+  }, [setEffect, onPreviewTextOverlay]);
 
   const handleApply = useCallback(async () => {
     if (!sourceUrl || !overlayText.trim()) return;

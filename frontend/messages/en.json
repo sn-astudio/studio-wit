@@ -738,7 +738,8 @@
     "aspectRatio": "Aspect Ratio",
     "promptLabel": "Prompt",
     "removeVideo": "Remove Video",
-    "toolOutput": "Output"
+    "toolOutput": "Output",
+    "generate": "Generate"
   },
   "ImageCreate": {
     "generating": "Generating image...",

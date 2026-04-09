@@ -5,5 +5,6 @@ export interface GifPanelProps {
 }
 
 export interface GifPanelRef {
+  reset: () => void;
   apply: () => void;
 }

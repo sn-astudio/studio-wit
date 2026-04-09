@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Camera,
@@ -25,11 +25,11 @@ import {
   useCaptureFrame,
 } from "@/hooks/queries/useVideoEdit";
 
-import type { ThumbnailPanelProps } from "./types";
+import type { ThumbnailPanelProps, ThumbnailPanelRef } from "./types";
 
 const COUNT_PRESETS = [4, 6, 8, 12, 16];
 
-export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: ThumbnailPanelProps) {
+export const ThumbnailPanel = forwardRef<ThumbnailPanelRef, ThumbnailPanelProps>(function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange, onStateChange }, ref) {
   const t = useTranslations("VideoEdit");
   const extractMutation = useExtractThumbnails();
   const captureMutation = useCaptureFrame();
@@ -60,6 +60,17 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
 
   const isPending = extractMutation.isPending || captureMutation.isPending;
 
+  const handleReset = useCallback(() => {
+    setCount(8);
+    setThumbnails([]);
+    setSelectedIdx(null);
+    setManualTime("");
+  }, []);
+
+  useEffect(() => {
+    onStateChange?.({ canApply: !!sourceUrl && !isPending, isPending });
+  }, [sourceUrl, isPending, onStateChange]);
+
   const handleExtract = useCallback(async () => {
     if (!sourceUrl) return;
     try {
@@ -71,6 +82,8 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
       toast.error(t("thumbnailError"));
     }
   }, [sourceUrl, count, extractMutation, t]);
+
+  useImperativeHandle(ref, () => ({ reset: handleReset, apply: handleExtract }), [handleReset, handleExtract]);
 
   const handleCapture = useCallback(async () => {
     if (!sourceUrl || !manualTime.trim()) return;
@@ -380,4 +393,4 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
       )}
     </div>
   );
-}
+});

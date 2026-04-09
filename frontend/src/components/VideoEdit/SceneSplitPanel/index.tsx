@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import {
   Download,
   Loader2,
@@ -19,7 +19,7 @@ import {
 } from "@/hooks/queries/useVideoEdit";
 import type { SceneInfo } from "@/types/api";
 
-import type { SceneSplitPanelProps } from "./types";
+import type { SceneSplitPanelProps, SceneSplitPanelRef } from "./types";
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -28,11 +28,12 @@ function formatTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}.${ms}`;
 }
 
-export function SceneSplitPanel({
+export const SceneSplitPanel = forwardRef<SceneSplitPanelRef, SceneSplitPanelProps>(function SceneSplitPanel({
   sourceUrl,
   duration,
   onSceneExtracted,
-}: SceneSplitPanelProps) {
+  onStateChange,
+}, ref) {
   const t = useTranslations("VideoEdit");
   const notify = useNotifyOnComplete();
 
@@ -142,6 +143,19 @@ export function SceneSplitPanel({
   );
 
   const isPending = detectMutation.isPending || splitMutation.isPending;
+  const hasChanges = threshold !== 0.3 || minDuration !== 1.0;
+
+  const handleReset = useCallback(() => {
+    setThreshold(0.3);
+    setMinDuration(1.0);
+    setScenes([]);
+  }, []);
+
+  useImperativeHandle(ref, () => ({ reset: handleReset, apply: handleDetect }), [handleReset, handleDetect]);
+
+  useEffect(() => {
+    onStateChange?.({ canApply: !!sourceUrl && !isPending, isPending });
+  }, [sourceUrl, isPending, onStateChange]);
 
   return (
     <div className="flex flex-1 flex-col gap-5">
@@ -181,15 +195,6 @@ export function SceneSplitPanel({
         />
       </div>
 
-      {/* 감지 버튼 */}
-      <button
-        onClick={handleDetect}
-        disabled={!sourceUrl || isPending}
-        className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-neutral-50 py-2.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 disabled:pointer-events-none disabled:opacity-30 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
-      >
-        {detectMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <ScanSearch className="size-3.5" />}
-        {t("detectScenes")}
-      </button>
 
       {/* 장면 목록 */}
       {scenes.length > 0 && (
@@ -270,4 +275,4 @@ export function SceneSplitPanel({
       )}
     </div>
   );
-}
+});

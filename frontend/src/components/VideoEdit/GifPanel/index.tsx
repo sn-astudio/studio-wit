@@ -26,7 +26,8 @@ export const GifPanel = forwardRef<GifPanelRef, GifPanelProps>(function GifPanel
   const [gifWidth, setGifWidth] = useState(480);
   const [gifFps, setGifFps] = useState(15);
 
-  const canApply = !!sourceUrl && !gifMutation.isPending;
+  const hasChanges = gifStart !== 0 || gifEnd !== 5 || gifWidth !== 480 || gifFps !== 15;
+  const canApply = !!sourceUrl && hasChanges && !gifMutation.isPending;
 
   useEffect(() => {
     onStateChange?.({ canApply, isPending: gifMutation.isPending });
@@ -57,7 +58,14 @@ export const GifPanel = forwardRef<GifPanelRef, GifPanelProps>(function GifPanel
     }
   }, [sourceUrl, gifStart, gifEnd, gifWidth, gifFps, gifMutation, t, notify]);
 
-  useImperativeHandle(ref, () => ({ apply: handleApply }), [handleApply]);
+  const handleReset = useCallback(() => {
+    setGifStart(0);
+    setGifEnd(5);
+    setGifWidth(480);
+    setGifFps(15);
+  }, []);
+
+  useImperativeHandle(ref, () => ({ reset: handleReset, apply: handleApply }), [handleReset, handleApply]);
 
   return (
     <div className="flex flex-col gap-5">

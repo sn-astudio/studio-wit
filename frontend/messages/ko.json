@@ -888,7 +888,8 @@
     "audioResultReady": "오디오 편집 결과가 준비되었습니다",
     "saveToGallery": "저장",
     "removeVideo": "비디오 제거",
-    "toolOutput": "출력 설정"
+    "toolOutput": "출력 설정",
+    "generate": "생성"
   },
   "MyPage": {
     "title": "마이페이지",
