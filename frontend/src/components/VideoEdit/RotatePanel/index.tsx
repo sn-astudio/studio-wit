@@ -106,7 +106,7 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
     <div className="flex flex-col gap-5">
       {/* 회전 */}
       <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("effectRotate")}</label>
+        <p className="text-[13px] font-[600] text-foreground">{t("effectRotate")}</p>
         <div className="flex gap-1.5">
           {ROTATE_PRESETS.map((preset) => {
             const Icon = preset.icon;
@@ -114,7 +114,7 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
               <button
                 key={preset.id}
                 onClick={() => { setSelected(selected === preset.id ? null : preset.id); onDirty?.(); }}
-                className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2.5 text-[12px] font-[500] transition-all active:opacity-80 ${
+                className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
                   selected === preset.id
                     ? "bg-foreground text-background"
                     : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
@@ -130,7 +130,7 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
 
       {/* 뒤집기 */}
       <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("flipLabel")}</label>
+        <p className="text-[13px] font-[600] text-foreground">{t("flipLabel")}</p>
         <div className="flex gap-1.5">
           {FLIP_PRESETS.map((preset) => {
             const Icon = preset.icon;
@@ -138,7 +138,7 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
               <button
                 key={preset.id}
                 onClick={() => { setSelected(selected === preset.id ? null : preset.id); onDirty?.(); }}
-                className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2.5 text-[12px] font-[500] transition-all active:opacity-80 ${
+                className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
                   selected === preset.id
                     ? "bg-foreground text-background"
                     : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"

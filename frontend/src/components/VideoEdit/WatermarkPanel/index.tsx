@@ -190,7 +190,7 @@ export const WatermarkPanel = forwardRef<WatermarkPanelRef, WatermarkPanelProps>
         <>
           <div className="space-y-2.5">
             <p className="text-[13px] font-[600] text-foreground">{t("wmImageLabel")}</p>
-            <label className="flex cursor-pointer items-center gap-2.5 rounded-xl bg-neutral-50 px-4 py-3 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white">
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg bg-neutral-50 px-4 py-3 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white">
               <ImageIcon className="size-5 shrink-0" strokeWidth={1.5} />
               <span className="flex-1 truncate">{wmImageFile ? wmImageFile.name : t("wmSelectImage")}</span>
               <input

@@ -1666,7 +1666,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => mergePanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
@@ -1688,7 +1688,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => effectsPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
@@ -1710,7 +1710,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => cropPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
@@ -1732,7 +1732,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => ratioPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
@@ -1754,7 +1754,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => creativePanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
@@ -1776,7 +1776,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => filterPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
@@ -1798,7 +1798,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => rotatePanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
@@ -1820,7 +1820,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => subtitlesPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
@@ -1842,7 +1842,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => textOverlayPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
@@ -1864,7 +1864,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => watermarkPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
@@ -1900,7 +1900,7 @@ export function VideoEditWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => aiEditPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>

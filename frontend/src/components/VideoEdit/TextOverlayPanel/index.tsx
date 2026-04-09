@@ -110,7 +110,7 @@ export const TextOverlayPanel = forwardRef<TextOverlayPanelRef, TextOverlayPanel
                 setEffect("textPosition", preset.position);
                 onDirty?.();
               }}
-              className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-xl py-2.5 text-[11px] font-[500] transition-all active:opacity-80 ${
+              className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-lg py-2.5 text-[11px] font-[500] transition-all active:opacity-80 ${
                 selectedTextPreset === preset.id
                   ? "bg-foreground text-background"
                   : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"

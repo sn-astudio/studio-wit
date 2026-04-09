@@ -178,7 +178,7 @@ export const EffectsPanel = forwardRef<EffectsPanelRef, EffectsPanelProps>(funct
         <p className="text-[13px] font-[600] text-foreground">{t("effectReverse")}</p>
         <button
           onClick={() => { setReverse(!reverse); onDirty?.(); }}
-          className={`flex w-full cursor-pointer items-center justify-center rounded-lg py-2.5 text-[12px] font-[500] transition-all active:opacity-80 ${
+          className={`flex w-full cursor-pointer items-center justify-center rounded-lg py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
             reverse
               ? "bg-foreground text-background"
               : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"

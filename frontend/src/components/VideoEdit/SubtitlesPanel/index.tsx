@@ -336,12 +336,12 @@ export const SubtitlesPanel = forwardRef<SubtitlesPanelRef, SubtitlesPanelProps>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={handleAdd}
-          className="flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-neutral-50 py-2.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+          className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-neutral-50 py-2.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
         >
           <Plus className="size-4" strokeWidth={1.5} />
           {t("addSubtitle")}
         </button>
-        <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-neutral-50 py-2.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white">
+        <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-neutral-50 py-2.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white">
           <FileUp className="size-4" strokeWidth={1.5} />
           {t("uploadSubtitleFile")}
           <input type="file" accept=".srt,.vtt,.txt" className="hidden" onChange={handleFileUpload} />
@@ -357,7 +357,7 @@ export const SubtitlesPanel = forwardRef<SubtitlesPanelRef, SubtitlesPanelProps>
             <button
               key={preset.id}
               onClick={() => handlePresetSelect(preset.id)}
-              className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-xl py-2.5 text-[11px] font-[500] transition-all active:opacity-80 ${
+              className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-lg py-2.5 text-[11px] font-[500] transition-all active:opacity-80 ${
                 selectedPreset === preset.id
                   ? "bg-foreground text-background"
                   : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"

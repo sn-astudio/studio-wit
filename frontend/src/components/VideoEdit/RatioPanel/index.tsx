@@ -137,7 +137,7 @@ export const RatioPanel = forwardRef<RatioPanelRef, RatioPanelProps>(function Ra
     <div className="flex flex-col gap-5">
       {/* 목표 비율 */}
       <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("letterboxRatio")}</label>
+        <p className="text-[13px] font-[600] text-foreground">{t("letterboxRatio")}</p>
         <div className="flex flex-wrap gap-1.5">
           {RATIO_PRESETS.map((r) => (
             <button
@@ -160,7 +160,7 @@ export const RatioPanel = forwardRef<RatioPanelRef, RatioPanelProps>(function Ra
       {targetRatio && (
         <>
           <div className="space-y-2.5">
-            <label className="text-[12px] font-[500] text-muted-foreground">{t("convertMode")}</label>
+            <p className="text-[13px] font-[600] text-foreground">{t("convertMode")}</p>
             <div className="flex gap-1.5">
               <button
                 onClick={() => setMode("letterbox")}
@@ -188,7 +188,7 @@ export const RatioPanel = forwardRef<RatioPanelRef, RatioPanelProps>(function Ra
           {/* 레터박스 옵션 — 패딩 색상 */}
           {mode === "letterbox" && (
             <div className="space-y-2.5">
-              <label className="text-[12px] font-[500] text-muted-foreground">{t("letterboxColor")}</label>
+              <p className="text-[13px] font-[600] text-foreground">{t("letterboxColor")}</p>
               <div className="flex gap-1.5">
                 {COLOR_PRESETS.map((c) => (
                   <button
@@ -215,7 +215,7 @@ export const RatioPanel = forwardRef<RatioPanelRef, RatioPanelProps>(function Ra
           {/* 쇼츠 크롭 옵션 — 크롭 위치 */}
           {mode === "crop" && (
             <div className="space-y-2.5">
-              <label className="text-[12px] font-[500] text-muted-foreground">{t("shortsCropPosition")}</label>
+              <p className="text-[13px] font-[600] text-foreground">{t("shortsCropPosition")}</p>
               <div className="flex gap-1.5">
                 {(["left", "center", "right"] as const).map((pos) => (
                   <button

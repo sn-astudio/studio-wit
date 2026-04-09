@@ -187,7 +187,7 @@ export const CropPanel = forwardRef<CropPanelRef, CropPanelProps>(function CropP
 
       {/* 비율 프리셋 */}
       <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("cropPreset")}</label>
+        <p className="text-[13px] font-[600] text-foreground">{t("cropPreset")}</p>
         <div className="flex flex-wrap gap-1.5">
           {RATIO_PRESETS.map((r) => (
             <button
