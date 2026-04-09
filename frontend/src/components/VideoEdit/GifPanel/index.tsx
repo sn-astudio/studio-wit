@@ -1,22 +1,22 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Download, Loader2 } from "lucide-react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import { useVideoToGif } from "@/hooks/queries/useVideoEdit";
 
-import type { GifPanelProps } from "./types";
+import type { GifPanelProps, GifPanelRef } from "./types";
 
 const WIDTH_PRESETS = [240, 360, 480, 640, 800];
 const FPS_PRESETS = [10, 15, 20, 25, 30];
 
-export function GifPanel({ sourceUrl, onDirty }: GifPanelProps) {
+export const GifPanel = forwardRef<GifPanelRef, GifPanelProps>(function GifPanel({
+  sourceUrl,
+  onDirty,
+  onStateChange,
+}, ref) {
   const t = useTranslations("VideoEdit");
   const notify = useNotifyOnComplete();
   const gifMutation = useVideoToGif();
@@ -26,7 +26,13 @@ export function GifPanel({ sourceUrl, onDirty }: GifPanelProps) {
   const [gifWidth, setGifWidth] = useState(480);
   const [gifFps, setGifFps] = useState(15);
 
-  const handleCreate = useCallback(async () => {
+  const canApply = !!sourceUrl && !gifMutation.isPending;
+
+  useEffect(() => {
+    onStateChange?.({ canApply, isPending: gifMutation.isPending });
+  }, [canApply, gifMutation.isPending, onStateChange]);
+
+  const handleApply = useCallback(async () => {
     if (!sourceUrl) return;
     try {
       const result = await gifMutation.mutateAsync({
@@ -51,131 +57,95 @@ export function GifPanel({ sourceUrl, onDirty }: GifPanelProps) {
     }
   }, [sourceUrl, gifStart, gifEnd, gifWidth, gifFps, gifMutation, t, notify]);
 
-  return (
-    <div className="space-y-4">
-      <p className="text-xs text-neutral-500">{t("gifDesc")}</p>
+  useImperativeHandle(ref, () => ({ apply: handleApply }), [handleApply]);
 
+  return (
+    <div className="flex flex-col gap-5">
       {/* 구간 설정 */}
-      <div className="space-y-2">
-        <span className="text-xs font-medium">{t("gifRange")}</span>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-[11px] text-neutral-500">{t("gifStart")}</label>
-            <Input
+      <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("gifRange")}</p>
+        <p className="text-[12px] text-muted-foreground/60">{t("gifDesc")}</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <span className="text-[12px] text-muted-foreground">{t("gifStart")}</span>
+            <input
               type="number"
               min={0}
               step={0.1}
               value={gifStart}
-              onChange={(e) => {
-                setGifStart(Number(e.target.value));
-                onDirty?.();
-              }}
-              className="h-8 text-xs"
+              onChange={(e) => { setGifStart(Number(e.target.value)); onDirty?.(); }}
+              className="h-9 w-full rounded-lg bg-neutral-50 px-3 text-[13px] tabular-nums text-foreground focus:outline-none dark:bg-neutral-800/60"
             />
           </div>
-          <div>
-            <label className="text-[11px] text-neutral-500">{t("gifEnd")}</label>
-            <Input
+          <div className="space-y-1.5">
+            <span className="text-[12px] text-muted-foreground">{t("gifEnd")}</span>
+            <input
               type="number"
               min={0}
               step={0.1}
               value={gifEnd}
-              onChange={(e) => {
-                setGifEnd(Number(e.target.value));
-                onDirty?.();
-              }}
-              className="h-8 text-xs"
+              onChange={(e) => { setGifEnd(Number(e.target.value)); onDirty?.(); }}
+              className="h-9 w-full rounded-lg bg-neutral-50 px-3 text-[13px] tabular-nums text-foreground focus:outline-none dark:bg-neutral-800/60"
             />
           </div>
         </div>
       </div>
 
       {/* 가로 크기 */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium">{t("gifWidth")}</span>
-          <span className="text-xs tabular-nums text-neutral-400">
-            {gifWidth}px
-          </span>
+          <span className="text-[13px] font-[600] text-foreground">{t("gifWidth")}</span>
+          <span className="text-[12px] font-[500] tabular-nums text-muted-foreground">{gifWidth}px</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {WIDTH_PRESETS.map((w) => (
             <button
               key={w}
-              type="button"
-              className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+              onClick={() => { setGifWidth(w); onDirty?.(); }}
+              className={`cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
                 gifWidth === w
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-neutral-200/60 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
               }`}
-              onClick={() => {
-                setGifWidth(w);
-                onDirty?.();
-              }}
             >
               {w}px
             </button>
           ))}
         </div>
-        <SliderPrimitive.Root
-          value={gifWidth}
-          onValueChange={(v) => {
-            setGifWidth(v as number);
-            onDirty?.();
-          }}
+        <input
+          type="range"
           min={120}
           max={1280}
           step={10}
-        >
-          <SliderPrimitive.Control className="relative flex h-5 w-full cursor-pointer items-center">
-            <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-800">
-              <SliderPrimitive.Indicator className="rounded-full bg-primary" />
-            </SliderPrimitive.Track>
-            <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-primary bg-background shadow-sm" />
-          </SliderPrimitive.Control>
-        </SliderPrimitive.Root>
+          value={gifWidth}
+          onChange={(e) => { setGifWidth(Number(e.target.value)); onDirty?.(); }}
+          className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+          style={{ "--slider-pct": `${((gifWidth - 120) / (1280 - 120)) * 100}%` } as React.CSSProperties}
+        />
       </div>
 
       {/* FPS */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium">{t("gifFps")}</span>
-          <span className="text-xs tabular-nums text-neutral-400">{gifFps}</span>
+          <span className="text-[13px] font-[600] text-foreground">{t("gifFps")}</span>
+          <span className="text-[12px] font-[500] tabular-nums text-muted-foreground">{gifFps}</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {FPS_PRESETS.map((f) => (
             <button
               key={f}
-              type="button"
-              className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+              onClick={() => { setGifFps(f); onDirty?.(); }}
+              className={`cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
                 gifFps === f
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-neutral-200/60 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
               }`}
-              onClick={() => {
-                setGifFps(f);
-                onDirty?.();
-              }}
             >
               {f}
             </button>
           ))}
         </div>
       </div>
-
-      {/* 생성 버튼 */}
-      <Button
-        className="w-full gap-1.5"
-        onClick={handleCreate}
-        disabled={!sourceUrl || gifMutation.isPending}
-      >
-        {gifMutation.isPending ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Download className="size-4" />
-        )}
-        {t("createGif")}
-      </Button>
     </div>
   );
-}
+});

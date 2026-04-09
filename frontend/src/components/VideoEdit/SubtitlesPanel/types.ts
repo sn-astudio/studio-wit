@@ -6,4 +6,10 @@ export interface SubtitlesPanelProps {
   onSubtitlesApplied?: (resultUrl: string) => void;
   onPreviewSubtitles?: (subs: SubtitlePreviewItem[]) => void;
   onDirty?: () => void;
+  onStateChange?: (state: { canApply: boolean; isPending: boolean }) => void;
+}
+
+export interface SubtitlesPanelRef {
+  reset: () => void;
+  apply: () => void;
 }

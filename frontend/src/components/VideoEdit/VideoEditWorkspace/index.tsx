@@ -28,8 +28,14 @@ import { FilterPanel } from "../FilterPanel";
 import type { FilterPanelRef } from "../FilterPanel/types";
 import type { CreativePresetPanelRef } from "../CreativePresetPanel/types";
 import { SubtitlesPanel } from "../SubtitlesPanel";
+import type { SubtitlesPanelRef } from "../SubtitlesPanel/types";
+import { TextOverlayPanel } from "../TextOverlayPanel";
+import type { TextOverlayPanelRef } from "../TextOverlayPanel/types";
+import { WatermarkPanel } from "../WatermarkPanel";
+import type { WatermarkPanelRef } from "../WatermarkPanel/types";
 import { AudioPanel } from "../AudioPanel";
 import { GifPanel } from "../GifPanel";
+import type { GifPanelRef } from "../GifPanel/types";
 import { SceneSplitPanel } from "../SceneSplitPanel";
 import { ThumbnailPanel } from "../ThumbnailPanel";
 import { CropPanel } from "../CropPanel";
@@ -49,7 +55,7 @@ import type { VideoSource } from "./types";
 
 type MainTab = "edit" | "filter" | "overlay" | "ai";
 type SubTool = "trim" | "crop" | "ratio" | "merge" | "speed" | "reverse" | "rotate" | "resolution" | "fps" | "filter" | "creative" | "subtitles" | "text" | "watermark" | "audio" | "gif" | "scene" | "thumbnail" | "color" | "cinematic" | "vintage" | "mood" | "fun" | null;
-type EditTab = "trim" | "ai" | "effects" | "filter" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop" | "ratio" | "rotate" | "scene" | "preset" | "creative";
+type EditTab = "trim" | "ai" | "effects" | "filter" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop" | "ratio" | "rotate" | "scene" | "preset" | "creative" | "text" | "watermark";
 
 export function VideoEditWorkspace() {
   const t = useTranslations("VideoEdit");
@@ -73,6 +79,14 @@ export function VideoEditWorkspace() {
   const [filterState, setFilterState] = useState({ canApply: false, isPending: false });
   const creativePanelRef = useRef<CreativePresetPanelRef>(null);
   const [creativeState, setCreativeState] = useState({ canApply: false, isPending: false });
+  const subtitlesPanelRef = useRef<SubtitlesPanelRef>(null);
+  const [subtitlesState, setSubtitlesState] = useState({ canApply: false, isPending: false });
+  const textOverlayPanelRef = useRef<TextOverlayPanelRef>(null);
+  const [textOverlayState, setTextOverlayState] = useState({ canApply: false, isPending: false });
+  const watermarkPanelRef = useRef<WatermarkPanelRef>(null);
+  const [watermarkState, setWatermarkState] = useState({ canApply: false, isPending: false });
+  const gifPanelRef = useRef<GifPanelRef>(null);
+  const [gifState, setGifState] = useState({ canApply: false, isPending: false });
   const searchParams = useSearchParams();
 
   // 탭 (URL ?tab= 파라미터로 초기값 설정)
@@ -104,7 +118,9 @@ export function VideoEditWorkspace() {
     else if (tool === "ratio") setActiveTab("ratio");
     else if (tool === "merge") setActiveTab("merge");
     else if (tool === "rotate") setActiveTab("rotate");
-    else if (tool === "speed" || tool === "reverse" || tool === "resolution" || tool === "fps" || tool === "text" || tool === "watermark") setActiveTab("effects");
+    else if (tool === "speed" || tool === "reverse" || tool === "resolution" || tool === "fps") setActiveTab("effects");
+    else if (tool === "text") setActiveTab("text");
+    else if (tool === "watermark") setActiveTab("watermark");
     else if (tool === "filter") setActiveTab("filter");
     else if (tool === "creative") setActiveTab("creative");
     else if (tool === "subtitles") setActiveTab("subtitles");
@@ -905,6 +921,17 @@ export function VideoEditWorkspace() {
             </div>
 
 
+          {/* 모바일 편집 도구 버튼 */}
+          {source && (
+            <button
+              onClick={() => toast(t("mobileEditSoon"))}
+              className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-foreground py-3 text-[14px] font-[600] text-background transition-colors hover:opacity-90 sm:hidden"
+            >
+              <Scissors className="size-4" />
+              {t("tabEdit")}
+            </button>
+          )}
+
           <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
 
           {/* 서브 패널: 트림 컨트롤 + 타임라인 (캔버스 아래) */}
@@ -1059,7 +1086,7 @@ export function VideoEditWorkspace() {
           {source && <div className="hidden sm:block sm:w-[360px] sm:shrink-0">
             <div className="fixed top-[88px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-104px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
               {/* 4탭 세그먼트 — 상단 고정 */}
-              <div className="shrink-0 px-5 pt-5 pb-0">
+              <div className="shrink-0 px-5 pt-5 pb-4">
                 <div className="relative flex flex-1 rounded-lg bg-neutral-100 p-1.5 dark:bg-neutral-800/60">
                   {MAIN_TABS.map((tab) => {
                     const Icon = tab.icon;
@@ -1086,7 +1113,7 @@ export function VideoEditWorkspace() {
               <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto scrollbar-none px-5 pb-5">
                 {/* 서브 도구 그리드 — 편집/필터/오버레이 탭 */}
                 {(mainTab === "edit" || mainTab === "filter" || mainTab === "overlay") && (
-                  <div className="mt-4 grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {(mainTab === "edit" ? EDIT_TOOLS : mainTab === "filter" ? FILTER_TOOLS : OVERLAY_TOOLS).map((tool) => {
                       const Icon = tool.icon;
                       const isActive = subTool === tool.id;
@@ -1418,11 +1445,13 @@ export function VideoEditWorkspace() {
           {source && activeTab === "subtitles" && (
             <>
               <SubtitlesPanel
+                ref={subtitlesPanelRef}
                 sourceUrl={source.url}
                 duration={duration}
                 onSubtitlesApplied={setResultUrl}
                 onPreviewSubtitles={setPreviewSubtitles}
                 onDirty={() => setIsPanelDirty(true)}
+                onStateChange={setSubtitlesState}
               />
               {resultUrl && (
                 <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
@@ -1485,8 +1514,10 @@ export function VideoEditWorkspace() {
 
           {source && activeTab === "gif" && (
               <GifPanel
+                ref={gifPanelRef}
                 sourceUrl={source.url}
                 onDirty={() => setIsPanelDirty(true)}
+                onStateChange={setGifState}
               />
           )}
 
@@ -1512,6 +1543,26 @@ export function VideoEditWorkspace() {
                     is_public: isPublic,
                   });
                 }}
+              />
+          )}
+
+          {source && activeTab === "text" && (
+              <TextOverlayPanel
+                ref={textOverlayPanelRef}
+                sourceUrl={source.url}
+                onEffectApplied={setResultUrl}
+                onDirty={() => setIsPanelDirty(true)}
+                onStateChange={setTextOverlayState}
+              />
+          )}
+
+          {source && activeTab === "watermark" && (
+              <WatermarkPanel
+                ref={watermarkPanelRef}
+                sourceUrl={source.url}
+                onEffectApplied={setResultUrl}
+                onDirty={() => setIsPanelDirty(true)}
+                onStateChange={setWatermarkState}
               />
           )}
 
@@ -1741,9 +1792,89 @@ export function VideoEditWorkspace() {
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {rotateState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("applyRotate")}
+                      {t("apply")}
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — subtitles */}
+              {activeTab === "subtitles" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => subtitlesPanelRef.current?.reset()}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={() => subtitlesPanelRef.current?.apply()}
+                      disabled={!subtitlesState.canApply || subtitlesState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {subtitlesState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("apply")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — text overlay */}
+              {activeTab === "text" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => textOverlayPanelRef.current?.reset()}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={() => textOverlayPanelRef.current?.apply()}
+                      disabled={!textOverlayState.canApply || textOverlayState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {textOverlayState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("apply")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — watermark */}
+              {activeTab === "watermark" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => watermarkPanelRef.current?.reset()}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={() => watermarkPanelRef.current?.apply()}
+                      disabled={!watermarkState.canApply || watermarkState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {watermarkState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("apply")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — gif */}
+              {activeTab === "gif" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <button
+                    onClick={() => gifPanelRef.current?.apply()}
+                    disabled={!gifState.canApply || gifState.isPending}
+                    className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    {gifState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                    {t("createGif")}
+                  </button>
                 </div>
               )}
 
