@@ -5,4 +5,10 @@ export interface CropPanelProps {
   onCropApplied?: (resultUrl: string) => void;
   onSave?: (resultUrl: string, isPublic: boolean) => Promise<void>;
   onDirty?: () => void;
+  onStateChange?: (state: { isOriginal: boolean; isPending: boolean }) => void;
+}
+
+export interface CropPanelRef {
+  reset: () => void;
+  apply: () => void;
 }

@@ -1,4 +1,5 @@
 import type { VideoSource } from "../VideoEditWorkspace/types";
+import type { Generation } from "@/types/api";
 
 export interface VideoSourceSelectorProps {
   onSourceSelected: (source: VideoSource) => void;
@@ -6,4 +7,5 @@ export interface VideoSourceSelectorProps {
   mergeMode?: boolean;
   onAddToMerge?: (url: string, name?: string) => void;
   onSelectVideo?: (url: string, name?: string) => void;
+  onDelete?: (gen: Generation) => void;
 }

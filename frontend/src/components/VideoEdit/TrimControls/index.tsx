@@ -1,9 +1,7 @@
 "use client";
 
-import { Scissors, RotateCcw, Download, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-
-import { Button } from "@/components/ui/Button";
 
 import { formatTime } from "../VideoTimeline/utils";
 import type { TrimControlsProps } from "./types";
@@ -22,55 +20,45 @@ export function TrimControls({
   const isFullRange = trimStart === 0 && trimEnd >= duration - 0.1;
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-zinc-100/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0 dark:bg-zinc-900/60">
-      <div className="flex items-center gap-4">
-        <div className="space-y-0.5">
-          <span className="text-[10px] text-zinc-500">{t("trimStart")}</span>
-          <p className="font-mono text-sm text-zinc-700 dark:text-zinc-200">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-5">
+        <div>
+          <span className="text-[12px] font-[500] text-muted-foreground/60">{t("trimStart")}</span>
+          <p className="mt-0.5 text-[15px] font-[600] tabular-nums text-foreground">
             {formatTime(trimStart)}
           </p>
         </div>
-        <div className="text-zinc-600 dark:text-zinc-600">→</div>
-        <div className="space-y-0.5">
-          <span className="text-[10px] text-zinc-500">{t("trimEnd")}</span>
-          <p className="font-mono text-sm text-zinc-700 dark:text-zinc-200">
+        <span className="text-muted-foreground/30">→</span>
+        <div>
+          <span className="text-[12px] font-[500] text-muted-foreground/60">{t("trimEnd")}</span>
+          <p className="mt-0.5 text-[15px] font-[600] tabular-nums text-foreground">
             {formatTime(trimEnd)}
           </p>
         </div>
-        <div className="ml-2 space-y-0.5">
-          <span className="text-[10px] text-zinc-500">
-            {t("trimDuration")}
-          </span>
-          <p className="font-mono text-sm text-primary">
+        <div className="ml-1">
+          <span className="text-[12px] font-[500] text-muted-foreground/60">{t("trimDuration")}</span>
+          <p className="mt-0.5 text-[15px] font-[600] tabular-nums text-primary">
             {formatTime(trimDuration)}
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex-1 gap-1.5 sm:flex-none"
+        <button
           onClick={onReset}
-          disabled={isFullRange || isTrimming}
+          disabled={isTrimming}
+          className="flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-neutral-100 px-4 text-[13px] font-[500] text-muted-foreground transition-colors hover:bg-neutral-200 hover:text-foreground disabled:pointer-events-none disabled:opacity-30 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
         >
-          <RotateCcw className="size-3.5" />
           {t("reset")}
-        </Button>
-        <Button
-          size="sm"
-          className="flex-1 gap-1.5 sm:flex-none"
+        </button>
+        <button
           onClick={onTrim}
           disabled={isFullRange || isTrimming}
+          className="flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-4 text-[13px] font-[600] text-white transition-colors hover:opacity-90 disabled:pointer-events-none disabled:opacity-30"
         >
-          {isTrimming ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Scissors className="size-3.5" />
-          )}
-          {t("trim")}
-        </Button>
+          {isTrimming && <Loader2 className="size-3.5 animate-spin" />}
+          {t("apply")}
+        </button>
       </div>
     </div>
   );

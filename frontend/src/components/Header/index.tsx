@@ -123,7 +123,7 @@ export function Header() {
             {mobileOpen ? <X className="size-6" /> : <Menu className="size-5" />}
           </button>
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold tracking-tight">Wit</span>
+            <img src="/logo_wit.svg" alt="Wit" className="h-4" />
           </Link>
         </div>
 

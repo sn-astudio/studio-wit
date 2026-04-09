@@ -26,6 +26,9 @@ export const DEFAULT_FILTER_VALUES: FilterValues = {
   blur: 0,
   invert: 0,
   opacity: 100,
+  sharpen: 0,
+  vignette: 0,
+  noise: 0,
 };
 
 export const FILTER_RANGES = {
@@ -38,6 +41,9 @@ export const FILTER_RANGES = {
   blur: { min: 0, max: 20, step: 0.5 },
   invert: { min: 0, max: 100, step: 1 },
   opacity: { min: 0, max: 100, step: 1 },
+  sharpen: { min: 0, max: 10, step: 1 },
+  vignette: { min: 0, max: 100, step: 1 },
+  noise: { min: 0, max: 100, step: 1 },
 } as const;
 
 export const DEFAULT_DRAWING_SETTINGS: DrawingSettings = {

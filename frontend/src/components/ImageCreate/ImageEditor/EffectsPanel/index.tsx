@@ -28,7 +28,7 @@ export function EffectsPanel({
     if (sharpen > 0) onApplySharpen(sharpen);
     if (vignette > 0) onApplyVignette(vignette);
     if (noise > 0) onApplyNoise(noise);
-    onCancel();
+    handleReset();
   };
 
   const effects = [
@@ -57,12 +57,13 @@ export function EffectsPanel({
             value={fx.value}
             onChange={(e) => fx.set(Number(e.target.value))}
             className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+            style={{ "--slider-pct": `${((fx.value - fx.min) / (fx.max - fx.min)) * 100}%` } as React.CSSProperties}
           />
         </div>
       ))}
 
       {/* 초기화 / 적용 */}
-      <div className="sticky bottom-0 z-10 mt-auto -mx-5 flex items-center gap-2 bg-white px-5 pt-4 pb-4 dark:bg-transparent">
+      <div className="sticky bottom-0 z-10 mt-auto -mx-5 flex items-center gap-2 bg-white px-5 pt-4 pb-4 dark:bg-neutral-950">
         <button
           onClick={handleReset}
           className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"

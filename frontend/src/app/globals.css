@@ -387,12 +387,12 @@
   background: transparent;
 }
 .filter-slider::-webkit-slider-runnable-track {
-  height: 6px;
+  height: 5px;
   border-radius: 9999px;
-  background: #d4d4d4;
+  background: linear-gradient(to right, white var(--slider-pct, 0%), #d4d4d4 var(--slider-pct, 0%));
 }
 .dark .filter-slider::-webkit-slider-runnable-track {
-  background: #404040;
+  background: linear-gradient(to right, white var(--slider-pct, 0%), #404040 var(--slider-pct, 0%));
 }
 .filter-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -405,12 +405,17 @@
   margin-top: -5px;
 }
 .filter-slider::-moz-range-track {
-  height: 6px;
+  height: 5px;
   border-radius: 9999px;
   background: #d4d4d4;
 }
 .dark .filter-slider::-moz-range-track {
   background: #404040;
+}
+.filter-slider::-moz-range-progress {
+  height: 5px;
+  border-radius: 9999px;
+  background: white;
 }
 .filter-slider::-moz-range-thumb {
   width: 16px;
@@ -425,4 +430,13 @@
 /* ── Sonner 토스트 위치 보정 ── */
 [data-sonner-toaster] {
   --offset: 76px !important;
+}
+
+/* ── Sonner 토스트 hover 시 일시정지 방지 ── */
+[data-sonner-toast] {
+  pointer-events: none;
+}
+[data-sonner-toast] [data-close-button],
+[data-sonner-toast] [data-button] {
+  pointer-events: auto;
 }

@@ -1,0 +1,12 @@
+export interface RatioPanelProps {
+  sourceUrl: string | null;
+  onRatioApplied?: (resultUrl: string) => void;
+  onSave?: (resultUrl: string, isPublic: boolean) => Promise<void>;
+  onDirty?: () => void;
+  onStateChange?: (state: { canApply: boolean; isPending: boolean }) => void;
+}
+
+export interface RatioPanelRef {
+  reset: () => void;
+  apply: () => void;
+}

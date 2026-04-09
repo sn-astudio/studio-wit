@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 import type { VideoTimelineProps } from "./types";
 import { formatTime, positionToTime } from "./utils";
@@ -12,6 +13,7 @@ export function VideoTimeline({
   currentTime,
   trimStart,
   trimEnd,
+  isTrimming,
   onTrimStartChange,
   onTrimEndChange,
   onSeek,
@@ -76,24 +78,17 @@ export function VideoTimeline({
 
   return (
     <div className="space-y-2 touch-none">
-      {/* 시간 라벨 */}
-      <div className="flex items-center justify-between text-[10px] text-zinc-500">
-        <span>{formatTime(trimStart)}</span>
-        <span>{formatTime(currentTime)}</span>
-        <span>{formatTime(trimEnd)}</span>
-      </div>
-
       {/* 타임라인 트랙 */}
       <div
         ref={trackRef}
-        className="relative h-12 cursor-pointer select-none rounded-lg bg-zinc-200 sm:h-10 dark:bg-zinc-800"
+        className="relative h-12 cursor-pointer select-none rounded-lg bg-neutral-200 sm:h-10 dark:bg-neutral-800"
         onClick={handleTrackClick}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
         {/* 비활성 구간 (왼쪽) */}
         <div
-          className="absolute inset-y-0 left-0 rounded-l-lg bg-zinc-300/70 dark:bg-zinc-900/70"
+          className="absolute inset-y-0 left-0 rounded-l-lg bg-neutral-300/70 dark:bg-neutral-900/70"
           style={{ width: `${startPct}%` }}
         />
 
@@ -105,44 +100,94 @@ export function VideoTimeline({
 
         {/* 비활성 구간 (오른쪽) */}
         <div
-          className="absolute inset-y-0 right-0 rounded-r-lg bg-zinc-300/70 dark:bg-zinc-900/70"
+          className="absolute inset-y-0 right-0 rounded-r-lg bg-neutral-300/70 dark:bg-neutral-900/70"
           style={{ width: `${100 - endPct}%` }}
         />
 
-        {/* 시작 핸들 — 터치 영역 확대 */}
+        {/* 시작 핸들 */}
         <div
           className="absolute top-0 z-10 h-full w-5 -translate-x-1/2 cursor-col-resize sm:w-3"
           style={{ left: `${startPct}%` }}
           onPointerDown={handlePointerDown("start")}
         >
-          <div className="absolute inset-y-0 left-1/2 w-1.5 -translate-x-1/2 rounded-l bg-primary shadow-lg transition-colors hover:bg-primary/80 sm:w-3 sm:rounded-l" />
-          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-zinc-600/50 dark:bg-white/50" />
+          <div
+            className={`absolute inset-y-0 left-1/2 -translate-x-1/2 rounded-l shadow-lg transition-all ${
+              dragging === "start"
+                ? "w-3.5 bg-primary sm:w-5"
+                : "w-2.5 bg-primary hover:bg-primary/80 sm:w-4 sm:rounded-l"
+            }`}
+          />
+          <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-neutral-600/50 dark:bg-white/50" />
+
+          {/* 시작 핸들 툴팁 */}
+          <div
+            className={`pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-neutral-900 px-1.5 py-0.5 text-[10px] font-[600] tabular-nums text-white whitespace-nowrap transition-opacity dark:bg-white dark:text-neutral-900 ${
+              dragging === "start" ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {formatTime(trimStart)}
+          </div>
         </div>
 
-        {/* 끝 핸들 — 터치 영역 확대 */}
+        {/* 끝 핸들 */}
         <div
           className="absolute top-0 z-10 h-full w-5 -translate-x-1/2 cursor-col-resize sm:w-3"
           style={{ left: `${endPct}%` }}
           onPointerDown={handlePointerDown("end")}
         >
-          <div className="absolute inset-y-0 left-1/2 w-1.5 -translate-x-1/2 rounded-r bg-primary shadow-lg transition-colors hover:bg-primary/80 sm:w-3 sm:rounded-r" />
-          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-zinc-600/50 dark:bg-white/50" />
+          <div
+            className={`absolute inset-y-0 left-1/2 -translate-x-1/2 rounded-r shadow-lg transition-all ${
+              dragging === "end"
+                ? "w-3.5 bg-primary sm:w-5"
+                : "w-2.5 bg-primary hover:bg-primary/80 sm:w-4 sm:rounded-r"
+            }`}
+          />
+          <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-neutral-600/50 dark:bg-white/50" />
+
+          {/* 끝 핸들 툴팁 */}
+          <div
+            className={`pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-neutral-900 px-1.5 py-0.5 text-[10px] font-[600] tabular-nums text-white whitespace-nowrap transition-opacity dark:bg-white dark:text-neutral-900 ${
+              dragging === "end" ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {formatTime(trimEnd)}
+          </div>
         </div>
 
-        {/* 재생 헤드 — 터치 영역 확대 */}
+        {/* 재생 헤드 */}
         <div
           className="absolute top-0 z-20 h-full w-6 -translate-x-1/2 cursor-col-resize sm:w-3"
           style={{ left: `${playheadPct}%` }}
           onPointerDown={handlePointerDown("playhead")}
         >
-          <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-zinc-700 shadow-lg dark:bg-white" />
-          <div className="absolute -top-1.5 left-1/2 size-3.5 -translate-x-1/2 rounded-full bg-zinc-700 shadow sm:-top-1 sm:size-2 dark:bg-white" />
+          <div className="absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 bg-neutral-700 shadow-lg dark:bg-white" />
+          <div className="absolute -top-2 left-1/2 size-4 -translate-x-1/2 rounded-full bg-neutral-700 shadow sm:-top-1.5 sm:size-3 dark:bg-white" />
+
+          {/* 재생 헤드 툴팁 */}
+          <div
+            className={`pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded bg-neutral-700 px-1.5 py-0.5 text-[10px] font-[600] tabular-nums text-white whitespace-nowrap transition-opacity dark:bg-neutral-300 dark:text-neutral-900 ${
+              dragging === "playhead" ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {formatTime(currentTime)}
+          </div>
         </div>
+
+        {/* 트리밍 중 오버레이 */}
+        {isTrimming && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center rounded-lg bg-neutral-900/60 dark:bg-neutral-950/70">
+            <div className="flex items-center gap-2 text-[12px] font-[500] text-white">
+              <Loader2 className="size-4 animate-spin" />
+              <span>트리밍 중...</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 전체 duration */}
-      <div className="text-right text-[10px] text-zinc-600">
-        {formatTime(duration)}
+      <div className="flex items-center justify-between text-[10px] tabular-nums text-neutral-500">
+        <span>{formatTime(0)}</span>
+        <span>{formatTime(duration)}</span>
       </div>
     </div>
   );

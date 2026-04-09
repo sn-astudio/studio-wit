@@ -71,6 +71,7 @@ export function ImageEditPreview({
   onTextPlace,
   freeRotateDegrees,
   resizePreviewScale,
+  drawEraserMode,
   onExport,
   onGenerateVideo,
   onUpload,
@@ -160,6 +161,7 @@ export function ImageEditPreview({
         onTextPlace={onTextPlace}
         freeRotateDegrees={freeRotateDegrees}
         resizePreviewScale={resizePreviewScale}
+        drawEraserMode={drawEraserMode}
       />
 
       {/* 하단 중앙: 줌 컨트롤 */}

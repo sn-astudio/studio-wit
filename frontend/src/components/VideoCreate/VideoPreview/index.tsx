@@ -26,6 +26,7 @@ import type { Generation } from "@/types/api";
 
 import type { VideoPreviewProps } from "./types";
 import { downloadVideo } from "./utils";
+import { formatTimeAgo } from "@/components/MyPage/GenerationCard/utils";
 
 export function VideoPreview({
   isGenerating = false,
@@ -129,21 +130,15 @@ export function VideoPreview({
 
   const hasHistory = generations.length > 0;
 
-  const getRowSpan = (ratio: string) => {
-    const [w, h] = ratio.split("/").map(Number);
-    if (!w || !h) return 7;
-    return Math.max(3, Math.round(7 * (h / w)));
-  };
-
   return (
     <div className="w-full">
       {hasHistory || isGenerating ? (
-        <div className="grid auto-rows-[32px] grid-cols-2 gap-2 sm:auto-rows-[36px] sm:grid-cols-3" style={{ gridAutoFlow: "dense" }}>
+        <div className="grid grid-cols-2 gap-1.5 sm:columns-3 sm:block sm:gap-2">
           {/* Generating card */}
           {isGenerating && (
             <div
-              className="relative flex flex-col items-center justify-center overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60"
-              style={{ gridRow: `span ${getRowSpan(generatingRatio?.replace(":", "/") ?? "16/9")}` }}
+              className="relative flex flex-col items-center justify-center overflow-hidden rounded-xl bg-neutral-100 sm:mb-2 sm:break-inside-avoid dark:bg-neutral-800/60"
+              style={{ aspectRatio: generatingRatio?.replace(":", "/") ?? "16/9" }}
             >
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="relative flex items-center justify-center">
@@ -179,8 +174,8 @@ export function VideoPreview({
             return (
               <div
                 key={gen.id}
-                className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60"
-                style={{ gridRow: `span ${getRowSpan(ratio)}` }}
+                className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 sm:mb-2 sm:break-inside-avoid dark:bg-neutral-800/60"
+                style={{ aspectRatio: ratio }}
                 onClick={() => setLightboxGen(gen)}
                 onMouseEnter={() => handleMouseEnter(gen.id)}
                 onMouseLeave={() => handleMouseLeave(gen.id)}
@@ -211,8 +206,13 @@ export function VideoPreview({
                       </p>
                     </div>
 
-                    {/* Bottom action buttons */}
-                    <div className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 opacity-100 sm:bottom-2.5 sm:right-2.5 sm:gap-1.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                    {/* Bottom: meta + actions */}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between px-3 pb-2.5 opacity-100 sm:px-3 sm:pb-2.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[12px] font-[500] text-white/80">{gen.model_id}</span>
+                        <span className="text-[11px] text-white/60">{formatTimeAgo(gen.created_at)}</span>
+                      </div>
+                      <div className="pointer-events-auto flex items-center gap-1">
                       <TooltipProvider delay={0} closeDelay={0}>
                         <Tooltip>
                           <TooltipTrigger
@@ -268,6 +268,7 @@ export function VideoPreview({
                           </Tooltip>
                         )}
                       </TooltipProvider>
+                    </div>
                     </div>
                   </>
                 )}
@@ -411,10 +412,15 @@ export function VideoPreview({
             <div
               className="relative overflow-hidden rounded-2xl"
               onClick={(e) => e.stopPropagation()}
+              style={{
+                aspectRatio: lightboxGen.aspect_ratio?.replace(":", "/") ?? "16/9",
+                maxHeight: "78vh",
+                maxWidth: "75vw",
+              }}
             >
               <video
                 src={lightboxGen.result_url}
-                className="block max-h-[70vh] max-w-[90vw] object-contain"
+                className="block size-full object-cover"
                 controls
                 autoPlay
                 loop
@@ -448,10 +454,10 @@ export function VideoPreview({
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-[16px] font-semibold text-foreground">
-                {t("deleteTitle")}
+                {t("deleteVideoTitle")}
               </h3>
               <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-                {t("deleteDesc")}
+                {t("deleteVideoDesc")}
               </p>
               <div className="mt-5 flex gap-2">
                 <button

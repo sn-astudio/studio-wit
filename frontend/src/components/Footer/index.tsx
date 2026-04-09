@@ -20,7 +20,7 @@ export function Footer() {
         {/* 모바일: 로고 + 설명 */}
         <div className="mb-6 md:hidden">
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold tracking-tight">Wit</span>
+            <img src="/logo_wit.svg" alt="Wit" className="h-4" />
           </Link>
           <p className="mt-1.5 text-sm leading-relaxed text-white/50 dark:text-muted-foreground">
             {t("description")}
@@ -54,7 +54,7 @@ export function Footer() {
         <div className="hidden md:flex md:justify-between">
           <div>
             <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold tracking-tight">Wit</span>
+              <img src="/logo_wit.svg" alt="Wit" className="h-4" />
             </Link>
             <p className="mt-3 text-sm leading-relaxed text-white/50 dark:text-muted-foreground">
               {t("description")}

@@ -1,17 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { Check, ChevronDown, Loader2, Palette } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 
 import { Button } from "@/components/ui/Button";
 import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import { useFilterVideo } from "@/hooks/queries/useVideoEdit";
 import { useVideoEditStore } from "@/stores/videoEditStore";
 
-import type { FilterPanelProps } from "./types";
+import type { FilterPanelProps, FilterPanelRef } from "./types";
 
 // ── 필터 카테고리별 프리셋 ──
 
@@ -123,7 +122,7 @@ function AccordionSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800">
+    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800">
       <button
         onClick={onToggle}
         className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium"
@@ -139,7 +138,7 @@ function AccordionSection({
 
 // ── FilterPanel ──
 
-export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDirty }: FilterPanelProps) {
+export const FilterPanel = forwardRef<FilterPanelRef, FilterPanelProps>(function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDirty, category, onStateChange }, ref) {
   const t = useTranslations("VideoEdit");
   const notify = useNotifyOnComplete();
 
@@ -154,6 +153,9 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
 
   const [openSection, setOpenSection] = useState<string | null>("color");
   const toggle = (id: string) => setOpenSection((prev) => (prev === id ? null : id));
+
+  // 카테고리별 필터 목록
+  const activeCat = category ? FILTER_CATEGORIES.find((c) => c.id === category) : null;
 
   // CSS 프리뷰 업데이트
   useEffect(() => {
@@ -179,6 +181,101 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
     }
   }, [sourceUrl, selectedFilter, brightness, contrast, saturation, filterMutation, onEffectApplied, t, notify]);
 
+  const handleReset = useCallback(() => {
+    setEffect("selectedFilter", "none");
+    setEffect("brightness", 0);
+    setEffect("contrast", 1);
+    setEffect("saturation", 1);
+  }, [setEffect]);
+
+  const isDefault = selectedFilter === "none" && brightness === 0 && contrast === 1 && saturation === 1;
+
+  useImperativeHandle(ref, () => ({
+    reset: handleReset,
+    apply: handleApply,
+  }));
+
+  useEffect(() => {
+    onStateChange?.({ canApply: !isDefault, isPending });
+  }, [isDefault, isPending, onStateChange]);
+
+  // 소도구 모드: 특정 카테고리만 플랫 레이아웃으로 표시
+  if (category) {
+    return (
+      <div className="flex flex-col gap-4">
+        {/* 색보정은 항상 슬라이더 포함 */}
+        {category === "color" && (
+          <div className="space-y-4">
+            <p className="text-[13px] font-[600] text-foreground">{t("categoryColor")}</p>
+            {[
+              { key: "brightness" as const, label: t("brightness"), min: -0.5, max: 0.5, step: 0.01 },
+              { key: "contrast" as const, label: t("contrast"), min: 0.5, max: 1.5, step: 0.01 },
+              { key: "saturation" as const, label: t("saturation"), min: 0, max: 2.0, step: 0.01 },
+            ].map(({ key, label, min, max, step }) => {
+              const val = key === "brightness" ? brightness : key === "contrast" ? contrast : saturation;
+              return (
+                <div key={key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[12px] font-[500] text-muted-foreground">{label}</label>
+                    <span className="text-[11px] tabular-nums text-muted-foreground/60">{Math.round((key === "brightness" ? 1 + val : val) * 100)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={val}
+                    onChange={(e) => { setEffect(key, Number(e.target.value)); onDirty?.(); }}
+                    className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+                    style={{ "--slider-pct": `${((val - min) / (max - min)) * 100}%` } as React.CSSProperties}
+                  />
+                </div>
+              );
+            })}
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {COLOR_FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => { setEffect("selectedFilter", f.id); onDirty?.(); }}
+                  className={`rounded-lg px-3 py-1.5 text-[12px] font-[500] transition-all active:opacity-80 ${
+                    selectedFilter === f.id
+                      ? "bg-foreground text-background"
+                      : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                  }`}
+                >
+                  {t(f.labelKey)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 다른 카테고리: 필터 프리셋 버튼 */}
+        {category !== "color" && activeCat && (
+          <div>
+            <p className="mb-3 text-[13px] font-[600] text-foreground">{t(activeCat.labelKey)}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {activeCat.filters.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => { setEffect("selectedFilter", f.id); onDirty?.(); }}
+                  className={`rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
+                    selectedFilter === f.id
+                      ? "bg-foreground text-background"
+                      : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                  }`}
+                >
+                  {t(f.labelKey)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 기존 아코디언 모드 (fallback)
   return (
     <div className="space-y-1">
       {/* 색보정 슬라이더 */}
@@ -189,63 +286,28 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
         onToggle={() => toggle("color")}
       >
         <div className="space-y-3">
-          {/* 밝기 */}
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-xs">{t("brightness")}</span>
-              <span className="text-xs text-zinc-500">{brightness.toFixed(2)}</span>
+          {[
+            { key: "brightness" as const, label: t("brightness"), min: 0.5, max: 1.5, step: 0.01, val: brightness },
+            { key: "contrast" as const, label: t("contrast"), min: 0.5, max: 1.5, step: 0.01, val: contrast },
+            { key: "saturation" as const, label: t("saturation"), min: 0, max: 2, step: 0.01, val: saturation },
+          ].map(({ key, label, min, max, step, val }) => (
+            <div key={key} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[12px] font-[500] text-muted-foreground">{label}</label>
+                <span className="text-[11px] tabular-nums text-muted-foreground/60">{Math.round(val * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={val}
+                onChange={(e) => { setEffect(key, Number(e.target.value)); onDirty?.(); }}
+                className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+                style={{ "--slider-pct": `${((val - min) / (max - min)) * 100}%` } as React.CSSProperties}
+              />
             </div>
-            <SliderPrimitive.Root
-              value={brightness}
-              onValueChange={(v) => { setEffect("brightness", v as number); onDirty?.(); }}
-              min={-0.5} max={0.5} step={0.05}
-            >
-              <SliderPrimitive.Control className="relative flex h-5 w-full cursor-pointer items-center">
-                <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
-                  <SliderPrimitive.Indicator className="rounded-full bg-primary" />
-                </SliderPrimitive.Track>
-                <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-primary bg-background shadow-sm" />
-              </SliderPrimitive.Control>
-            </SliderPrimitive.Root>
-          </div>
-          {/* 대비 */}
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-xs">{t("contrast")}</span>
-              <span className="text-xs text-zinc-500">{contrast.toFixed(2)}</span>
-            </div>
-            <SliderPrimitive.Root
-              value={contrast}
-              onValueChange={(v) => { setEffect("contrast", v as number); onDirty?.(); }}
-              min={0.5} max={2.0} step={0.05}
-            >
-              <SliderPrimitive.Control className="relative flex h-5 w-full cursor-pointer items-center">
-                <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
-                  <SliderPrimitive.Indicator className="rounded-full bg-primary" />
-                </SliderPrimitive.Track>
-                <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-primary bg-background shadow-sm" />
-              </SliderPrimitive.Control>
-            </SliderPrimitive.Root>
-          </div>
-          {/* 채도 */}
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-xs">{t("saturation")}</span>
-              <span className="text-xs text-zinc-500">{saturation.toFixed(2)}</span>
-            </div>
-            <SliderPrimitive.Root
-              value={saturation}
-              onValueChange={(v) => { setEffect("saturation", v as number); onDirty?.(); }}
-              min={0} max={2.0} step={0.05}
-            >
-              <SliderPrimitive.Control className="relative flex h-5 w-full cursor-pointer items-center">
-                <SliderPrimitive.Track className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
-                  <SliderPrimitive.Indicator className="rounded-full bg-primary" />
-                </SliderPrimitive.Track>
-                <SliderPrimitive.Thumb className="block size-4 rounded-full border-2 border-primary bg-background shadow-sm" />
-              </SliderPrimitive.Control>
-            </SliderPrimitive.Root>
-          </div>
+          ))}
 
           {/* 기본 색보정 필터 */}
           <div className="flex flex-wrap gap-1.5">
@@ -256,7 +318,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
                 className={`rounded-md border px-2.5 py-1 text-xs transition-colors ${
                   selectedFilter === f.id
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
+                    : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500"
                 }`}
               >
                 {selectedFilter === f.id && <Check className="mr-1 inline size-3" />}
@@ -284,7 +346,7 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
                 className={`rounded-md border px-2.5 py-1 text-xs transition-colors ${
                   selectedFilter === f.id
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
+                    : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500"
                 }`}
               >
                 {selectedFilter === f.id && <Check className="mr-1 inline size-3" />}
@@ -307,4 +369,4 @@ export function FilterPanel({ sourceUrl, onEffectApplied, onPreviewFilter, onDir
       </Button>
     </div>
   );
-}
+});

@@ -34,22 +34,8 @@ export function VideoCreateWorkspace() {
   const [currentGenId, setCurrentGenId] = useState<string | null>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
 
-  // Mock mode states
-  const [mockMode, setMockMode] = useState(true);
-  const [mockGenerating, setMockGenerating] = useState(false);
-  const [mockProgress, setMockProgress] = useState<number | null>(null);
-  const [mockGenerations, setMockGenerations] = useState<Generation[]>([]);
-
   const createMutation = useCreateGeneration();
   const uploadImageMutation = useUploadImage();
-
-  // Load mock generations from localStorage
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("mock-video-generations");
-      if (saved) setMockGenerations(JSON.parse(saved));
-    } catch { /* ignore */ }
-  }, []);
 
   // 히스토리에서 진행중인 생성 감지 (새로고침 시 폴링 재개용)
   const { data: historyPages } = useGenerationHistory(
@@ -58,7 +44,6 @@ export function VideoCreateWorkspace() {
 
   // 완료/실패 처리된 ID를 추적하여 중복 폴링 방지
   const handledIdsRef = useRef<Set<string>>(new Set());
-  const mockIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 새로고침 시 히스토리에서 진행중인 생성 감지 → 폴링 재개
   useEffect(() => {
@@ -80,12 +65,12 @@ export function VideoCreateWorkspace() {
   const currentGen = pollingData?.generation ?? null;
 
   const isGenerating =
-    mockGenerating || currentGen?.status === "pending" || currentGen?.status === "processing";
+    currentGen?.status === "pending" || currentGen?.status === "processing";
   const videoUrl =
     currentGen?.status === "completed"
       ? currentGen.result_url
       : selectedVideoUrl;
-  const progress = mockProgress ?? currentGen?.progress ?? null;
+  const progress = currentGen?.progress ?? null;
 
   // 완료/실패 시 토스트
   const prevStatusRef = useRef<string | null>(null);
@@ -116,54 +101,6 @@ export function VideoCreateWorkspace() {
 
   const handleSubmit = useCallback(
     async (state: PromptInputState) => {
-      // Mock mode handling
-      if (mockMode) {
-        if (mockGenerating) return;
-        setMockGenerating(true);
-        setMockProgress(0);
-        setSelectedVideoUrl(null);
-        usePromptStore.getState().setPrompt("");
-        setTimeout(() => contentTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-        let p = 0;
-        const interval = setInterval(() => {
-          p += Math.floor(Math.random() * 15) + 5;
-          if (p >= 100) {
-            p = 100;
-            clearInterval(interval);
-            setTimeout(() => {
-              const ratio = state.params.aspectRatio ? String(state.params.aspectRatio) : "16:9";
-              const seed = Date.now();
-              const newGen: Generation = {
-                id: `mock-${seed}`,
-                prompt: state.prompt,
-                model_id: state.selectedModel,
-                type: "video",
-                status: "completed",
-                result_url: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
-                thumbnail_url: null,
-                aspect_ratio: ratio,
-                created_at: new Date().toISOString(),
-                completed_at: new Date().toISOString(),
-                progress: null,
-                error: null,
-              };
-              setMockGenerating(false);
-              setMockProgress(null);
-              setSelectedVideoUrl(newGen.result_url ?? null);
-              setMockGenerations((prev) => {
-                const next = [newGen, ...prev];
-                localStorage.setItem("mock-video-generations", JSON.stringify(next));
-                return next;
-              });
-              toast.success(t("generateSuccess"));
-            }, 500);
-          }
-          setMockProgress(p);
-        }, 400);
-        mockIntervalRef.current = interval;
-        return;
-      }
-
       if (!token) {
         toast.error(t("loginRequired"));
         return;
@@ -204,24 +141,17 @@ export function VideoCreateWorkspace() {
             prevStatusRef.current = res.generation.status;
             setCurrentGenId(res.generation.id);
             usePromptStore.getState().setPrompt("");
-            setTimeout(() => contentTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-          },
+              },
           onError: (err) => {
             toast.error(err.message || t("generateFailed"));
           },
         },
       );
     },
-    [token, createMutation, uploadImageMutation, isGenerating, t, mockMode, mockGenerating],
+    [token, createMutation, uploadImageMutation, isGenerating, t],
   );
 
   const handleCancel = useCallback(() => {
-    if (mockIntervalRef.current) {
-      clearInterval(mockIntervalRef.current);
-      mockIntervalRef.current = null;
-    }
-    setMockGenerating(false);
-    setMockProgress(null);
     setCurrentGenId(null);
     toast(t("generationCancelled"));
   }, [t]);
@@ -244,25 +174,10 @@ export function VideoCreateWorkspace() {
     historyPages?.pages
       .flatMap((p) => p.generations)
       .filter((g) => g.status === "completed" && g.result_url) ?? [];
-  const completedGenerations = [...mockGenerations, ...apiGenerations];
+  const completedGenerations = apiGenerations;
 
   return (
     <div className="relative bg-background">
-      {/* Mock mode toggle */}
-      <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-        <button
-          onClick={() => setMockMode((v) => !v)}
-          className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium shadow-md transition-colors ${
-            mockMode
-              ? "bg-amber-500 text-white"
-              : "bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300"
-          }`}
-        >
-          <span className={`inline-block size-2 rounded-full ${mockMode ? "bg-white" : "bg-neutral-400"}`} />
-          {mockMode ? "Mock ON" : "Mock OFF"}
-        </button>
-      </div>
-
       <div ref={contentTopRef} />
       {/* 프리뷰 + 히스토리 영역 (하단 입력창 높이만큼 패딩) */}
       <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
@@ -275,17 +190,7 @@ export function VideoCreateWorkspace() {
             generations={completedGenerations}
             onSelectGeneration={handleSelectGeneration}
             onCancel={handleCancel}
-            onDelete={(gen) => {
-              if (gen.id.startsWith("mock-")) {
-                setMockGenerations((prev) => {
-                  const next = prev.filter((g) => g.id !== gen.id);
-                  localStorage.setItem("mock-video-generations", JSON.stringify(next));
-                  return next;
-                });
-                if (selectedVideoUrl === gen.result_url) {
-                  setSelectedVideoUrl(null);
-                }
-              }
+            onDelete={() => {
               // TODO: API 삭제 연동
             }}
           />

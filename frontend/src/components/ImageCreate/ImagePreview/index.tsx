@@ -32,6 +32,7 @@ import type { Generation } from "@/types/api";
 
 import type { ImagePreviewProps } from "./types";
 import { downloadImage } from "./utils";
+import { formatTimeAgo } from "@/components/MyPage/GenerationCard/utils";
 
 export function ImagePreview({
   imageUrl,
@@ -219,8 +220,13 @@ export function ImagePreview({
                     </p>
                   </div>
 
-                  {/* 하단 액션 버튼 — 모바일 항상 표시, PC 호버 시 */}
-                  <div className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 opacity-100 sm:bottom-2.5 sm:right-2.5 sm:gap-1.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                  {/* 하단: 메타 + 액션 */}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between px-3 pb-2.5 opacity-100 sm:px-3 sm:pb-2.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[12px] font-[500] text-white/80">{gen.model_id}</span>
+                      <span className="text-[11px] text-white/60">{formatTimeAgo(gen.created_at)}</span>
+                    </div>
+                    <div className="pointer-events-auto flex items-center gap-1">
                     <TooltipProvider delay={0} closeDelay={0}>
                     <Tooltip>
                       <TooltipTrigger
@@ -279,6 +285,7 @@ export function ImagePreview({
                       </Tooltip>
                     )}
                     </TooltipProvider>
+                  </div>
                   </div>
                 </>
               )}

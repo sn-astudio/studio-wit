@@ -113,8 +113,10 @@ export function MyPage() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const allGenerations =
+  const apiGenerations =
     data?.pages.flatMap((page) => page.generations) ?? [];
+
+  const allGenerations = apiGenerations;
 
   // Lightbox navigation
   const lightboxIndex = lightboxGen

@@ -1,48 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import NextImage from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
-import { Eye, Heart, ArrowRight, Loader2 } from "lucide-react";
+import { Eye, Heart, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { useGalleryList } from "@/hooks/queries/useGallery";
 import { GALLERY_ITEMS, STYLE_TAG_KEYS } from "./const";
-import { GalleryCard } from "./GalleryCard";
 import type { GalleryProps } from "./types";
 
 export function Gallery({ variant = "landing" }: GalleryProps) {
   const t = useTranslations("Gallery");
+  const tCommon = useTranslations("MyPage");
   const isPage = variant === "page";
-
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useGalleryList({ sort: "recent", limit: 20 });
-
-  const observerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isPage) return;
-    const el = observerRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      },
-      { threshold: 0.1 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [isPage, hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  const allItems = data?.pages.flatMap((page) => page.items) ?? [];
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
 
   return (
     <section id="gallery" className={isPage ? "pb-32 pt-8" : "pb-32"}>
@@ -62,54 +33,85 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
         </div>
 
         {isPage && (
-          <div className="mb-8 flex flex-wrap gap-2">
+          <div className="mb-8 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setSelectedStyle(null)}
+              className={`shrink-0 cursor-pointer rounded-lg px-3 py-2 text-[14px] font-[500] transition-colors ${
+                selectedStyle === null
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-100 text-muted-foreground hover:bg-neutral-200/60 dark:bg-neutral-800 dark:hover:bg-neutral-700/70"
+              }`}
+            >
+              {tCommon("allTypes")}
+            </button>
             {STYLE_TAG_KEYS.map((key) => (
-              <Badge
+              <button
                 key={key}
-                variant="outline"
-                className="cursor-pointer px-3 py-1 transition-colors hover:bg-secondary"
+                onClick={() => setSelectedStyle(key)}
+                className={`shrink-0 cursor-pointer rounded-lg px-3 py-2 text-[14px] font-[500] transition-colors ${
+                  selectedStyle === key
+                    ? "bg-foreground text-background"
+                    : "bg-neutral-100 text-muted-foreground hover:bg-neutral-200/60 dark:bg-neutral-800 dark:hover:bg-neutral-700/70"
+                }`}
               >
                 {t(key)}
-              </Badge>
+              </button>
             ))}
           </div>
         )}
 
         {isPage ? (
-          <>
-            {isLoading && (
-              <div className="flex min-h-[30vh] items-center justify-center">
-                <Loader2 className="size-6 animate-spin text-muted-foreground" />
-              </div>
-            )}
+          <div className="columns-2 gap-2 lg:columns-4">
+            {GALLERY_ITEMS.filter((item) => !selectedStyle || item.style === selectedStyle).map((item) => (
+              <div
+                key={item.titleKey}
+                className={`group relative mb-2 cursor-pointer overflow-hidden rounded-2xl bg-neutral-900 ${item.className}`}
+              >
+                {item.video ? (
+                  <video
+                    src={item.video}
+                    poster={item.image}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <NextImage
+                    src={item.image}
+                    alt={t(item.titleKey)}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                )}
 
-            {!isLoading && allItems.length === 0 && (
-              <div className="flex min-h-[20vh] items-center justify-center">
-                <p className="text-sm text-muted-foreground">
-                  {t("noPublicWorks")}
-                </p>
-              </div>
-            )}
+                <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-black/50 via-transparent to-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-            {!isLoading && allItems.length > 0 && (
-              <>
-                <div className="columns-2 gap-3 sm:columns-3 lg:columns-4">
-                  {allItems.map((item) => (
-                    <div key={item.id} className="mb-3 break-inside-avoid">
-                      <GalleryCard item={item} />
-                    </div>
-                  ))}
+                <div className="absolute inset-x-0 top-0 z-20 -translate-y-1 p-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                  <h3 className="text-[15px] font-semibold leading-snug tracking-tight text-white">
+                    {t(item.titleKey)}
+                  </h3>
                 </div>
 
-                <div ref={observerRef} className="h-1" />
-                {isFetchingNextPage && (
-                  <div className="flex justify-center py-6">
-                    <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                <div className="absolute inset-x-0 bottom-0 z-20 translate-y-1 px-4 pb-3.5 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] font-medium text-white/70">@{item.author}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1 text-[12px] text-white/50">
+                        <Eye className="size-3.5" />
+                        {item.views}
+                      </span>
+                      <span className="flex items-center gap-1 text-[12px] text-white/50">
+                        <Heart className="size-3.5" />
+                        {item.likes}
+                      </span>
+                    </div>
                   </div>
-                )}
-              </>
-            )}
-          </>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <>
             <div className="relative max-h-[700px] overflow-hidden sm:max-h-[850px]">

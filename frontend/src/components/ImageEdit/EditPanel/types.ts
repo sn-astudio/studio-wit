@@ -10,4 +10,6 @@ export interface EditPanelProps {
   setCropRatio: (ratio: CropRatio) => void;
   onFreeRotateChange?: (degrees: number) => void;
   onResizeChange?: (width: number, height: number) => void;
+  drawEraserMode?: boolean;
+  onDrawEraserModeChange?: (mode: boolean) => void;
 }

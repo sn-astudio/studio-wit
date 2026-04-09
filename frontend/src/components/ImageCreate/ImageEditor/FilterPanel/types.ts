@@ -5,4 +5,7 @@ export interface FilterPanelProps {
   onChange: (values: FilterValues) => void;
   onApply: () => void;
   onReset: () => void;
+  onApplySharpen?: (amount: number) => void;
+  onApplyVignette?: (intensity: number) => void;
+  onApplyNoise?: (amount: number) => void;
 }

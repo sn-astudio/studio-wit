@@ -162,14 +162,14 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-zinc-500">{t("thumbnailDesc")}</p>
+      <p className="text-xs text-neutral-500">{t("thumbnailDesc")}</p>
 
       {/* 특정 초수 캡처 */}
       <div className="space-y-2">
         <span className="text-xs font-medium">{t("thumbnailManual")}</span>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Clock className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400" />
+            <Clock className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-neutral-400" />
             <Input
               type="number"
               min={0}
@@ -210,7 +210,7 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                 count === c
                   ? "bg-primary text-primary-foreground"
-                  : "bg-zinc-200/60 text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  : "bg-neutral-200/60 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-800/60 dark:text-neutral-300 dark:hover:bg-neutral-700"
               }`}
               onClick={() => setCount(c)}
             >
@@ -283,7 +283,7 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
                   className={`relative w-full overflow-hidden rounded-lg border-2 transition-all ${
                     selectedIdx === idx
                       ? "border-primary ring-2 ring-primary/30"
-                      : "border-transparent hover:border-zinc-400 dark:hover:border-zinc-600"
+                      : "border-transparent hover:border-neutral-400 dark:hover:border-neutral-600"
                   }`}
                 >
                   <img
@@ -318,7 +318,7 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
                 <button
                   type="button"
                   onClick={() => setIsPublicSave(!isPublicSave)}
-                  className="flex items-center gap-1 rounded-lg bg-zinc-200/60 px-2 py-1 text-xs transition-colors hover:bg-zinc-300 dark:bg-zinc-800/60 dark:hover:bg-zinc-700"
+                  className="flex items-center gap-1 rounded-lg bg-neutral-200/60 px-2 py-1 text-xs transition-colors hover:bg-neutral-300 dark:bg-neutral-800/60 dark:hover:bg-neutral-700"
                 >
                   {isPublicSave ? (
                     <Globe className="size-3" />
@@ -362,14 +362,14 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
           onClick={() => setModalIdx(null)}
         >
           <div
-            className="relative flex max-h-[90vh] w-full max-w-3xl flex-col gap-3 rounded-xl bg-white p-4 dark:bg-zinc-900"
+            className="relative flex max-h-[90vh] w-full max-w-3xl flex-col gap-3 rounded-xl bg-white p-4 dark:bg-neutral-900"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 닫기 */}
             <button
               type="button"
               onClick={() => setModalIdx(null)}
-              className="absolute right-3 top-3 rounded-full bg-zinc-200 p-1.5 text-zinc-500 transition-colors hover:bg-zinc-300 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-white"
+              className="absolute right-3 top-3 rounded-full bg-neutral-200 p-1.5 text-neutral-500 transition-colors hover:bg-neutral-300 hover:text-neutral-900 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-white"
             >
               <X className="size-5" />
             </button>
@@ -388,7 +388,7 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
               <Button
                 size="sm"
                 variant="ghost"
-                className="gap-1 text-zinc-400"
+                className="gap-1 text-neutral-400"
                 onClick={() =>
                   setModalIdx((prev) =>
                     prev !== null && prev > 0 ? prev - 1 : prev,
@@ -399,13 +399,13 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
                 <ChevronLeft className="size-4" />
                 {t("thumbnailPrev")}
               </Button>
-              <span className="text-sm text-zinc-400">
+              <span className="text-sm text-neutral-400">
                 {modalIdx + 1} / {thumbnails.length}
               </span>
               <Button
                 size="sm"
                 variant="ghost"
-                className="gap-1 text-zinc-400"
+                className="gap-1 text-neutral-400"
                 onClick={() =>
                   setModalIdx((prev) =>
                     prev !== null && prev < thumbnails.length - 1
@@ -425,7 +425,7 @@ export function ThumbnailPanel({ sourceUrl, onSave, onThumbnailsChange }: Thumbn
               <button
                 type="button"
                 onClick={() => setIsPublicSave(!isPublicSave)}
-                className="flex items-center gap-1 rounded-lg bg-zinc-200 px-2.5 py-1.5 text-xs text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="flex items-center gap-1 rounded-lg bg-neutral-200 px-2.5 py-1.5 text-xs text-neutral-600 transition-colors hover:bg-neutral-300 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
               >
                 {isPublicSave ? (
                   <Globe className="size-3" />

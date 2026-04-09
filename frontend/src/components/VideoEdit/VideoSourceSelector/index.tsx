@@ -1,30 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
-  Check,
-  ChevronDown,
-  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Download,
-  Upload,
+  Film,
   Loader2,
-  Plus,
+  Scissors,
+  Trash2,
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 
-import { Button } from "@/components/ui/Button";
 import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/Tooltip";
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
-import { useUploadVideo } from "@/hooks/queries/useVideoEdit";
-import { videoEditApi } from "@/services/api";
+import type { Generation } from "@/types/api";
 import { downloadVideo } from "../utils";
+import { formatTimeAgo } from "@/components/MyPage/GenerationCard/utils";
 import type { VideoSourceSelectorProps } from "./types";
 
 export function VideoSourceSelector({
@@ -33,24 +32,9 @@ export function VideoSourceSelector({
   mergeMode,
   onAddToMerge,
   onSelectVideo,
+  onDelete,
 }: VideoSourceSelectorProps) {
   const t = useTranslations("VideoEdit");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadMutation = useUploadVideo();
-  const [modelFilter, setModelFilter] = useState<string>("all");
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isBulkDownloading, setIsBulkDownloading] = useState(false);
-
-  const toggleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
 
   const {
     data: historyData,
@@ -80,292 +64,380 @@ export function VideoSourceSelector({
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const allGenerations =
+  const apiGenerations =
     historyData?.pages.flatMap((p) => p.generations) ?? [];
 
-  const availableModels = [
-    ...new Set(allGenerations.map((g) => g.model_id)),
-  ];
+  const completedVideos = apiGenerations;
 
-  const completedVideos =
-    modelFilter === "all"
-      ? allGenerations
-      : allGenerations.filter((g) => g.model_id === modelFilter);
+  // 라이트박스
+  const [lightboxGen, setLightboxGen] = useState<Generation | null>(null);
+  const [lightboxClosing, setLightboxClosing] = useState(false);
 
-  const handleFileChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      e.target.value = "";
+  const closeLightbox = () => {
+    setLightboxClosing(true);
+    setTimeout(() => { setLightboxGen(null); setLightboxClosing(false); }, 200);
+  };
 
-      try {
-        const result = await uploadMutation.mutateAsync(file);
-        if (mergeMode && onAddToMerge) {
-          onAddToMerge(result.url, file.name);
-        } else {
-          onSourceSelected({
-            url: result.url,
-            duration: result.duration,
-            width: result.width,
-            height: result.height,
-            name: file.name,
-          });
-        }
-      } catch {
-        toast.error(t("uploadError"));
-      }
-    },
-    [uploadMutation, onSourceSelected, mergeMode, onAddToMerge],
-  );
+  const lightboxIndex = lightboxGen ? completedVideos.findIndex((g) => g.id === lightboxGen.id) : -1;
+  const hasPrev = lightboxIndex > 0;
+  const hasNext = lightboxIndex >= 0 && lightboxIndex < completedVideos.length - 1;
+  const goLightboxPrev = () => { if (hasPrev) setLightboxGen(completedVideos[lightboxIndex - 1]); };
+  const goLightboxNext = () => { if (hasNext) setLightboxGen(completedVideos[lightboxIndex + 1]); };
 
-  const handleSelectVideo = useCallback(
-    (gen: (typeof allGenerations)[0]) => {
-      if (selectMode) {
-        toggleSelect(gen.id);
-        return;
-      }
-      if (onSelectVideo) {
-        onSelectVideo(gen.result_url!, gen.prompt);
-      } else if (mergeMode && onAddToMerge) {
-        onAddToMerge(gen.result_url!, gen.prompt.slice(0, 30));
-      } else {
-        onSourceSelected({
-          url: gen.result_url!,
-          duration: 0,
-          width: 0,
-          height: 0,
-          name: gen.prompt.slice(0, 30),
-        });
-      }
-    },
-    [onSelectVideo, mergeMode, onAddToMerge, onSourceSelected, selectMode, toggleSelect],
-  );
+  useEffect(() => {
+    if (!lightboxGen) return;
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") goLightboxPrev();
+      if (e.key === "ArrowRight") goLightboxNext();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      window.scrollTo(0, scrollY);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [lightboxGen, lightboxIndex]);
 
-  const handleBulkDownload = useCallback(async () => {
-    const selected = allGenerations.filter(
-      (g) => selectedIds.has(g.id) && g.result_url,
-    );
-    if (selected.length === 0) return;
-    setIsBulkDownloading(true);
-    try {
-      const blob = await videoEditApi.bulkDownload({
-        urls: selected.map((g) => g.result_url!),
-        filenames: selected.map((g, i) => `${g.model_id}_${i + 1}.mp4`),
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `videos_${selected.length}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-      toast.success(t("bulkDownloadSuccess", { count: selected.length }));
-      setSelectMode(false);
-      setSelectedIds(new Set());
-    } catch {
-      toast.error(t("bulkDownloadError"));
-    } finally {
-      setIsBulkDownloading(false);
-    }
-  }, [allGenerations, selectedIds, t]);
+  const [deleteTarget, setDeleteTarget] = useState<Generation | null>(null);
 
-  const uploading = uploadMutation.isPending || isLoading;
-  const hasItems = completedVideos.length > 0;
+  useEffect(() => {
+    if (!deleteTarget) return;
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDeleteTarget(null);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      window.scrollTo(0, scrollY);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [deleteTarget]);
+
+  const handleDelete = (gen: Generation) => {
+    onDelete?.(gen);
+  };
+
+  const handleSelectVideo = (gen: (typeof completedVideos)[0]) => {
+    onSourceSelected({
+      url: gen.result_url!,
+      duration: 0,
+      width: 0,
+      height: 0,
+      name: gen.prompt?.slice(0, 30) || gen.model_id,
+      aspectRatio: gen.aspect_ratio ?? undefined,
+    });
+  };
 
   return (
-    <div className="space-y-2">
-      {/* 헤더: 업로드 + 필터 + 접기 */}
-      <div className="flex items-center justify-between px-0.5">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 gap-1.5 text-xs"
-            disabled={uploading}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {uploading ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Upload className="size-3.5" />
-            )}
-            {t("uploadVideo")}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="video/*"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-
-          {/* 모델 필터 */}
-          {hasItems && availableModels.length > 1 && (
-            <Select value={modelFilter} onValueChange={setModelFilter}>
-              <SelectTrigger className="h-6 w-auto min-w-[80px] gap-1 border-zinc-400 bg-zinc-100/60 px-2 text-[11px] dark:border-zinc-700 dark:bg-zinc-800/60">
-                {modelFilter === "all" ? t("filterAll") : modelFilter}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("filterAll")}</SelectItem>
-                {availableModels.map((model) => (
-                  <SelectItem key={model} value={model}>
-                    {model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {hasItems && !mergeMode && (
-            <button
-              onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); }}
-              className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
-                selectMode
-                  ? "text-primary"
-                  : "text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-              }`}
-            >
-              {selectMode ? <X className="size-3" /> : <Download className="size-3" />}
-              {selectMode ? t("cancelSelect") : t("bulkDownload")}
-            </button>
-          )}
-          {hasItems && (
-            <button
-              onClick={() => setIsExpanded((v) => !v)}
-              className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-            >
-              {isExpanded ? (
-                <ChevronUp className="size-3.5" />
-              ) : (
-                <ChevronDown className="size-3.5" />
-              )}
-              {completedVideos.length}
-            </button>
-          )}
-        </div>
+    <div>
+      {/* 섹션 타이틀 */}
+      <div className="pt-8 pb-5">
+        <h3 className="text-[24px] font-[700] text-foreground">
+          {t("myVideos")}
+        </h3>
       </div>
 
-      {/* 그리드 */}
-      {hasItems && isExpanded && (
-        <>
-          {mergeMode && (
-            <p className="flex items-center gap-1.5 text-xs text-primary">
-              <Plus className="size-3" />
-              {t("clickToAddClip")}
+      {/* 히스토리 그리드 */}
+      <div>
+        {completedVideos.length === 0 ? (
+          <div className="flex w-full flex-col items-center justify-center py-20">
+            <div className="flex size-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+              <Film className="size-6 text-neutral-400 dark:text-neutral-500" />
+            </div>
+            <p className="mt-4 text-[16px] font-[600] text-foreground">
+              {t("noVideos")}
             </p>
-          )}
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-5 sm:gap-2">
-            {completedVideos.map((gen) => (
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-1.5 sm:columns-3 sm:block sm:gap-2">
+            {completedVideos.map((gen) => {
+              const ratio = gen.aspect_ratio?.replace(":", "/") ?? "16/9";
+              return (
               <div
                 key={gen.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => handleSelectVideo(gen)}
-                className="relative"
-              >
-                {selectMode && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleSelect(gen.id); }}
-                    className={`absolute top-1 left-1 z-10 flex size-5 items-center justify-center rounded border-2 transition-colors ${
-                      selectedIds.has(gen.id)
-                        ? "border-primary bg-primary text-white"
-                        : "border-zinc-300 bg-black/40 dark:border-zinc-600"
-                    }`}
-                  >
-                    {selectedIds.has(gen.id) && <Check className="size-3" />}
-                  </button>
-                )}
-              <div
+                className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 sm:mb-2 sm:break-inside-avoid dark:bg-neutral-800/60"
+                style={{ aspectRatio: ratio }}
+                onClick={() => setLightboxGen(gen)}
                 onMouseEnter={(e) => {
                   const video = e.currentTarget.querySelector("video");
                   video?.play().catch(() => {});
                 }}
                 onMouseLeave={(e) => {
                   const video = e.currentTarget.querySelector("video");
-                  if (video) {
-                    video.pause();
-                    video.currentTime = 0;
-                  }
+                  if (video) { video.pause(); video.currentTime = 0; }
                 }}
-                className={`group relative aspect-video cursor-pointer overflow-hidden rounded-lg border transition-colors ${
-                  mergeMode
-                    ? "border-primary/30 hover:border-primary"
-                    : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
-                }`}
               >
-                <video
-                  src={gen.result_url!}
-                  poster={gen.thumbnail_url ?? undefined}
-                  preload="metadata"
-                  className="absolute inset-0 size-full object-cover"
-                  muted
-                  loop
-                  playsInline
-                />
-                {/* 합치기 모드: + 오버레이 */}
-                {mergeMode && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Plus className="size-6 text-primary" />
-                  </div>
+                {gen.result_url && (
+                  <>
+                    <video
+                      src={gen.result_url}
+                      poster={gen.thumbnail_url ?? undefined}
+                      preload="metadata"
+                      className="absolute inset-0 size-full object-cover sm:transition-transform sm:duration-300 sm:group-hover:scale-105"
+                      muted
+                      loop
+                      playsInline
+                    />
+                    {/* 호버 오버레이 */}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100" />
+                    {/* 상단 프롬프트 */}
+                    <div className="pointer-events-none absolute inset-x-0 top-0 px-3 pt-3 pb-8 opacity-100 sm:px-4 sm:pt-4 sm:pb-10 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                      <p className="line-clamp-1 text-[13px] font-[500] leading-relaxed text-white/90 sm:line-clamp-2 sm:text-[15px]">
+                        {gen.prompt}
+                      </p>
+                    </div>
+                    {/* 하단: 메타 + 액션 */}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between px-3 pb-2.5 opacity-100 sm:px-3 sm:pb-2.5 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[12px] font-[500] text-white/80">{gen.model_id}</span>
+                        <span className="text-[11px] text-white/60">{formatTimeAgo(gen.created_at)}</span>
+                      </div>
+                      <div className="pointer-events-auto flex items-center gap-1">
+                        <TooltipProvider delay={0} closeDelay={0}>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSelectVideo(gen);
+                                  }}
+                                  className="flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                                >
+                                  <Scissors className="size-4" />
+                                </button>
+                              }
+                            />
+                            <TooltipContent>{t("edit")}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    downloadVideo(gen.result_url!, `${gen.model_id}_${gen.id.slice(0, 8)}.mp4`);
+                                  }}
+                                  className="flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                                >
+                                  <Download className="size-4" />
+                                </button>
+                              }
+                            />
+                            <TooltipContent>{t("download")}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteTarget(gen);
+                                  }}
+                                  className="flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-red-500/80"
+                                >
+                                  <Trash2 className="size-4" />
+                                </button>
+                              }
+                            />
+                            <TooltipContent>{t("delete")}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </div>
+                  </>
                 )}
-                {/* 다운로드 버튼 */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    downloadVideo(
-                      gen.result_url!,
-                      `${gen.model_id}_${gen.id.slice(0, 8)}.mp4`,
-                    );
-                  }}
-                  className="absolute top-1 right-1 z-10 flex size-6 cursor-pointer items-center justify-center rounded-full bg-black/60 text-zinc-200 opacity-100 hover:bg-black/80 hover:text-white sm:top-1.5 sm:right-1.5 sm:size-7 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100"
-                >
-                  <Download className="size-3 sm:size-4" />
-                </button>
-                {/* 프롬프트 오버레이 */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1 pt-3 sm:p-1.5 sm:pt-4 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
-                  <p className="truncate text-[9px] text-zinc-300 sm:text-[10px]">
-                    {gen.prompt}
-                  </p>
-                </div>
               </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-          {/* 선택 모드 하단 바 (fixed) */}
-          {selectMode && selectedIds.size > 0 && (
-            <div className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-200 bg-background/95 px-4 py-2.5 backdrop-blur-sm dark:border-zinc-800">
-              <div className="mx-auto flex max-w-screen-xl items-center justify-between">
-                <span className="text-xs font-medium text-primary">
-                  {t("selectedCount", { count: selectedIds.size })}
-                </span>
-                <Button
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={handleBulkDownload}
-                  disabled={isBulkDownloading}
-                >
-                  {isBulkDownloading ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Download className="size-3.5" />
-                  )}
-                  {t("downloadZip")}
-                </Button>
+        )}
+        <div ref={observerRef} className="h-1" />
+        {isFetchingNextPage && (
+          <div className="flex justify-center py-2">
+            <Loader2 className="size-4 animate-spin text-neutral-500" />
+          </div>
+        )}
+      </div>
+
+      {/* 라이트박스 */}
+      {lightboxGen?.result_url &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            onClick={closeLightbox}
+          >
+            {/* 닫기 */}
+            <button
+              onClick={closeLightbox}
+              className="absolute top-4 right-4 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20"
+            >
+              <X className="size-5" />
+            </button>
+
+            {/* 좌측 네비 */}
+            {hasPrev && (
+              <button
+                onClick={(e) => { e.stopPropagation(); goLightboxPrev(); }}
+                className="absolute left-4 top-1/2 flex size-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20"
+              >
+                <ChevronLeft className="size-6" />
+              </button>
+            )}
+
+            {/* 우측 네비 */}
+            {hasNext && (
+              <button
+                onClick={(e) => { e.stopPropagation(); goLightboxNext(); }}
+                className="absolute right-4 top-1/2 flex size-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20"
+              >
+                <ChevronRight className="size-6" />
+              </button>
+            )}
+
+            {/* 하단 중앙: 액션 바 */}
+            <div
+              className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <TooltipProvider delay={0} closeDelay={0}>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        onClick={() => {
+                          handleSelectVideo(lightboxGen);
+                          closeLightbox();
+                        }}
+                        className="flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20"
+                      >
+                        <Scissors className="size-4" />
+                      </button>
+                    }
+                  />
+                  <TooltipContent>{t("edit")}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        onClick={() => downloadVideo(lightboxGen.result_url!, `${lightboxGen.model_id}_${lightboxGen.id.slice(0, 8)}.mp4`)}
+                        className="flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20"
+                      >
+                        <Download className="size-4" />
+                      </button>
+                    }
+                  />
+                  <TooltipContent>{t("download")}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        onClick={() => {
+                          closeLightbox();
+                          setDeleteTarget(lightboxGen);
+                        }}
+                        className="flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-red-500/80"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    }
+                  />
+                  <TooltipContent>{t("delete")}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* 비디오 */}
+            <div
+              className="relative overflow-hidden rounded-2xl"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                aspectRatio: lightboxGen.aspect_ratio?.replace(":", "/") ?? "16/9",
+                maxHeight: "78vh",
+                maxWidth: "75vw",
+              }}
+            >
+              <video
+                src={lightboxGen.result_url}
+                className="block size-full object-cover"
+                controls
+                autoPlay
+                loop
+                muted
+              />
+
+              {/* 오버레이 */}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent" />
+
+              {/* 상단 프롬프트 */}
+              <div className="pointer-events-none absolute inset-x-0 top-0 px-5 pt-5 pb-10">
+                <p className="line-clamp-6 text-[15px] font-[500] leading-relaxed text-white/90">
+                  {lightboxGen.prompt}
+                </p>
               </div>
             </div>
-          )}
-          {/* 무한 스크롤 트리거 */}
-          <div ref={observerRef} className="h-1" />
-          {isFetchingNextPage && (
-            <div className="flex justify-center py-2">
-              <Loader2 className="size-4 animate-spin text-zinc-500" />
+          </div>,
+          document.body,
+        )}
+
+      {/* 삭제 확인 다이얼로그 */}
+      {deleteTarget &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 backdrop-blur-sm"
+            onWheel={(e) => e.preventDefault()}
+            onTouchMove={(e) => e.preventDefault()}
+          >
+            <div
+              className="w-[340px] rounded-2xl border border-neutral-200 bg-background p-6 shadow-2xl dark:border-neutral-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-[16px] font-semibold text-foreground">
+                {t("deleteVideoTitle")}
+              </h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
+                {t("deleteVideoDesc")}
+              </p>
+              <div className="mt-5 flex gap-2">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  className="flex-1 cursor-pointer rounded-xl bg-neutral-100 py-2.5 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+                >
+                  {t("deleteCancel")}
+                </button>
+                <button
+                  onClick={() => {
+                    handleDelete(deleteTarget);
+                    setDeleteTarget(null);
+                  }}
+                  className="flex-1 cursor-pointer rounded-xl bg-red-500 py-2.5 text-[14px] font-[500] text-white transition-colors hover:bg-red-600"
+                >
+                  {t("deleteConfirm")}
+                </button>
+              </div>
             </div>
-          )}
-        </>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

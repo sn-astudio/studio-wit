@@ -5,4 +5,5 @@ export interface ImageSlotProps {
   onRemove?: () => void;
   readOnly?: boolean;
   currentEditingImageUrl?: string | null;
+  compact?: boolean;
 }

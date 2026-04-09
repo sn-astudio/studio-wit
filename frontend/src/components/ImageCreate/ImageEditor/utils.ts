@@ -83,8 +83,12 @@ export function applyFilterToCanvas(
   return offscreen;
 }
 
+// CSS filter로 변환할 수 없는 키 (캔버스에서 별도 처리)
+const NON_CSS_FILTER_KEYS: Set<keyof FilterValues> = new Set(["sharpen", "vignette", "noise"]);
+
 export function buildCssFilter(values: FilterValues): string {
   return (Object.keys(values) as Array<keyof FilterValues>)
+    .filter((key) => !NON_CSS_FILTER_KEYS.has(key))
     .map((key) => {
       const value = values[key];
       const name = CSS_FILTER_NAME[key] ?? key;
@@ -101,6 +105,9 @@ const CSS_FILTER_NAME: Partial<Record<keyof FilterValues, string>> = {
 export const FILTER_UNITS: Partial<Record<keyof FilterValues, string>> = {
   hueRotate: "deg",
   blur: "px",
+  sharpen: "",
+  vignette: "%",
+  noise: "%",
 };
 
 export function hasFilterChanges(values: FilterValues): boolean {

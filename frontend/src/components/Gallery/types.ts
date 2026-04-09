@@ -6,6 +6,7 @@ export interface GalleryItem {
   image: string;
   video?: string;
   className: string;
+  style: string;
 }
 
 export interface GalleryProps {

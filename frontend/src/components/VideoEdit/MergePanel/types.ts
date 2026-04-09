@@ -15,4 +15,12 @@ export interface MergePanelProps {
   onResetClipsRef?: (resetClips: () => void) => void;
   onSetClipsRef?: (setClips: Dispatch<SetStateAction<MergeClip[]>>) => void;
   onClipsChange?: (clips: MergeClip[]) => void;
+  onStateChange?: (state: { canApply: boolean; isPending: boolean }) => void;
+  sourceUrl?: string | null;
+  sourceName?: string;
+}
+
+export interface MergePanelRef {
+  reset: () => void;
+  apply: () => void;
 }

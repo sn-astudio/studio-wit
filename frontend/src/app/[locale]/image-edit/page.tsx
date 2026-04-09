@@ -20,7 +20,7 @@ export default function ImageEditPage() {
   return (
     <div>
       <Header />
-      <main className="pt-[72px]">
+      <main className="pt-16">
         <ImageEditWorkspace initialImageUrl={initialImageUrl} />
       </main>
     </div>

@@ -58,17 +58,20 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
         </div>
       )}
 
-      {/* Bottom gradient overlay with info */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2.5 pt-8 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-        <p className="truncate text-left text-xs leading-snug text-white">
-          {gen.prompt}
-        </p>
-        <div className="mt-1 flex items-center gap-1.5">
-          <span className="text-[11px] text-white/60">{gen.model_id}</span>
-          <span className="text-[11px] text-white/40">&middot;</span>
+      {/* 호버 오버레이 */}
+      {isCompleted && (
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100" />
+      )}
+
+      {/* Bottom: meta */}
+      {isCompleted && (
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between px-3 pb-2.5 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[12px] font-[500] text-white/80">{gen.model_id}</span>
           <span className="text-[11px] text-white/60">{timeAgo}</span>
         </div>
       </div>
+      )}
     </button>
   );
 }

@@ -1,33 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Film, Loader2, Upload, X } from "lucide-react";
-import { toast } from "sonner";
+import { Film, X } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
-import { useUploadVideo } from "@/hooks/queries/useVideoEdit";
+import { formatTimeAgo } from "@/components/MyPage/GenerationCard/utils";
 import type { HistorySelectModalProps } from "./types";
 
 export function HistorySelectModal({
   isOpen,
   onClose,
   onSelect,
-  onMultiSelect,
-  multiSelect,
 }: HistorySelectModalProps) {
   const t = useTranslations("VideoEdit");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const uploadMutation = useUploadVideo();
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [modelFilter, setModelFilter] = useState<string>("all");
 
   const {
     data: historyData,
@@ -40,15 +26,10 @@ export function HistorySelectModal({
     limit: 20,
   });
 
-  const allGenerations =
+  const apiGenerations =
     historyData?.pages.flatMap((p) => p.generations) ?? [];
 
-  const availableModels = [...new Set(allGenerations.map((g) => g.model_id))];
-
-  const filteredGenerations =
-    modelFilter === "all"
-      ? allGenerations
-      : allGenerations.filter((g) => g.model_id === modelFilter);
+  const allGenerations = apiGenerations;
 
   // 무한 스크롤
   const observerRef = useRef<HTMLDivElement>(null);
@@ -66,14 +47,6 @@ export function HistorySelectModal({
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, isOpen]);
 
-  // 모달 닫을 때 초기화
-  useEffect(() => {
-    if (!isOpen) {
-      setSelectedIds(new Set());
-      setModelFilter("all");
-    }
-  }, [isOpen]);
-
   // ESC 닫기
   useEffect(() => {
     if (!isOpen) return;
@@ -84,162 +57,67 @@ export function HistorySelectModal({
     return () => window.removeEventListener("keydown", handler);
   }, [isOpen, onClose]);
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const handleSingleSelect = useCallback(
-    async (gen: (typeof allGenerations)[number]) => {
+  const handleSelect = useCallback(
+    (gen: (typeof allGenerations)[number]) => {
       onSelect?.({
         url: gen.result_url!,
         duration: 0,
         width: 0,
         height: 0,
         name: gen.prompt?.slice(0, 30) || gen.model_id,
+        aspectRatio: gen.aspect_ratio ?? undefined,
       });
       onClose();
     },
     [onSelect, onClose],
   );
 
-  const handleMultiConfirm = useCallback(() => {
-    const selected = allGenerations
-      .filter((g) => selectedIds.has(g.id))
-      .map((g) => ({
-        url: g.result_url!,
-        name: g.prompt?.slice(0, 30) || g.model_id,
-      }));
-    onMultiSelect?.(selected);
-    onClose();
-  }, [allGenerations, selectedIds, onMultiSelect, onClose]);
-
-  const handleFileUpload = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      e.target.value = "";
-      try {
-        const result = await uploadMutation.mutateAsync(file);
-        if (multiSelect) {
-          onMultiSelect?.([{ url: result.url, name: file.name }]);
-        } else {
-          onSelect?.({
-            url: result.url,
-            duration: result.duration,
-            width: result.width,
-            height: result.height,
-            name: file.name,
-          });
-        }
-        onClose();
-      } catch {
-        toast.error(t("uploadError"));
-      }
-    },
-    [uploadMutation, multiSelect, onSelect, onMultiSelect, onClose, t],
-  );
-
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="mx-4 flex h-[80vh] w-full max-w-2xl flex-col rounded-2xl border border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900"
+        className="mx-4 flex h-[80vh] w-full max-w-[800px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/95"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3 dark:border-zinc-800">
-          <h3 className="text-base font-semibold text-foreground">
-            {multiSelect ? t("selectVideosForMerge") : t("selectVideo")}
+        <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 px-5 py-4 dark:border-neutral-800/60">
+          <h3 className="text-[15px] font-[600] text-foreground">
+            {t("selectVideosForMerge")}
           </h3>
-          <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="video/*"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-xs"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadMutation.isPending}
-            >
-              {uploadMutation.isPending ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Upload className="size-3.5" />
-              )}
-              {t("uploadVideo")}
-            </Button>
-            <button
-              onClick={onClose}
-              className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-            >
-              <X className="size-5" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground dark:hover:bg-neutral-800"
+          >
+            <X className="size-4" />
+          </button>
         </div>
 
-        {/* 모델 필터 */}
-        {availableModels.length > 1 && (
-          <div className="border-b border-zinc-200 px-5 py-3 dark:border-zinc-800">
-            <Select value={modelFilter} onValueChange={setModelFilter}>
-              <SelectTrigger className="h-9 w-full">
-                <span className="text-sm">
-                  {modelFilter === "all" ? t("filterAll") : modelFilter}
-                </span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("filterAll")}</SelectItem>
-                {availableModels.map((model) => (
-                  <SelectItem key={model} value={model}>
-                    {model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* 비디오 그리드 */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {filteredGenerations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-zinc-500">
-              <Film className="mb-3 size-12" />
-              <p className="text-sm">{t("noVideos")}</p>
+        {/* 비디오 그리드 — 3열 masonry */}
+        <div className="flex-1 overflow-y-auto scrollbar-none p-5">
+          {allGenerations.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2">
+              <Film className="size-10 text-muted-foreground/30" />
+              <p className="text-[14px] text-muted-foreground/50">
+                {t("noVideos")}
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {filteredGenerations
+            <div className="columns-3 gap-2">
+              {allGenerations
                 .filter((g) => g.result_url)
                 .map((gen) => (
                   <button
                     key={gen.id}
-                    onClick={() =>
-                      multiSelect
-                        ? toggleSelect(gen.id)
-                        : handleSingleSelect(gen)
-                    }
-                    className={`group relative overflow-hidden rounded-xl border transition-all ${
-                      selectedIds.has(gen.id)
-                        ? "border-primary ring-2 ring-primary/30"
-                        : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
-                    }`}
+                    onClick={() => handleSelect(gen)}
+                    className="group relative mb-2 block w-full cursor-pointer overflow-hidden rounded-xl bg-neutral-100 break-inside-avoid transition-all active:scale-[0.97] dark:bg-neutral-800/60"
                   >
                     <video
                       src={gen.result_url!}
-                      className="aspect-video w-full object-cover"
+                      className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       muted
                       preload="metadata"
                       onMouseEnter={(e) =>
@@ -253,15 +131,22 @@ export function HistorySelectModal({
                         v.currentTime = 0;
                       }}
                     />
-                    {multiSelect && selectedIds.has(gen.id) && (
-                      <div className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-full bg-primary text-white">
-                        <Check className="size-3.5" />
-                      </div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                      <p className="truncate text-[11px] text-white">
-                        {gen.prompt?.slice(0, 40) || gen.model_id}
+                    {/* 호버 오버레이 */}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                    {/* 상단 프롬프트 */}
+                    <div className="pointer-events-none absolute inset-x-0 top-0 px-3 pt-3 pb-8 text-left opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <p className="line-clamp-2 text-[13px] font-[500] leading-relaxed text-white/90">
+                        {gen.prompt}
                       </p>
+                    </div>
+                    {/* 하단 메타 */}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-start gap-0.5 px-3 pb-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      {gen.model_id && (
+                        <span className="text-[12px] font-[500] text-white/80">{gen.model_id}</span>
+                      )}
+                      {gen.created_at && (
+                        <span className="text-[11px] text-white/60">{formatTimeAgo(gen.created_at)}</span>
+                      )}
                     </div>
                   </button>
                 ))}
@@ -269,15 +154,6 @@ export function HistorySelectModal({
             </div>
           )}
         </div>
-
-        {/* 다중 선택 확인 버튼 */}
-        {multiSelect && selectedIds.size > 0 && (
-          <div className="border-t border-zinc-200 px-5 py-3 dark:border-zinc-800">
-            <Button className="w-full" onClick={handleMultiConfirm}>
-              {t("selectedCount", { count: selectedIds.size })}
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );

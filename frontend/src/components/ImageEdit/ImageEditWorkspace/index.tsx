@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Scissors, SlidersHorizontal, Sparkle, Layers } from "lucide-react";
+import { Scissors, SlidersHorizontal, Sparkle } from "lucide-react";
 
 import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
@@ -28,14 +28,12 @@ import { ImageSourceSelector } from "../ImageSourceSelector";
 import { EditPanel } from "../EditPanel";
 import { ImageFilterPanel } from "../ImageFilterPanel";
 import { AIEditPanel } from "../AIEditPanel";
-import { ComposePanel } from "../ComposePanel";
 import type { EditTab, ImageSource, ImageEditWorkspaceProps } from "./types";
 
 const TABS: { id: EditTab; labelKey: string; icon: typeof Scissors }[] = [
   { id: "edit", labelKey: "tabEdit", icon: Scissors },
   { id: "filter", labelKey: "tabFilter", icon: SlidersHorizontal },
   { id: "ai", labelKey: "tabAI", icon: Sparkle },
-  { id: "compose", labelKey: "tabCompose", icon: Layers },
 ];
 
 const SHEET_MID = 50; // vh
@@ -108,7 +106,7 @@ function MobileBottomSheet({
       />
       {/* 시트 */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 flex flex-col rounded-t-2xl bg-white shadow-[0_-4px_24px_rgba(0,0,0,0.15)] transition-[height] duration-200 ease-out sm:hidden dark:bg-transparent"
+        className="fixed inset-x-0 bottom-0 z-40 flex flex-col rounded-t-2xl bg-white shadow-[0_-4px_24px_rgba(0,0,0,0.15)] transition-[height] duration-200 ease-out sm:hidden dark:bg-neutral-950/85"
         style={{ height: `${sheetH}vh` }}
       >
         {/* 드래그 핸들 */}
@@ -122,7 +120,7 @@ function MobileBottomSheet({
         </div>
 
         {/* 탭 세그먼트 */}
-        <div className="shrink-0 bg-white px-4 pb-3 dark:bg-transparent">
+        <div className="shrink-0 bg-white px-4 pb-3 dark:bg-neutral-950/85">
           <div className="relative flex flex-1 rounded-lg bg-neutral-100 p-1.5 dark:bg-neutral-800/60">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -171,6 +169,7 @@ export function ImageEditWorkspace({
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
   const [cropRatio, setCropRatio] = useState<CropRatio>("free");
   const [freeRotateDegrees, setFreeRotateDegrees] = useState(0);
+  const [drawEraserMode, setDrawEraserMode] = useState(false);
   const [resizePreviewScale, setResizePreviewScale] = useState<
     { scaleX: number; scaleY: number } | undefined
   >();
@@ -363,6 +362,7 @@ export function ImageEditWorkspace({
               onTextPlace={handleTextPlace}
               freeRotateDegrees={freeRotateDegrees}
               resizePreviewScale={resizePreviewScale}
+              drawEraserMode={drawEraserMode}
               onExport={handleExport}
               onGenerateVideo={handleGenerateVideo}
               onUpload={handleFileUpload}
@@ -396,9 +396,9 @@ export function ImageEditWorkspace({
           {/* 우측 패널 — 데스크톱 고정 */}
           {source && (
             <div className="hidden sm:block sm:w-[360px] sm:shrink-0">
-              <div className="fixed top-[96px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-112px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
+              <div className="fixed top-[88px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-104px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
                 {/* 탭 세그먼트 — 상단 고정 */}
-                <div className="shrink-0 bg-white px-5 pt-5 pb-4 dark:bg-transparent">
+                <div className="shrink-0 bg-white px-5 pt-5 pb-4 dark:bg-neutral-950/85">
                   <div
                     ref={trackRef}
                     className="relative flex flex-1 rounded-lg bg-neutral-100 p-1.5 dark:bg-neutral-800/60"
@@ -443,6 +443,8 @@ export function ImageEditWorkspace({
                       setCropRatio={setCropRatio}
                       onFreeRotateChange={setFreeRotateDegrees}
                       onResizeChange={handleResizeChange}
+                      drawEraserMode={drawEraserMode}
+                      onDrawEraserModeChange={setDrawEraserMode}
                     />
                   )}
                   {activeTab === "filter" && (
@@ -451,12 +453,6 @@ export function ImageEditWorkspace({
                   {activeTab === "ai" && (
                     <AIEditPanel
                       sourceUrl={source?.url ?? null}
-                      onUseAsSource={handleUseAsSource}
-                    />
-                  )}
-                  {activeTab === "compose" && (
-                    <ComposePanel
-                      currentEditingImageUrl={source?.url ?? null}
                       onUseAsSource={handleUseAsSource}
                     />
                   )}
@@ -493,12 +489,6 @@ export function ImageEditWorkspace({
             {activeTab === "ai" && (
               <AIEditPanel
                 sourceUrl={source?.url ?? null}
-                onUseAsSource={handleUseAsSource}
-              />
-            )}
-            {activeTab === "compose" && (
-              <ComposePanel
-                currentEditingImageUrl={source?.url ?? null}
                 onUseAsSource={handleUseAsSource}
               />
             )}

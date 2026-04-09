@@ -4,4 +4,5 @@ export interface VideoSource {
   width: number;
   height: number;
   name?: string;
+  aspectRatio?: string;
 }
