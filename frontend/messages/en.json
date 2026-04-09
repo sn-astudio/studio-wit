@@ -730,7 +730,13 @@
     "saveToGallery": "Save",
     "mobileEditSoon": "Mobile editing is coming soon.",
     "wmModeLabel": "Mode",
-    "audioQuickActionsDesc": "Extract audio or mute the video"
+    "audioQuickActionsDesc": "Extract audio or mute the video",
+    "captureFrameLabel": "Frame Capture",
+    "captureFrameDesc": "Capture the current frame to use as AI generation input",
+    "aiModelLabel": "AI Model",
+    "aiDuration": "Duration",
+    "aspectRatio": "Aspect Ratio",
+    "promptLabel": "Prompt"
   },
   "ImageCreate": {
     "generating": "Generating image...",

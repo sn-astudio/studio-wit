@@ -14,4 +14,10 @@ export interface AIEditPanelProps {
   aiIsCompleted: boolean;
   aiIsFailed: boolean;
   aiElapsed: number;
+  onStateChange?: (state: { canApply: boolean; isPending: boolean }) => void;
+}
+
+export interface AIEditPanelRef {
+  reset: () => void;
+  apply: () => void;
 }

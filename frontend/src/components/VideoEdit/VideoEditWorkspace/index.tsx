@@ -20,6 +20,7 @@ import { VideoTimeline } from "../VideoTimeline";
 import { HistorySelectModal } from "../HistorySelectModal";
 import { TrimControls } from "../TrimControls";
 import { AIEditPanel } from "../AIEditPanel";
+import type { AIEditPanelRef } from "../AIEditPanel/types";
 import { MergePanel } from "../MergePanel";
 import type { MergePanelRef } from "../MergePanel/types";
 import { EffectsPanel } from "../EffectsPanel";
@@ -87,6 +88,8 @@ export function VideoEditWorkspace() {
   const [watermarkState, setWatermarkState] = useState({ canApply: false, isPending: false });
   const gifPanelRef = useRef<GifPanelRef>(null);
   const [gifState, setGifState] = useState({ canApply: false, isPending: false });
+  const aiEditPanelRef = useRef<AIEditPanelRef>(null);
+  const [aiEditState, setAiEditState] = useState({ canApply: false, isPending: false });
   const searchParams = useSearchParams();
 
   // 탭 (URL ?tab= 파라미터로 초기값 설정)
@@ -1259,6 +1262,7 @@ export function VideoEditWorkspace() {
             <>
               {source && (
                 <AIEditPanel
+                  ref={aiEditPanelRef}
                   sourceUrl={source.url}
                   currentTime={currentTime}
                   videoRef={videoRef}
@@ -1270,6 +1274,7 @@ export function VideoEditWorkspace() {
                   aiIsCompleted={aiIsCompleted}
                   aiIsFailed={aiIsFailed}
                   aiElapsed={aiElapsed}
+                  onStateChange={setAiEditState}
                 />
               )}
               {/* 소스 없어도 생성 상태 표시 */}
@@ -1875,6 +1880,28 @@ export function VideoEditWorkspace() {
                     {gifState.isPending && <Loader2 className="size-3.5 animate-spin" />}
                     {t("createGif")}
                   </button>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — ai */}
+              {mainTab === "ai" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => aiEditPanelRef.current?.reset()}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={() => aiEditPanelRef.current?.apply()}
+                      disabled={!aiEditState.canApply || aiEditState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {aiEditState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("apply")}
+                    </button>
+                  </div>
                 </div>
               )}
 
