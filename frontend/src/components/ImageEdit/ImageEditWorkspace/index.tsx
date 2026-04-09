@@ -169,6 +169,7 @@ export function ImageEditWorkspace({
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
   const [cropRatio, setCropRatio] = useState<CropRatio>("free");
   const [freeRotateDegrees, setFreeRotateDegrees] = useState(0);
+  const [drawEraserMode, setDrawEraserMode] = useState(false);
   const [resizePreviewScale, setResizePreviewScale] = useState<
     { scaleX: number; scaleY: number } | undefined
   >();
@@ -361,6 +362,7 @@ export function ImageEditWorkspace({
               onTextPlace={handleTextPlace}
               freeRotateDegrees={freeRotateDegrees}
               resizePreviewScale={resizePreviewScale}
+              drawEraserMode={drawEraserMode}
               onExport={handleExport}
               onGenerateVideo={handleGenerateVideo}
               onUpload={handleFileUpload}
@@ -441,6 +443,8 @@ export function ImageEditWorkspace({
                       setCropRatio={setCropRatio}
                       onFreeRotateChange={setFreeRotateDegrees}
                       onResizeChange={handleResizeChange}
+                      drawEraserMode={drawEraserMode}
+                      onDrawEraserModeChange={setDrawEraserMode}
                     />
                   )}
                   {activeTab === "filter" && (

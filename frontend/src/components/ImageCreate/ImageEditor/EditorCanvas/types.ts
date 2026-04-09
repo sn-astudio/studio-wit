@@ -17,6 +17,7 @@ export interface EditorCanvasProps {
   onTextPlace?: (x: number, y: number) => void;
   freeRotateDegrees?: number;
   resizePreviewScale?: { scaleX: number; scaleY: number };
+  drawEraserMode?: boolean;
 }
 
 export interface EditorCanvasHandle {

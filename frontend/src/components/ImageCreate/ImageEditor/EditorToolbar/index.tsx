@@ -8,7 +8,6 @@ import {
   SlidersHorizontal,
   Scaling,
   Pencil,
-  Eraser,
   Type,
   RotateCcw,
   Sparkles,
@@ -43,7 +42,6 @@ export function EditorToolbar({
     { id: "flipV" as const, icon: FlipVertical2, label: t("flipV"), onClick: onFlipV, isActive: false },
     { id: "resize" as const, icon: Scaling, label: t("resize"), onClick: () => onToolChange("resize"), isActive: activeTool === "resize" },
     { id: "draw" as const, icon: Pencil, label: t("draw"), onClick: () => onToolChange("draw"), isActive: activeTool === "draw" },
-    { id: "eraser" as const, icon: Eraser, label: t("eraser"), onClick: () => onToolChange("eraser"), isActive: activeTool === "eraser" },
     { id: "text" as const, icon: Type, label: t("text"), onClick: () => onToolChange("text"), isActive: activeTool === "text" },
     ...(!hideFilter
       ? [{ id: "filter" as const, icon: SlidersHorizontal, label: t("filter"), onClick: () => onToolChange("filter"), isActive: activeTool === "filter" }]

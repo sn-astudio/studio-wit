@@ -6,6 +6,12 @@ export interface CreativePresetPanelProps {
   onPreviewOverlay?: (overlay: ReactNode | null) => void;
   onPreviewFilter?: (css: string) => void;
   onSave?: (resultUrl: string, isPublic: boolean) => Promise<void>;
+  onStateChange?: (state: { canApply: boolean; isPending: boolean }) => void;
+}
+
+export interface CreativePresetPanelRef {
+  reset: () => void;
+  apply: () => void;
 }
 
 export interface PresetDefinition {

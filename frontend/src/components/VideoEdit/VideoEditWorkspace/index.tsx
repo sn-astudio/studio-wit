@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { Download, Globe, Lock, Loader2, Merge, MessageCircle, Save, ScanSearch, Scissors, Sparkle, Sparkles, Volume2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { ChevronDown, ChevronUp, Clapperboard, Columns2, Crop, Film, Gauge, ImageIcon, Layers, Maximize2, Pause, Play, RectangleHorizontal, Redo2, RotateCcw, RotateCw, SlidersHorizontal, Stamp, Timer, Trash2, Type, Undo2, Upload, Wand2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clapperboard, Columns2, Copy, Crop, Film, Gauge, ImageIcon, Layers, Maximize2, Palette, Pause, Play, Plus, RectangleHorizontal, Redo2, RotateCcw, RotateCw, SlidersHorizontal, Smile, Stamp, Sun, Timer, Trash2, Type, Undo2, Upload, Wand2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { useTrimVideo, useSaveEdit, useUploadVideo } from "@/hooks/queries/useVideoEdit";
@@ -24,6 +25,8 @@ import type { MergePanelRef } from "../MergePanel/types";
 import { EffectsPanel } from "../EffectsPanel";
 import type { EffectsPanelRef } from "../EffectsPanel/types";
 import { FilterPanel } from "../FilterPanel";
+import type { FilterPanelRef } from "../FilterPanel/types";
+import type { CreativePresetPanelRef } from "../CreativePresetPanel/types";
 import { SubtitlesPanel } from "../SubtitlesPanel";
 import { AudioPanel } from "../AudioPanel";
 import { GifPanel } from "../GifPanel";
@@ -45,7 +48,7 @@ import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import type { VideoSource } from "./types";
 
 type MainTab = "edit" | "filter" | "overlay" | "ai";
-type SubTool = "trim" | "crop" | "ratio" | "merge" | "speed" | "reverse" | "rotate" | "resolution" | "fps" | "filter" | "creative" | "subtitles" | "text" | "watermark" | "audio" | "gif" | "scene" | "thumbnail" | null;
+type SubTool = "trim" | "crop" | "ratio" | "merge" | "speed" | "reverse" | "rotate" | "resolution" | "fps" | "filter" | "creative" | "subtitles" | "text" | "watermark" | "audio" | "gif" | "scene" | "thumbnail" | "color" | "cinematic" | "vintage" | "mood" | "fun" | null;
 type EditTab = "trim" | "ai" | "effects" | "filter" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop" | "ratio" | "rotate" | "scene" | "preset" | "creative";
 
 export function VideoEditWorkspace() {
@@ -66,6 +69,10 @@ export function VideoEditWorkspace() {
   const [effectsState, setEffectsState] = useState({ canApply: false, isPending: false });
   const mergePanelRef = useRef<MergePanelRef>(null);
   const [mergeState, setMergeState] = useState({ canApply: false, isPending: false });
+  const filterPanelRef = useRef<FilterPanelRef>(null);
+  const [filterState, setFilterState] = useState({ canApply: false, isPending: false });
+  const creativePanelRef = useRef<CreativePresetPanelRef>(null);
+  const [creativeState, setCreativeState] = useState({ canApply: false, isPending: false });
   const searchParams = useSearchParams();
 
   // 탭 (URL ?tab= 파라미터로 초기값 설정)
@@ -119,9 +126,11 @@ export function VideoEditWorkspace() {
   useEffect(() => {
     if (activeTab === "merge" && source && !mergeAutoAddedRef.current) {
       mergeAutoAddedRef.current = true;
-      setTimeout(() => {
+      // MergePanel 마운트 후 실행되도록 충분한 딜레이
+      const timer = setTimeout(() => {
         addMergeClipRef.current?.(source.url, source.name || "Current video");
-      }, 0);
+      }, 100);
+      return () => clearTimeout(timer);
     }
     if (activeTab !== "merge") {
       mergeAutoAddedRef.current = false;
@@ -413,6 +422,13 @@ export function VideoEditWorkspace() {
   const mergeDragIdxRef = useRef<number | null>(null);
   const mergeClipListRef = useRef<HTMLDivElement>(null);
 
+  // 하단 스트립 메뉴
+  const [stripMenuOpen, setStripMenuOpen] = useState(false);
+  const [stripMenuPos, setStripMenuPos] = useState({ top: 0, left: 0 });
+  const stripMenuBtnRef = useRef<HTMLButtonElement>(null);
+  const stripMenuRef = useRef<HTMLDivElement>(null);
+  const stripFileInputRef = useRef<HTMLInputElement>(null);
+
   const handleMergePointerDown = useCallback(
     (e: React.PointerEvent, idx: number) => {
       // 버튼 클릭은 무시
@@ -430,10 +446,10 @@ export function VideoEditWorkspace() {
     (e: React.PointerEvent) => {
       if (mergeDragIdxRef.current === null || !mergeClipListRef.current) return;
       const items = mergeClipListRef.current.children;
-      const y = e.clientY;
+      const x = e.clientX;
       for (let i = 0; i < items.length; i++) {
         const rect = items[i].getBoundingClientRect();
-        if (y >= rect.top && y <= rect.bottom) {
+        if (x >= rect.left && x <= rect.right) {
           setMergeDragOverIdx(i);
           return;
         }
@@ -459,6 +475,47 @@ export function VideoEditWorkspace() {
       return next;
     });
   }, [mergeDragOverIdx]);
+
+  // 하단 스트립 메뉴 열기
+  const openStripMenu = useCallback(() => {
+    const rect = stripMenuBtnRef.current?.getBoundingClientRect();
+    if (rect) {
+      const menuW = 200;
+      const menuH = 96;
+      const top = rect.top - menuH - 4;
+      const left = Math.min(Math.max(16, rect.left + rect.width / 2 - menuW / 2), window.innerWidth - menuW - 16);
+      setStripMenuPos({ top, left });
+    }
+    setStripMenuOpen(true);
+  }, []);
+
+  // 하단 스트립 메뉴 외부 클릭 닫기
+  useEffect(() => {
+    if (!stripMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        stripMenuRef.current && !stripMenuRef.current.contains(e.target as Node) &&
+        stripMenuBtnRef.current && !stripMenuBtnRef.current.contains(e.target as Node)
+      ) {
+        setStripMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [stripMenuOpen]);
+
+  // 하단 스트립 파일 업로드
+  const handleStripFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      addMergeClipRef.current?.(url, file.name);
+      setStripMenuOpen(false);
+      e.target.value = "";
+    },
+    [],
+  );
 
   // 탭 전환 로직 (모든 state 선언 이후)
   const resetAllState = useCallback(() => {
@@ -690,7 +747,7 @@ export function VideoEditWorkspace() {
     resetAndLoadSelectedVideo();
   }, [resetAndLoadSelectedVideo]);
 
-  const displayUrl = resultUrl ?? source?.url ?? null;
+  const displayUrl = (activeTab === "merge" && mergePreviewUrl) ? mergePreviewUrl : (resultUrl ?? source?.url ?? null);
 
   // 작업 중이거나 완료 결과가 있을 때 페이지 이탈 방지
   const hasUnsavedWork = !!resultUrl || trimMutation.isPending || saveEditMutation.isPending;
@@ -717,6 +774,7 @@ export function VideoEditWorkspace() {
     { id: "merge", icon: Merge, labelKey: "tabMerge" },
     { id: "rotate", icon: RotateCw, labelKey: "toolRotate" },
     { id: "speed", icon: Wand2, labelKey: "tabEffects" },
+    { id: "creative", icon: Sparkles, labelKey: "tabCreative" },
   ];
 
   const OVERLAY_TOOLS: { id: SubTool; icon: typeof Scissors; labelKey: string }[] = [
@@ -729,122 +787,20 @@ export function VideoEditWorkspace() {
     { id: "thumbnail", icon: ImageIcon, labelKey: "tabThumbnail" },
   ];
 
+  const FILTER_TOOLS: { id: SubTool; icon: typeof Scissors; labelKey: string }[] = [
+    { id: "color", icon: Sun, labelKey: "categoryColor" },
+    { id: "cinematic", icon: Clapperboard, labelKey: "categoryCinematic" },
+    { id: "vintage", icon: Timer, labelKey: "categoryVintage" },
+    { id: "mood", icon: Palette, labelKey: "categoryMood" },
+    { id: "fun", icon: Smile, labelKey: "categoryFun" },
+  ];
+
   return (
     <div className="relative">
       <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 sm:pt-6 md:px-6">
         <div className="flex min-h-0 flex-col gap-4 sm:flex-row sm:gap-6">
           {/* 좌측: 프리뷰 */}
           <div className="flex flex-1 flex-col">
-          {activeTab === "merge" ? (
-            /* 합치기: 결과 또는 클립 목록 */
-            <div
-              className="min-h-[200px] w-full overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white sm:min-h-[280px] dark:border-neutral-800/80 dark:bg-neutral-950/85"
-              style={{
-                backgroundImage: "radial-gradient(circle, var(--canvas-checker) 1px, transparent 1px)",
-                backgroundSize: "16px 16px",
-              }}
-            >
-              {resultUrl ? (
-                /* 합치기 완료 결과 */
-                <div className="flex h-full items-center justify-center p-4">
-                  <video
-                    src={resultUrl}
-                    className="max-h-full max-w-full rounded-lg object-contain"
-                    controls
-                    muted
-                  />
-                </div>
-              ) : (
-                /* 클립 목록 */
-                <div className="flex h-full w-full flex-col">
-                  {mergeClips.length === 0 ? (
-                    <div
-                      onClick={() => setHistoryModalOpen(true)}
-                      className="flex flex-1 cursor-pointer flex-col items-center justify-center gap-3 transition-colors hover:bg-neutral-100/60 dark:hover:bg-neutral-800/30"
-                    >
-                      <div className="flex size-16 items-center justify-center rounded-2xl bg-neutral-100 dark:bg-neutral-800/60">
-                        <Film className="size-7 text-muted-foreground/40" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[13px] font-[500] text-muted-foreground/60">{t("mergePreviewEmpty")}</p>
-                        <p className="mt-1 text-[11px] text-muted-foreground/40">{t("mergeDescription")}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      ref={mergeClipListRef}
-                      className="flex w-full flex-col gap-1.5 overflow-y-auto p-3 touch-none"
-                      onPointerMove={handleMergePointerMove}
-                      onPointerUp={handleMergePointerUp}
-                      onPointerCancel={handleMergePointerUp}
-                    >
-                      {mergeClips.map((clip, idx) => (
-                        <div
-                          key={clip.id}
-                          onPointerDown={(e) =>
-                            handleMergePointerDown(e, idx)
-                          }
-                          className={`flex shrink-0 cursor-grab items-center gap-2.5 rounded-xl bg-neutral-100/80 px-3 py-2 transition-all hover:bg-neutral-200/60 active:opacity-80 dark:bg-neutral-800/40 dark:hover:bg-neutral-800/70 ${
-                            mergeDragIdx === idx
-                              ? "scale-[0.98] opacity-50"
-                              : ""
-                          } ${
-                            mergeDragOverIdx === idx && mergeDragIdx !== null && mergeDragIdx !== idx
-                              ? "ring-2 ring-primary"
-                              : ""
-                          }`}
-                        >
-                          <div className="flex shrink-0 flex-col">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                moveMergeClipRef.current?.(idx, -1);
-                              }}
-                              disabled={idx === 0}
-                              className="text-muted-foreground hover:text-foreground disabled:opacity-20"
-                            >
-                              <ChevronUp className="size-3.5" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                moveMergeClipRef.current?.(idx, 1);
-                              }}
-                              disabled={idx === mergeClips.length - 1}
-                              className="text-muted-foreground hover:text-foreground disabled:opacity-20"
-                            >
-                              <ChevronDown className="size-3.5" />
-                            </button>
-                          </div>
-                          <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-neutral-200/80 text-[10px] font-[600] tabular-nums text-muted-foreground dark:bg-neutral-700/60">
-                            {idx + 1}
-                          </span>
-                          <video
-                            src={clip.url}
-                            className="h-12 w-20 shrink-0 rounded-lg object-cover"
-                            muted
-                            preload="metadata"
-                          />
-                          <span className="min-w-0 flex-1 truncate text-[12px] font-[500] text-foreground">
-                            {clip.name ?? `Clip ${idx + 1}`}
-                          </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeMergeClipRef.current?.(clip.id);
-                            }}
-                            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-400"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
             <div className="relative">
               {/* 비교 모드 토글 */}
               {resultUrl && source?.url && resultUrl !== source.url && (
@@ -947,7 +903,6 @@ export function VideoEditWorkspace() {
                 />
               )}
             </div>
-          )}
 
 
           <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
@@ -975,6 +930,127 @@ export function VideoEditWorkspace() {
                   onSeek={handleSeek}
                 />
               </div>
+            </div>
+          )}
+
+          {/* 서브 패널: 합치기 클립 스트립 (캔버스 아래) */}
+          {activeTab === "merge" && source && (
+            <div className="mt-3 rounded-2xl border-2 border-neutral-200 bg-white px-4 py-4 dark:border-neutral-800/80 dark:bg-neutral-950/85">
+              <div className="mb-2.5 flex items-center justify-between">
+                <p className="text-[13px] font-[600] text-foreground">
+                  {t("clipCount")}
+                </p>
+                <span className="text-[12px] tabular-nums text-muted-foreground/50">
+                  {mergeClips.length} / 5
+                </span>
+              </div>
+              <div
+                ref={mergeClipListRef}
+                className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none touch-none"
+                onPointerMove={handleMergePointerMove}
+                onPointerUp={handleMergePointerUp}
+                onPointerCancel={handleMergePointerUp}
+              >
+                {mergeClips.map((clip, idx) => {
+                  const isDragging = mergeDragIdx === idx;
+                  const isOver = mergeDragOverIdx === idx && mergeDragIdx !== null && mergeDragIdx !== idx;
+                  const showLeftBar = isOver && mergeDragIdx !== null && mergeDragIdx > idx;
+                  const showRightBar = isOver && mergeDragIdx !== null && mergeDragIdx < idx;
+                  return (
+                    <div
+                      key={clip.id}
+                      onPointerDown={(e) => handleMergePointerDown(e, idx)}
+                      onClick={() => setMergePreviewUrl(clip.url)}
+                      className={`group relative flex shrink-0 cursor-grab items-center gap-1 transition-all duration-150 ${
+                        isDragging ? "scale-[0.90] opacity-40" : ""
+                      }`}
+                    >
+                      {/* 왼쪽 삽입 인디케이터 */}
+                      <div className={`absolute -left-2 top-0 h-full w-[3px] rounded-full bg-primary transition-opacity duration-150 ${showLeftBar ? "opacity-100" : "opacity-0"}`} />
+                      <div className={`relative overflow-hidden rounded-xl border-[3px] transition-all ${mergePreviewUrl === clip.url ? "border-white" : "border-transparent"}`}>
+                        <video
+                          src={clip.url}
+                          className="size-28 object-cover"
+                          muted
+                          preload="metadata"
+                        />
+                        {/* 호버 오버레이 */}
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                        <span className="pointer-events-none absolute top-1.5 left-1.5 max-w-[calc(100%-32px)] truncate text-[10px] font-[500] leading-tight text-white/90 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                          {clip.name ?? `Clip ${idx + 1}`}
+                        </span>
+                        {mergeClips.length > 1 && <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (mergePreviewUrl === clip.url) {
+                              const next = mergeClips[idx + 1] ?? mergeClips[idx - 1];
+                              setMergePreviewUrl(next?.url ?? null);
+                            }
+                            removeMergeClipRef.current?.(clip.id);
+                          }}
+                          className="absolute top-1 right-1 z-10 flex size-4 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white/80 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+                        >
+                          <X className="size-2.5" />
+                        </button>}
+                      </div>
+                      {/* 오른쪽 삽입 인디케이터 */}
+                      <div className={`absolute -right-2 top-0 h-full w-[3px] rounded-full bg-primary transition-opacity duration-150 ${showRightBar ? "opacity-100" : "opacity-0"}`} />
+                    </div>
+                  );
+                })}
+                {/* 추가 버튼 — 5개 미만일 때 표시 */}
+                {mergeClips.length < 5 && <button
+                  ref={stripMenuBtnRef}
+                  onClick={() => stripMenuOpen ? setStripMenuOpen(false) : openStripMenu()}
+                  className="flex size-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 text-muted-foreground transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900/50 dark:hover:border-neutral-500 dark:hover:bg-white/5"
+                >
+                  <Plus className="size-5 opacity-40" />
+                  <span className="text-[13px] font-[500]">{t("addClip")}</span>
+                </button>}
+              </div>
+
+              {/* 스트립 메뉴 팝오버 */}
+              {stripMenuOpen && createPortal(
+                <div
+                  ref={stripMenuRef}
+                  className="fixed z-[100] w-[200px] rounded-xl border border-border/50 bg-popover p-2 shadow-lg"
+                  style={{ top: stripMenuPos.top, left: stripMenuPos.left }}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    {source?.url && mergeClips.length < 5 && !mergeClips.some((c) => c.url === source.url) && (
+                      <button
+                        onClick={() => { addMergeClipRef.current?.(source.url, source.name || "Current video"); setStripMenuOpen(false); }}
+                        className="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[13px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                      >
+                        <Copy className="size-4 opacity-35" />
+                        {t("mergeUseCurrentVideo")}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { setStripMenuOpen(false); setHistoryModalOpen(true); }}
+                      className="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[13px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    >
+                      <Film className="size-4 opacity-35" />
+                      {t("mergeFromHistory")}
+                    </button>
+                    <button
+                      onClick={() => stripFileInputRef.current?.click()}
+                      className="flex h-9 w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 text-[13px] font-[500] text-foreground transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    >
+                      <Upload className="size-4 opacity-35" />
+                      {t("mergeUploadVideo")}
+                    </button>
+                    <input
+                      ref={stripFileInputRef}
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={handleStripFileChange}
+                    />
+                  </div>
+                </div>,
+                document.body,
+              )}
             </div>
           )}
           </div>
@@ -1008,10 +1084,10 @@ export function VideoEditWorkspace() {
 
               {/* 스크롤 영역 — 서브도구 + Undo/Redo + 패널 콘텐츠 */}
               <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto scrollbar-none px-5 pb-5">
-                {/* 서브 도구 그리드 — 편집/오버레이 탭 */}
-                {(mainTab === "edit" || mainTab === "overlay") && (
+                {/* 서브 도구 그리드 — 편집/필터/오버레이 탭 */}
+                {(mainTab === "edit" || mainTab === "filter" || mainTab === "overlay") && (
                   <div className="mt-4 grid grid-cols-4 gap-2">
-                    {(mainTab === "edit" ? EDIT_TOOLS : OVERLAY_TOOLS).map((tool) => {
+                    {(mainTab === "edit" ? EDIT_TOOLS : mainTab === "filter" ? FILTER_TOOLS : OVERLAY_TOOLS).map((tool) => {
                       const Icon = tool.icon;
                       const isActive = subTool === tool.id;
                       return (
@@ -1032,8 +1108,8 @@ export function VideoEditWorkspace() {
                   </div>
                 )}
 
-                {/* Undo/Redo — 서브도구 선택 시만, 필터 탭 제외 */}
-                {subTool && mainTab !== "filter" && (
+                {/* Undo/Redo — 서브도구 선택 시만 */}
+                {subTool && mainTab !== "filter" && mainTab !== "overlay" && (
                 <div className="mt-4 flex justify-center">
                   <div className="flex items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-1.5 dark:bg-neutral-800/60">
                     <button
@@ -1056,8 +1132,8 @@ export function VideoEditWorkspace() {
                 </div>
                 )}
 
-                {/* 디바이더 — 서브도구 선택 시 (트리밍 제외) */}
-                {subTool && subTool !== "trim" && <div className="my-4 border-t border-neutral-200 dark:border-neutral-800" />}
+                {/* 디바이더 — 서브도구 선택 시 (트리밍, 합치기 제외) */}
+                {subTool && subTool !== "trim" && activeTab !== "merge" && <div className="my-4 border-t border-neutral-200 dark:border-neutral-800" />}
 
               {/* AI 생성 미니 바 */}
               {aiIsGenerating && activeTab !== "ai" && (
@@ -1296,66 +1372,16 @@ export function VideoEditWorkspace() {
             </>
           )}
 
-          {source && mainTab === "filter" && (
-            <>
+          {source && mainTab === "filter" && subTool && subTool !== "creative" && (
               <FilterPanel
+                ref={filterPanelRef}
                 sourceUrl={source.url}
                 onEffectApplied={setResultUrl}
                 onPreviewFilter={setPreviewCssFilter}
                 onDirty={() => setIsPanelDirty(true)}
+                category={subTool as "color" | "cinematic" | "vintage" | "mood" | "fun"}
+                onStateChange={setFilterState}
               />
-
-              {resultUrl && (
-                <div className="space-y-2 rounded-xl bg-primary/10 px-4 py-3">
-                  <span className="text-sm font-semibold text-primary">
-                    {t("effectApplied")}
-                  </span>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-                    onClick={() => setIsPublicSave(!isPublicSave)}
-                  >
-                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-neutral-500" />}
-                    <span className="text-neutral-700 dark:text-neutral-300">{isPublicSave ? t("public") : t("private")}</span>
-                  </button>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 gap-1.5"
-                      onClick={() => {
-                        downloadVideo(resultUrl, `filter_${Date.now()}.mp4`);
-                        toast.success(t("downloadSuccess"));
-                      }}
-                    >
-                      <Download className="size-3.5" />
-                      {t("download")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 gap-1.5"
-                      disabled={saveEditMutation.isPending}
-                      onClick={async () => {
-                        try {
-                          await saveEditMutation.mutateAsync({
-                            result_url: resultUrl,
-                            edit_type: "filter",
-                            prompt: source?.name || "Filter applied",
-                            is_public: isPublicSave,
-                          });
-                          toast.success(t("saveSuccess"));
-                        } catch {
-                          toast.error(t("saveError"));
-                        }
-                      }}
-                    >
-                      <Save className="size-3.5" />
-                      {t("saveMerged")}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
           )}
 
           {/* 합치기 탭 */}
@@ -1382,8 +1408,9 @@ export function VideoEditWorkspace() {
                 setMergeClipsInternalRef.current = fn;
               }}
               onClipsChange={(c) => setMergeClips(c)}
-              onAddClipClick={() => setHistoryModalOpen(true)}
               onStateChange={setMergeState}
+              sourceUrl={source?.url ?? null}
+              sourceName={source?.name}
             />
           )}
 
@@ -1544,12 +1571,14 @@ export function VideoEditWorkspace() {
               />
           )}
 
-          {source && mainTab === "filter" && (
+          {source && activeTab === "creative" && (
               <CreativePresetPanel
+                ref={creativePanelRef}
                 sourceUrl={displayUrl}
                 onApplied={setResultUrl}
                 onPreviewOverlay={setPreviewCreativeOverlay}
                 onPreviewFilter={setPreviewCssFilter}
+                onStateChange={setCreativeState}
                 onSave={async (url, isPublic) => {
                   await saveEditMutation.mutateAsync({
                     result_url: url,
@@ -1652,6 +1681,50 @@ export function VideoEditWorkspace() {
                 </div>
               )}
 
+              {/* 하단 고정 액션 바 — creative */}
+              {activeTab === "creative" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => creativePanelRef.current?.reset()}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={() => creativePanelRef.current?.apply()}
+                      disabled={!creativeState.canApply || creativeState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {creativeState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("apply")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — filter */}
+              {mainTab === "filter" && subTool && subTool !== "creative" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => filterPanelRef.current?.reset()}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={() => filterPanelRef.current?.apply()}
+                      disabled={!filterState.canApply || filterState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {filterState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("apply")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 하단 고정 액션 바 — rotate */}
               {activeTab === "rotate" && source && (
                 <div className="shrink-0 px-5 pt-3 pb-4">
@@ -1716,11 +1789,13 @@ export function VideoEditWorkspace() {
       <HistorySelectModal
         isOpen={isHistoryModalOpen}
         onClose={() => setHistoryModalOpen(false)}
-        multiSelect={activeTab === "merge"}
-        onSelect={handleSourceSelected}
-        onMultiSelect={(items) => {
-          items.forEach((item) => addMergeClipRef.current?.(item.url, item.name));
-          setHistoryModalOpen(false);
+        onSelect={(item) => {
+          if (activeTab === "merge") {
+            addMergeClipRef.current?.(item.url, item.name);
+            setHistoryModalOpen(false);
+          } else {
+            handleSourceSelected(item);
+          }
         }}
       />
 

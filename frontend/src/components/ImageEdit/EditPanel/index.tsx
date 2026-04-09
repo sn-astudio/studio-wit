@@ -39,6 +39,8 @@ export function EditPanel({
   setCropRatio,
   onFreeRotateChange,
   onResizeChange,
+  drawEraserMode = false,
+  onDrawEraserModeChange,
 }: EditPanelProps) {
   const t = useTranslations("ImageEdit");
   const activeTool = useImageEditorStore((s) => s.activeTool);
@@ -54,6 +56,7 @@ export function EditPanel({
   const canRedo = historyIndex < historyLength - 1;
   const ratioFromPanelRef = useRef(false);
   const [hasDrawingContent, setHasDrawingContent] = useState(false);
+  const setDrawEraserMode = onDrawEraserModeChange ?? (() => {});
 
   // 도구 진입/해제 시 리셋
   const prevDrawToolRef = useRef(activeTool);
@@ -63,6 +66,7 @@ export function EditPanel({
     prevDrawToolRef.current = activeTool;
     if (prev !== activeTool) {
       setHasDrawingContent(false);
+      if (activeTool !== "draw") setDrawEraserMode(false);
       if (activeTool === "mosaic") {
         mosaicEntryRef.current = historyIndex;
       }
@@ -71,9 +75,9 @@ export function EditPanel({
 
   // 그리기/지우개: pointerUp 시 내용 체크
   useEffect(() => {
-    if (activeTool !== "draw" && activeTool !== "eraser") return;
+    if (activeTool !== "draw") return;
     const handler = () => {
-      if (activeTool === "eraser") {
+      if (drawEraserMode) {
         setHasDrawingContent(true);
       } else {
         const has = canvasRef.current?.hasOverlayContent() ?? false;
@@ -82,7 +86,7 @@ export function EditPanel({
     };
     document.addEventListener("pointerup", handler);
     return () => document.removeEventListener("pointerup", handler);
-  }, [activeTool, canvasRef]);
+  }, [activeTool, drawEraserMode, canvasRef]);
 
   // 모자이크: historyIndex 변화로 감지 (도구 유지 중일 때만)
   useEffect(() => {
@@ -249,7 +253,7 @@ export function EditPanel({
   const handleToolChange = useCallback(
     (tool: typeof activeTool) => {
       // 현재 도구의 미적용 내용 클리어
-      if (activeTool === "draw" || activeTool === "eraser" || activeTool === "text") {
+      if (activeTool === "draw" || activeTool === "text") {
         canvasRef.current?.clearOverlay();
       }
       if (activeTool === "mosaic") {
@@ -357,7 +361,7 @@ export function EditPanel({
         </>
       )}
 
-      {(activeTool === "draw" || activeTool === "eraser") && (
+      {activeTool === "draw" && (
         <>
         <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
         <DrawingPanel
@@ -365,7 +369,8 @@ export function EditPanel({
           onChange={setDrawingSettings}
           onApply={handleApplyDrawing}
           onClear={handleClearDrawing}
-          isEraser={activeTool === "eraser"}
+          isEraser={drawEraserMode}
+          onEraserToggle={setDrawEraserMode}
           hasContent={hasDrawingContent}
         />
         </>

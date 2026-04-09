@@ -6,6 +6,7 @@ export interface DrawingPanelProps {
   onApply: () => void;
   onClear: () => void;
   isEraser?: boolean;
+  onEraserToggle?: (isEraser: boolean) => void;
   isMosaic?: boolean;
   hasContent?: boolean;
 }

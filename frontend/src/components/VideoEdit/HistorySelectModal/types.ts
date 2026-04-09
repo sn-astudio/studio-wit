@@ -9,6 +9,4 @@ export interface HistorySelectModalProps {
     name: string;
     aspectRatio?: string;
   }) => void;
-  onMultiSelect?: (items: { url: string; name: string }[]) => void;
-  multiSelect?: boolean;
 }

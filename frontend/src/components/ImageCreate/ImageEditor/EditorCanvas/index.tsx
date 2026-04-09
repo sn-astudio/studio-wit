@@ -39,6 +39,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       onTextPlace,
       freeRotateDegrees,
       resizePreviewScale,
+      drawEraserMode,
     },
     ref,
   ) {
@@ -58,13 +59,13 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
 
     const isCropping = activeTool === "crop";
     const isDrawing = activeTool === "draw";
-    const isEraser = activeTool === "eraser";
+    const isEraser = activeTool === "draw" && !!drawEraserMode;
     const isText = activeTool === "text";
     const isMosaic = activeTool === "mosaic";
     const isZoom = activeTool === "zoom";
     const needsOverlay =
-      isCropping || isDrawing || isEraser || isText || isMosaic;
-    const showBrushCursor = isDrawing || isEraser || isMosaic;
+      isCropping || isDrawing || isText || isMosaic;
+    const showBrushCursor = isDrawing || isMosaic;
 
     const zoomPan = useImageEditorStore((s) => s.zoomPan);
     const setZoomPan = useImageEditorStore((s) => s.setZoomPan);

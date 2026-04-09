@@ -73,10 +73,6 @@ export function FilterPanel({
     <div className="flex flex-1 flex-col">
       <div className="mb-4 space-y-5">
         {CSS_FILTER_KEYS.map(renderSlider)}
-
-        {/* 구분선 */}
-        <div className="border-t border-neutral-200 dark:border-neutral-800" />
-
         {EFFECT_KEYS.map(renderSlider)}
       </div>
       <div className="sticky bottom-0 z-10 mt-auto -mx-5 flex items-center gap-2 bg-white px-5 pt-4 pb-4 dark:bg-neutral-950">

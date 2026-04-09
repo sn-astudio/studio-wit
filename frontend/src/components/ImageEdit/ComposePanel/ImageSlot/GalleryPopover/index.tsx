@@ -42,6 +42,15 @@ export function GalleryModal({ onSelect, onClose }: GalleryModalProps) {
 
   const allImages: GalleryItem[] = [...mockGenerations, ...apiGenerations].filter((g) => g.result_url);
 
+  // ESC 키로 닫기
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"

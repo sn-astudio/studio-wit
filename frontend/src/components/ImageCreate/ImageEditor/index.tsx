@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/Button";
@@ -58,6 +58,12 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
   const [resizePreviewScale, setResizePreviewScale] = useState<
     { scaleX: number; scaleY: number } | undefined
   >();
+  const [drawEraserMode, setDrawEraserMode] = useState(false);
+
+  // draw 도구에서 벗어나면 지우개 모드 초기화
+  useEffect(() => {
+    if (activeTool !== "draw") setDrawEraserMode(false);
+  }, [activeTool]);
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < historyLength - 1;
@@ -284,6 +290,7 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
         onTextPlace={handleTextPlace}
         freeRotateDegrees={freeRotateDegrees}
         resizePreviewScale={resizePreviewScale}
+        drawEraserMode={drawEraserMode}
       />
 
       {activeTool === "crop" && (
@@ -330,13 +337,14 @@ export function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorProps) {
         />
       )}
 
-      {(activeTool === "draw" || activeTool === "eraser") && (
+      {activeTool === "draw" && (
         <DrawingPanel
           settings={drawingSettings}
           onChange={setDrawingSettings}
           onApply={handleApplyDrawing}
           onClear={handleClearDrawing}
-          isEraser={activeTool === "eraser"}
+          isEraser={drawEraserMode}
+          onEraserToggle={setDrawEraserMode}
         />
       )}
 

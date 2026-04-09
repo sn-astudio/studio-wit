@@ -19,6 +19,7 @@ export interface ImageEditPreviewProps {
   onTextPlace?: (x: number, y: number) => void;
   freeRotateDegrees?: number;
   resizePreviewScale?: { scaleX: number; scaleY: number };
+  drawEraserMode?: boolean;
   onExport: () => void;
   onGenerateVideo: () => void;
   onUpload?: () => void;

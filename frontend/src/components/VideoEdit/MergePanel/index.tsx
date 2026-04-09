@@ -7,8 +7,6 @@ import {
   Globe,
   Lock,
   Loader2,
-  Merge,
-  Plus,
   Save,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -29,8 +27,9 @@ export const MergePanel = forwardRef<MergePanelRef, MergePanelProps>(function Me
   onResetClipsRef,
   onSetClipsRef,
   onClipsChange,
-  onAddClipClick,
   onStateChange,
+  sourceUrl,
+  sourceName,
 }, ref) {
   const t = useTranslations("VideoEdit");
   const [clips, setClips] = useState<MergeClip[]>([]);
@@ -43,14 +42,20 @@ export const MergePanel = forwardRef<MergePanelRef, MergePanelProps>(function Me
 
   const clipIdRef = useRef(0);
   const addClip = useCallback((url: string, name?: string) => {
-    clipIdRef.current += 1;
-    const id = `clip_${Date.now()}_${clipIdRef.current}`;
-    setClips((prev) => [...prev, { id, url, name }]);
+    setClips((prev) => {
+      if (prev.length >= 5) return prev;
+      clipIdRef.current += 1;
+      const id = `clip_${Date.now()}_${clipIdRef.current}`;
+      return [...prev, { id, url, name }];
+    });
     setResultUrl(null);
   }, []);
 
   const removeClip = useCallback((id: string) => {
-    setClips((prev) => prev.filter((c) => c.id !== id));
+    setClips((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((c) => c.id !== id);
+    });
   }, []);
 
   const moveClip = useCallback((idx: number, direction: -1 | 1) => {
@@ -64,10 +69,15 @@ export const MergePanel = forwardRef<MergePanelRef, MergePanelProps>(function Me
   }, []);
 
   const resetClips = useCallback(() => {
-    setClips([]);
     setResultUrl(null);
-    clipIdRef.current = 0;
-  }, []);
+    clipIdRef.current = 1;
+    if (sourceUrl) {
+      setClips([{ id: `clip_${Date.now()}_1`, url: sourceUrl, name: sourceName || "Current video" }]);
+    } else {
+      setClips([]);
+      clipIdRef.current = 0;
+    }
+  }, [sourceUrl, sourceName]);
 
   // 함수들을 부모에 노출
   useEffect(() => { onAddClipRef?.(addClip); }, [addClip, onAddClipRef]);
@@ -123,32 +133,6 @@ export const MergePanel = forwardRef<MergePanelRef, MergePanelProps>(function Me
 
   return (
     <div className="flex flex-col gap-5">
-      {/* 클립 정보 */}
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] font-[600] text-foreground">
-          {t("clipCount", { count: clips.length })}
-        </p>
-        {clips.length < 2 && (
-          <span className="text-[11px] text-muted-foreground/50">
-            {t("mergeMinClips")}
-          </span>
-        )}
-      </div>
-
-      {/* 클립 추가 버튼 */}
-      <div className={clips.length < 2 ? "grid grid-cols-2 gap-3" : ""}>
-        {Array.from({ length: clips.length < 2 ? 2 - clips.length : 1 }).map((_, i) => (
-          <button
-            key={i}
-            onClick={onAddClipClick}
-            className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-neutral-50 text-muted-foreground transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900/50 dark:hover:border-neutral-500 dark:hover:bg-white/5 ${clips.length < 2 ? "aspect-square" : "w-full py-3"}`}
-          >
-            <Plus className="size-5 opacity-40" />
-            <span className="text-[13px] font-[500]">{t("addClip")} {clips.length < 2 && `${clips.length + i + 1}`}</span>
-          </button>
-        ))}
-      </div>
-
       {/* 합치기 완료 결과 */}
       {resultUrl && (
         <div className="animate-in fade-in slide-in-from-bottom-2 space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3 duration-200">
