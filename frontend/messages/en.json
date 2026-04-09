@@ -736,7 +736,9 @@
     "aiModelLabel": "AI Model",
     "aiDuration": "Duration",
     "aspectRatio": "Aspect Ratio",
-    "promptLabel": "Prompt"
+    "promptLabel": "Prompt",
+    "removeVideo": "Remove Video",
+    "toolOutput": "Output"
   },
   "ImageCreate": {
     "generating": "Generating image...",

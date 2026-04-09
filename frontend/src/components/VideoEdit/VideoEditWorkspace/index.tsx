@@ -792,15 +792,15 @@ export function VideoEditWorkspace() {
     { id: "ratio", icon: RectangleHorizontal, labelKey: "tabRatio" },
     { id: "merge", icon: Merge, labelKey: "tabMerge" },
     { id: "rotate", icon: RotateCw, labelKey: "toolRotate" },
-    { id: "speed", icon: Wand2, labelKey: "tabEffects" },
-    { id: "creative", icon: Sparkles, labelKey: "tabCreative" },
+    { id: "speed", icon: Gauge, labelKey: "toolSpeed" },
+    { id: "resolution", icon: Maximize2, labelKey: "toolOutput" },
+    { id: "audio", icon: Volume2, labelKey: "tabAudio" },
   ];
 
   const OVERLAY_TOOLS: { id: SubTool; icon: typeof Scissors; labelKey: string }[] = [
     { id: "subtitles", icon: MessageCircle, labelKey: "tabSubtitles" },
     { id: "text", icon: Type, labelKey: "toolText" },
     { id: "watermark", icon: Stamp, labelKey: "toolWatermark" },
-    { id: "audio", icon: Volume2, labelKey: "tabAudio" },
     { id: "gif", icon: Film, labelKey: "tabGif" },
     { id: "scene", icon: ScanSearch, labelKey: "tabScene" },
     { id: "thumbnail", icon: ImageIcon, labelKey: "tabThumbnail" },
@@ -812,6 +812,7 @@ export function VideoEditWorkspace() {
     { id: "vintage", icon: Timer, labelKey: "categoryVintage" },
     { id: "mood", icon: Palette, labelKey: "categoryMood" },
     { id: "fun", icon: Smile, labelKey: "categoryFun" },
+    { id: "creative", icon: Sparkles, labelKey: "tabCreative" },
   ];
 
   return (
@@ -918,6 +919,15 @@ export function VideoEditWorkspace() {
                       height: 0,
                       name: file.name,
                     });
+                  }}
+                  onDownload={() => {
+                    if (source?.url) downloadVideo(source.url, `video_${Date.now()}.mp4`);
+                  }}
+                  onRemove={() => {
+                    setSource(null);
+                    setResultUrl(null);
+                    setCurrentTime(0);
+                    setDuration(0);
                   }}
                 />
               )}
@@ -1349,6 +1359,7 @@ export function VideoEditWorkspace() {
                 onPreviewSpeed={setPreviewSpeed}
                 onDirty={() => setIsPanelDirty(true)}
                 onStateChange={setEffectsState}
+                category={subTool === "speed" ? "speed" : "output"}
               />
 
               {resultUrl && (

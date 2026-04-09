@@ -27,6 +27,7 @@ export const EffectsPanel = forwardRef<EffectsPanelRef, EffectsPanelProps>(funct
   onPreviewSpeed,
   onDirty,
   onStateChange,
+  category,
 }, ref) {
   const t = useTranslations("VideoEdit");
   const notify = useNotifyOnComplete();
@@ -153,8 +154,8 @@ export const EffectsPanel = forwardRef<EffectsPanelRef, EffectsPanelProps>(funct
   return (
     <div className="flex flex-col gap-5">
       {/* 속도 */}
-      <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("effectSpeed")}</label>
+      {(!category || category === "speed") && <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("effectSpeed")}</p>
         <div className="flex gap-1.5">
           {SPEED_PRESETS.map((s) => (
             <button
@@ -170,11 +171,11 @@ export const EffectsPanel = forwardRef<EffectsPanelRef, EffectsPanelProps>(funct
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* 역재생 */}
-      <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("effectReverse")}</label>
+      {(!category || category === "speed") && <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("effectReverse")}</p>
         <button
           onClick={() => { setReverse(!reverse); onDirty?.(); }}
           className={`flex w-full cursor-pointer items-center justify-center rounded-lg py-2.5 text-[12px] font-[500] transition-all active:opacity-80 ${
@@ -185,11 +186,11 @@ export const EffectsPanel = forwardRef<EffectsPanelRef, EffectsPanelProps>(funct
         >
           {reverse ? t("reverseOn") : t("reverseOff")}
         </button>
-      </div>
+      </div>}
 
       {/* 해상도 */}
-      <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("effectResolution")}</label>
+      {(!category || category === "output") && <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("effectResolution")}</p>
         <div className="flex flex-wrap gap-1.5">
           {RESOLUTION_PRESETS.map((r) => (
             <button
@@ -205,11 +206,11 @@ export const EffectsPanel = forwardRef<EffectsPanelRef, EffectsPanelProps>(funct
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* FPS */}
-      <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("effectFps")}</label>
+      {(!category || category === "output") && <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("effectFps")}</p>
         <div className="flex gap-1.5">
           {FPS_PRESETS.map((f) => (
             <button
@@ -225,7 +226,7 @@ export const EffectsPanel = forwardRef<EffectsPanelRef, EffectsPanelProps>(funct
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* 결과 저장/다운로드 */}
       {pendingResult && (

@@ -151,8 +151,8 @@
     "allRightsReserved": "Wit. All rights reserved."
   },
   "ImagePage": {
-    "title": "이미지 생성",
-    "description": "AI로 이미지를 생성하세요."
+    "tabCreate": "생성",
+    "tabEdit": "편집"
   },
   "VideoPage": {
     "title": "영상 생성",
@@ -304,10 +304,6 @@
     "deleteConfirm": "삭제",
     "videoLoadError": "비디오를 불러올 수 없습니다"
   },
-  "ImagePage": {
-    "tabCreate": "생성",
-    "tabEdit": "편집"
-  },
   "ImageCreate": {
     "generating": "이미지 생성 중...",
     "generatingDesc": "AI가 이미지를 만들고 있습니다. 잠시만 기다려주세요.",
@@ -427,7 +423,6 @@
     "loginRequired": "로그인이 필요합니다",
     "generateVideo": "비디오 생성",
     "removeImage": "이미지 제거",
-    "download": "내려받기",
     "delete": "삭제",
     "deleteTitle": "이미지를 삭제하시겠습니까?",
     "deleteDesc": "삭제된 이미지는 복구할 수 없습니다.",
@@ -477,11 +472,10 @@
     "deleteVideoDesc": "삭제된 비디오는 복구할 수 없습니다.",
     "deleteCancel": "취소",
     "deleteConfirm": "삭제",
-    "selectedCount": "{count}개 선택 완료",
+    "selectedCount": "{count}개 선택됨",
     "orSelectFromHistory": "또는 아래 히스토리에서 선택",
     "bulkDownload": "일괄 다운로드",
     "cancelSelect": "취소",
-    "selectedCount": "{count}개 선택됨",
     "downloadZip": "ZIP 다운로드",
     "bulkDownloadSuccess": "{count}개 영상이 다운로드되었습니다",
     "bulkDownloadError": "일괄 다운로드에 실패했습니다",
@@ -561,7 +555,6 @@
     "mergePreviewEmpty": "아래 히스토리에서 클립을 추가하세요",
     "clipCount": "비디오 합치기",
     "tabEffects": "효과",
-    "tabFilter": "필터",
     "categoryColor": "색보정",
     "categoryCinematic": "시네마틱",
     "categoryVintage": "빈티지",
@@ -894,7 +887,8 @@
     "audioError": "오디오 처리에 실패했습니다",
     "audioResultReady": "오디오 편집 결과가 준비되었습니다",
     "saveToGallery": "저장",
-    "download": "내려받기"
+    "removeVideo": "비디오 제거",
+    "toolOutput": "출력 설정"
   },
   "MyPage": {
     "title": "마이페이지",
