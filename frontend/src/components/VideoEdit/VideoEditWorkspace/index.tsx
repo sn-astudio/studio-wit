@@ -166,6 +166,12 @@ export function VideoEditWorkspace() {
   const handleSubToolChange = useCallback((tool: SubTool) => {
     // 편집 탭 내 소도구 전환은 state 유지, 그 외 탭은 초기화
     if (mainTab === "filter") {
+      // store 필터값 직접 리셋 (ref가 null일 수 있으므로)
+      const setEffect = useVideoEditStore.getState().setEffect;
+      setEffect("selectedFilter", "none");
+      setEffect("brightness", 0);
+      setEffect("contrast", 1);
+      setEffect("saturation", 1);
       filterPanelRef.current?.reset();
       creativePanelRef.current?.reset();
       setPreviewCssFilter("");
@@ -173,6 +179,23 @@ export function VideoEditWorkspace() {
       setResultUrl(null);
       setFilterState({ canApply: false, isPending: false });
       setCreativeState({ canApply: false, isPending: false });
+    } else if (mainTab === "overlay") {
+      // store 값 직접 리셋 + activeTab 강제 초기화
+      setActiveTab("trim");
+      const setEffect = useVideoEditStore.getState().setEffect;
+      setEffect("overlayText", "");
+      setEffect("textPosition", "bottom");
+      setEffect("fontSize", 36);
+      setEffect("textColor", "white");
+      setEffect("selectedTextPreset", "default");
+      setEffect("wmMode", "text");
+      setEffect("wmText", "");
+      setEffect("wmPosition", "bottom-right");
+      setEffect("wmOpacity", 0.7);
+      setEffect("wmFontSize", 24);
+      setEffect("wmColor", "white");
+      setEffect("wmImageScale", 20);
+      resetNonEditPanels();
     } else if (mainTab !== "edit") {
       resetNonEditPanels();
     }
@@ -1265,8 +1288,8 @@ export function VideoEditWorkspace() {
                 {/* 디바이더 — 서브도구 선택 시 (트리밍, 합치기 제외) */}
                 {subTool && subTool !== "trim" && activeTab !== "merge" && <div className="my-4 border-t border-neutral-200 dark:border-neutral-800" />}
 
-              {/* AI 생성 미니 바 */}
-              {aiIsGenerating && activeTab !== "ai" && (
+              {/* AI 생성 미니 바 — 숨김 */}
+              {false && aiIsGenerating && activeTab !== "ai" && (
                 <div
                   className="mb-3 flex cursor-pointer items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 transition-colors hover:bg-primary/15"
                   onClick={() => handleMainTabChange("ai")}
@@ -1283,7 +1306,7 @@ export function VideoEditWorkspace() {
                   </span>
                 </div>
               )}
-              {aiIsCompleted && aiGeneration?.result_url && activeTab !== "ai" && (
+              {false && aiIsCompleted && aiGeneration?.result_url && activeTab !== "ai" && (
                 <div
                   className="mb-3 flex cursor-pointer items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 transition-colors hover:bg-primary/10"
                   onClick={() => handleMainTabChange("ai")}

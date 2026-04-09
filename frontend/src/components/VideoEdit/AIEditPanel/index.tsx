@@ -277,22 +277,6 @@ export const AIEditPanel = forwardRef<AIEditPanelRef, AIEditPanelProps>(function
         </div>
       )}
 
-      {/* 생성 완료 */}
-      {aiIsCompleted && aiGeneration?.result_url && (
-        <div className="space-y-2.5 rounded-xl bg-neutral-50 px-4 py-3 dark:bg-neutral-800/60">
-          <div className="flex items-center gap-2">
-            <Sparkles className="size-3.5 text-primary" />
-            <span className="flex-1 text-[12px] font-[500] text-primary">{t("aiGenerateComplete")}</span>
-          </div>
-          <button
-            onClick={() => downloadVideo(aiGeneration.result_url!, `ai_edit_${Date.now()}.mp4`)}
-            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-neutral-100 py-2.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:hover:text-white"
-          >
-            <Download className="size-3.5" />
-            {t("download")}
-          </button>
-        </div>
-      )}
 
     </div>
   );
