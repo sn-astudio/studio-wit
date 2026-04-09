@@ -38,21 +38,7 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
     null,
   );
 
-  // Mock mode states
-  const [mockMode, setMockMode] = useState(true);
-  const [mockGenerating, setMockGenerating] = useState(false);
-  const [mockProgress, setMockProgress] = useState<number | null>(null);
-  const [mockGenerations, setMockGenerations] = useState<Generation[]>([]);
-
   const createMutation = useCreateGeneration();
-
-  // Load mock generations from localStorage
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("mock-generations");
-      if (saved) setMockGenerations(JSON.parse(saved));
-    } catch { /* ignore */ }
-  }, []);
 
   // 히스토리에서 진행중인 생성 감지 (새로고침 시 폴링 재개용)
   const { data: historyPages } = useGenerationHistory(
@@ -61,7 +47,6 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
 
   // 완료/실패 처리된 ID를 추적하여 중복 폴링 방지
   const handledIdsRef = useRef<Set<string>>(new Set());
-  const mockIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 새로고침 시 히스토리에서 진행중인 생성 감지 → 폴링 재개
   useEffect(() => {
@@ -83,12 +68,12 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
   const currentGen = pollingData?.generation ?? null;
 
   const isGenerating =
-    mockGenerating || currentGen?.status === "pending" || currentGen?.status === "processing";
+    currentGen?.status === "pending" || currentGen?.status === "processing";
   const imageUrl =
     currentGen?.status === "completed"
       ? currentGen.result_url
       : selectedImageUrl;
-  const progress = mockProgress ?? currentGen?.progress ?? null;
+  const progress = currentGen?.progress ?? null;
 
   // 완료/실패 시 토스트
   const prevStatusRef = useRef<string | null>(null);
@@ -115,61 +100,6 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
 
   const handleSubmit = useCallback(
     (state: PromptInputState) => {
-      // Mock mode handling
-      if (mockMode) {
-        if (mockGenerating) return;
-        setMockGenerating(true);
-        setMockProgress(0);
-        setSelectedImageUrl(null);
-        usePromptStore.getState().setPrompt("");
-        let p = 0;
-        const interval = setInterval(() => {
-          p += Math.floor(Math.random() * 15) + 5;
-          if (p >= 100) {
-            p = 100;
-            clearInterval(interval);
-            setTimeout(() => {
-              const ratio = state.params.aspectRatio ? String(state.params.aspectRatio) : "1:1";
-              const [rw, rh] = ratio.split(":").map(Number);
-              const baseSize = 1024;
-              const imgW = rw >= rh ? baseSize : Math.round(baseSize * (rw / rh));
-              const imgH = rh >= rw ? baseSize : Math.round(baseSize * (rh / rw));
-              const numImages = Number(state.params.numImages) || 1;
-              const newGens: Generation[] = [];
-              for (let i = 0; i < numImages; i++) {
-                const seed = Date.now() + i;
-                newGens.push({
-                  id: `mock-${seed}`,
-                  prompt: state.prompt,
-                  model_id: state.selectedModel,
-                  type: "image",
-                  status: "completed",
-                  result_url: `https://picsum.photos/seed/${seed}/${imgW}/${imgH}`,
-                  thumbnail_url: null,
-                  aspect_ratio: ratio,
-                  created_at: new Date().toISOString(),
-                  completed_at: new Date().toISOString(),
-                  progress: null,
-                  error: null,
-                });
-              }
-              setMockGenerating(false);
-              setMockProgress(null);
-              setSelectedImageUrl(newGens[0].result_url ?? null);
-              setMockGenerations((prev) => {
-                const next = [...newGens, ...prev];
-                localStorage.setItem("mock-generations", JSON.stringify(next));
-                return next;
-              });
-              toast.success(t("generateSuccess"));
-            }, 500);
-          }
-          setMockProgress(p);
-        }, 400);
-        mockIntervalRef.current = interval;
-        return;
-      }
-
       if (!token) {
         toast.error(t("loginRequired"));
         return;
@@ -200,16 +130,10 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
         },
       );
     },
-    [token, createMutation, isGenerating, t, mockMode, mockGenerating],
+    [token, createMutation, isGenerating, t],
   );
 
   const handleCancel = useCallback(() => {
-    if (mockIntervalRef.current) {
-      clearInterval(mockIntervalRef.current);
-      mockIntervalRef.current = null;
-    }
-    setMockGenerating(false);
-    setMockProgress(null);
     setCurrentGenId(null);
     toast(t("generationCancelled"));
   }, [t]);
@@ -234,27 +158,12 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
     historyPages?.pages
       .flatMap((p) => p.generations)
       .filter((g) => g.status === "completed" && g.result_url) ?? [];
-  const completedGenerations = [...mockGenerations, ...apiGenerations];
+  const completedGenerations = apiGenerations;
 
   const contentTopRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="relative bg-background">
-      {/* Mock mode toggle */}
-      <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-        <button
-          onClick={() => setMockMode((v) => !v)}
-          className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium shadow-md transition-colors ${
-            mockMode
-              ? "bg-amber-500 text-white"
-              : "bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300"
-          }`}
-        >
-          <span className={`inline-block size-2 rounded-full ${mockMode ? "bg-white" : "bg-neutral-400"}`} />
-          {mockMode ? "Mock ON" : "Mock OFF"}
-        </button>
-      </div>
-
       <div ref={contentTopRef} />
       {/* 프리뷰 + 히스토리 영역 (하단 입력창 높이만큼 패딩) */}
       <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
@@ -269,17 +178,7 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
             onSelectGeneration={handleSelectGeneration}
             onCancel={handleCancel}
             onEdit={onSwitchToEdit}
-            onDelete={(gen) => {
-              if (gen.id.startsWith("mock-")) {
-                setMockGenerations((prev) => {
-                  const next = prev.filter((g) => g.id !== gen.id);
-                  localStorage.setItem("mock-generations", JSON.stringify(next));
-                  return next;
-                });
-                if (selectedImageUrl === gen.result_url) {
-                  setSelectedImageUrl(null);
-                }
-              }
+            onDelete={() => {
               // TODO: API 삭제 연동
             }}
           />

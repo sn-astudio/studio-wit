@@ -67,18 +67,7 @@ export function VideoSourceSelector({
   const apiGenerations =
     historyData?.pages.flatMap((p) => p.generations) ?? [];
 
-  // localStorage mock video generations
-  const [mockGenerations, setMockGenerations] = useState<Generation[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const saved = localStorage.getItem("mock-video-generations");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const completedVideos = [...mockGenerations, ...apiGenerations];
+  const completedVideos = apiGenerations;
 
   // 라이트박스
   const [lightboxGen, setLightboxGen] = useState<Generation | null>(null);
@@ -142,13 +131,6 @@ export function VideoSourceSelector({
   }, [deleteTarget]);
 
   const handleDelete = (gen: Generation) => {
-    if (gen.id.startsWith("mock-")) {
-      setMockGenerations((prev) => {
-        const next = prev.filter((g) => g.id !== gen.id);
-        localStorage.setItem("mock-video-generations", JSON.stringify(next));
-        return next;
-      });
-    }
     onDelete?.(gen);
   };
 

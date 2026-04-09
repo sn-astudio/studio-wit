@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
@@ -31,16 +31,7 @@ export function GalleryModal({ onSelect, onClose }: GalleryModalProps) {
   );
   const apiGenerations = data?.pages.flatMap((page) => page.generations) ?? [];
 
-  // localStorage mock generations
-  const [mockGenerations, setMockGenerations] = useState<GalleryItem[]>([]);
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("mock-generations");
-      if (saved) setMockGenerations(JSON.parse(saved));
-    } catch { /* ignore */ }
-  }, []);
-
-  const allImages: GalleryItem[] = [...mockGenerations, ...apiGenerations].filter((g) => g.result_url);
+  const allImages: GalleryItem[] = apiGenerations.filter((g) => g.result_url);
 
   // ESC 키로 닫기
   useEffect(() => {

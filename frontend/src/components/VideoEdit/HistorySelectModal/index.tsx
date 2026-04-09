@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Film, X } from "lucide-react";
 
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
 import { formatTimeAgo } from "@/components/MyPage/GenerationCard/utils";
-import type { Generation } from "@/types/api";
 import type { HistorySelectModalProps } from "./types";
 
 export function HistorySelectModal({
@@ -30,18 +29,7 @@ export function HistorySelectModal({
   const apiGenerations =
     historyData?.pages.flatMap((p) => p.generations) ?? [];
 
-  // localStorage mock video generations
-  const [mockGenerations] = useState<Generation[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const saved = localStorage.getItem("mock-video-generations");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const allGenerations = [...mockGenerations, ...apiGenerations];
+  const allGenerations = apiGenerations;
 
   // 무한 스크롤
   const observerRef = useRef<HTMLDivElement>(null);

@@ -1757,16 +1757,7 @@ export function VideoEditWorkspace() {
           <VideoSourceSelector
             onSourceSelected={handleSourceSelected}
             isLoading={uploadMutation.isPending}
-            onDelete={(gen) => {
-              if (gen.id.startsWith("mock-")) {
-                try {
-                  const saved = localStorage.getItem("mock-video-generations");
-                  if (saved) {
-                    const list = JSON.parse(saved).filter((g: { id: string }) => g.id !== gen.id);
-                    localStorage.setItem("mock-video-generations", JSON.stringify(list));
-                  }
-                } catch {}
-              }
+            onDelete={() => {
               // TODO: API 삭제 연동
             }}
           />

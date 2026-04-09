@@ -116,30 +116,7 @@ export function MyPage() {
   const apiGenerations =
     data?.pages.flatMap((page) => page.generations) ?? [];
 
-  // localStorage mock generations
-  const [mockImageGenerations] = useState<Generation[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const saved = localStorage.getItem("mock-generations");
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
-  const [mockVideoGenerations] = useState<Generation[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const saved = localStorage.getItem("mock-video-generations");
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
-
-  const mockGenerations = [...mockImageGenerations, ...mockVideoGenerations]
-    .filter((g) => {
-      if (typeFilter !== "all" && g.type !== typeFilter) return false;
-      if (statusFilter !== "all" && g.status !== statusFilter) return false;
-      return true;
-    });
-
-  const allGenerations = [...mockGenerations, ...apiGenerations];
+  const allGenerations = apiGenerations;
 
   // Lightbox navigation
   const lightboxIndex = lightboxGen

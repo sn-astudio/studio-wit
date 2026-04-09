@@ -54,18 +54,7 @@ export function ImageSourceSelector({
   const apiGenerations =
     data?.pages.flatMap((page) => page.generations) ?? [];
 
-  // localStorage mock generations
-  const [mockGenerations] = useState<Generation[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const saved = localStorage.getItem("mock-generations");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const generations = [...mockGenerations, ...apiGenerations];
+  const generations = apiGenerations;
 
   // 삭제 다이얼로그
   const [deleteTarget, setDeleteTarget] = useState<Generation | null>(null);

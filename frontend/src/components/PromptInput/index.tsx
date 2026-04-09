@@ -84,26 +84,11 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
       : undefined,
   );
 
-  const [mockImages, setMockImages] = React.useState<import("@/types/api").Generation[]>([]);
-  React.useEffect(() => {
-    if (mode !== "video") return;
-    const load = () => {
-      try {
-        const saved = localStorage.getItem("mock-generations");
-        if (saved) setMockImages(JSON.parse(saved));
-      } catch { /* ignore */ }
-    };
-    load();
-    // 갤러리 열릴 때 최신 데이터 반영
-    if (showGalleryModal) load();
-  }, [mode, showGalleryModal]);
-
   const generatedImages = React.useMemo(() => {
-    const api = imageHistoryData?.pages
+    return imageHistoryData?.pages
       .flatMap((p) => p.generations)
       .filter((g) => g.result_url) ?? [];
-    return [...mockImages.filter((g) => g.result_url), ...api];
-  }, [imageHistoryData, mockImages]);
+  }, [imageHistoryData]);
 
   // 드롭다운 외부 클릭 닫기
   React.useEffect(() => {
