@@ -231,9 +231,9 @@ export function Header() {
                     <User className="size-4 opacity-50" />
                     {t("myPage")}
                   </Link>
-                  {/* 테마 변경 */}
+                  {/* 테마 변경 (다크모드 전용 — 숨김) */}
                   <div
-                    className="group/theme relative"
+                    className="group/theme relative hidden"
                     onMouseEnter={() => setThemeSubOpen(true)}
                     onMouseLeave={() => setThemeSubOpen(false)}
                   >
@@ -299,13 +299,7 @@ export function Header() {
             </div>
           ) : (
             <>
-              <button
-                onClick={toggleTheme}
-                className="flex cursor-pointer items-center justify-center rounded-[12px] p-2 text-white/60 transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-white dark:text-muted-foreground dark:hover:bg-[rgba(255,255,255,0.05)] dark:hover:text-foreground"
-              >
-                <Sun className="hidden size-5 dark:block" />
-                <Moon className="block size-5 dark:hidden" />
-              </button>
+              {/* 테마 토글 — 다크모드 전용, 숨김 처리 */}
               <Button
                 variant="outline"
                 size="lg"
@@ -360,7 +354,7 @@ export function Header() {
                     {t("myPage")}
                   </Link>
                   <div
-                    className="relative"
+                    className="relative hidden"
                     onMouseEnter={() => setThemeSubOpen(true)}
                     onMouseLeave={() => setThemeSubOpen(false)}
                   >
@@ -424,13 +418,7 @@ export function Header() {
             </div>
           ) : (
             <>
-              <button
-                onClick={toggleTheme}
-                className="flex cursor-pointer items-center justify-center rounded-[12px] p-2 text-white/60 transition-colors hover:bg-[rgba(255,255,255,0.08)] hover:text-white dark:text-muted-foreground dark:hover:bg-[rgba(255,255,255,0.05)] dark:hover:text-foreground"
-              >
-                <Sun className="hidden size-5 dark:block" />
-                <Moon className="block size-5 dark:hidden" />
-              </button>
+              {/* 테마 토글 — 다크모드 전용, 숨김 처리 */}
               <Button
                 variant="outline"
                 size="lg"

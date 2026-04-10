@@ -14,14 +14,16 @@ const TooltipTrigger = TooltipPrimitive.Trigger;
 function TooltipContent({
   className,
   sideOffset = 4,
+  side,
   children,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Popup> & {
   sideOffset?: number;
+  side?: "top" | "bottom" | "left" | "right";
 }) {
   return (
     <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Positioner sideOffset={sideOffset + 4} className="pointer-events-none z-[9999]">
+      <TooltipPrimitive.Positioner sideOffset={sideOffset + 4} side={side} className="pointer-events-none z-[9999]">
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={cn(

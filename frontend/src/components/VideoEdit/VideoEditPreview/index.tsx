@@ -1,7 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Scissors, Upload } from "lucide-react";
+import { Download, Minus, Scissors, Upload } from "lucide-react";
+
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/Tooltip";
 import { useTranslations } from "next-intl";
 
 import type { VideoEditPreviewProps, TextOverlayPreview, WatermarkPreview, SubtitlePreviewItem } from "./types";
@@ -21,6 +28,8 @@ export function VideoEditPreview({
   onClickEmpty,
   onUpload,
   onFileDrop,
+  onDownload,
+  onRemove,
   sourceAspectRatio,
 }: VideoEditPreviewProps) {
   const t = useTranslations("VideoEdit");
@@ -154,6 +163,44 @@ export function VideoEditPreview({
         {/* 크리에이티브 프리셋 오버레이 */}
         {creativeOverlay}
       </div>
+
+      {/* 우상단 액션 버튼 */}
+      {(onDownload || onRemove) && (
+        <div className="pointer-events-none absolute top-2.5 right-2.5 flex items-center gap-1.5">
+          <TooltipProvider delay={0} closeDelay={0}>
+            {onDownload && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      onClick={onDownload}
+                      className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                    >
+                      <Download className="size-4" />
+                    </button>
+                  }
+                />
+                <TooltipContent side="bottom">{t("download")}</TooltipContent>
+              </Tooltip>
+            )}
+            {onRemove && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      onClick={onRemove}
+                      className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                    >
+                      <Minus className="size-4" />
+                    </button>
+                  }
+                />
+                <TooltipContent side="bottom">{t("removeVideo")}</TooltipContent>
+              </Tooltip>
+            )}
+          </TooltipProvider>
+        </div>
+      )}
     </div>
   );
 }

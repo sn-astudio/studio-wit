@@ -151,8 +151,8 @@
     "allRightsReserved": "Wit. All rights reserved."
   },
   "ImagePage": {
-    "title": "이미지 생성",
-    "description": "AI로 이미지를 생성하세요."
+    "tabCreate": "생성",
+    "tabEdit": "편집"
   },
   "VideoPage": {
     "title": "영상 생성",
@@ -304,10 +304,6 @@
     "deleteConfirm": "삭제",
     "videoLoadError": "비디오를 불러올 수 없습니다"
   },
-  "ImagePage": {
-    "tabCreate": "생성",
-    "tabEdit": "편집"
-  },
   "ImageCreate": {
     "generating": "이미지 생성 중...",
     "generatingDesc": "AI가 이미지를 만들고 있습니다. 잠시만 기다려주세요.",
@@ -427,7 +423,6 @@
     "loginRequired": "로그인이 필요합니다",
     "generateVideo": "비디오 생성",
     "removeImage": "이미지 제거",
-    "download": "내려받기",
     "delete": "삭제",
     "deleteTitle": "이미지를 삭제하시겠습니까?",
     "deleteDesc": "삭제된 이미지는 복구할 수 없습니다.",
@@ -477,11 +472,10 @@
     "deleteVideoDesc": "삭제된 비디오는 복구할 수 없습니다.",
     "deleteCancel": "취소",
     "deleteConfirm": "삭제",
-    "selectedCount": "{count}개 선택 완료",
+    "selectedCount": "{count}개 선택됨",
     "orSelectFromHistory": "또는 아래 히스토리에서 선택",
     "bulkDownload": "일괄 다운로드",
     "cancelSelect": "취소",
-    "selectedCount": "{count}개 선택됨",
     "downloadZip": "ZIP 다운로드",
     "bulkDownloadSuccess": "{count}개 영상이 다운로드되었습니다",
     "bulkDownloadError": "일괄 다운로드에 실패했습니다",
@@ -498,6 +492,7 @@
     "trimError": "트리밍에 실패했습니다",
     "trimComplete": "트리밍 완료!",
     "download": "내려받기",
+    "mobileEditSoon": "모바일 편집 기능은 준비 중입니다.",
     "tabEdit": "편집",
     "tabFilter": "필터",
     "tabOverlay": "오버레이",
@@ -513,8 +508,14 @@
     "apply": "적용",
     "selectToolDesc": "편집할 도구를 선택하세요",
     "captureFrame": "프레임 캡처",
+    "captureFrameLabel": "프레임 캡처",
+    "captureFrameDesc": "현재 재생 위치의 프레임을 캡처하여 AI 생성의 입력으로 사용합니다",
     "captureError": "프레임 캡처에 실패했습니다",
-    "aiPromptPlaceholder": "이 프레임으로 생성할 영상을 설명하세요...",
+    "aiModelLabel": "AI 모델",
+    "aspectRatio": "비율",
+    "aiDuration": "영상 길이",
+    "promptLabel": "프롬프트",
+    "aiPromptPlaceholder": "이 프레임으로 생성할 영상을 설명하세요",
     "aiGenerate": "AI 생성",
     "aiGenerateStarted": "AI 비디오 생성을 시작했습니다",
     "aiGenerateError": "AI 생성에 실패했습니다",
@@ -554,7 +555,6 @@
     "mergePreviewEmpty": "아래 히스토리에서 클립을 추가하세요",
     "clipCount": "비디오 합치기",
     "tabEffects": "효과",
-    "tabFilter": "필터",
     "categoryColor": "색보정",
     "categoryCinematic": "시네마틱",
     "categoryVintage": "빈티지",
@@ -631,6 +631,9 @@
     "noSubtitles": "자막을 추가해주세요",
     "tabSwitchCancel": "취소",
     "effectTextOverlay": "텍스트 오버레이",
+    "textStylePreset": "스타일 프리셋",
+    "textInput": "텍스트 입력",
+    "textPositionLabel": "위치",
     "txtPresetDefault": "기본",
     "txtPresetTitle": "타이틀",
     "txtPresetCaption": "캡션",
@@ -651,6 +654,10 @@
     "textColor": "색상",
     "applyTextOverlay": "텍스트 적용",
     "effectWatermark": "워터마크",
+    "wmModeLabel": "모드",
+    "wmTextLabel": "텍스트",
+    "wmImageLabel": "이미지 파일",
+    "wmPositionLabel": "위치",
     "wmText": "텍스트",
     "wmImage": "이미지",
     "wmTextPlaceholder": "워터마크 텍스트",
@@ -849,6 +856,8 @@
     "gifDesc": "비디오의 원하는 구간을 GIF로 변환합니다",
     "gifRange": "구간 설정",
     "gifError": "GIF 변환에 실패했습니다",
+    "audioQuickActions": "빠른 작업",
+    "audioQuickActionsDesc": "오디오를 추출하거나 음소거할 수 있습니다",
     "audioExtract": "오디오 추출",
     "audioExtractDesc": "비디오에서 오디오를 MP3 파일로 추출합니다",
     "audioExtractBtn": "오디오 추출",
@@ -878,7 +887,9 @@
     "audioError": "오디오 처리에 실패했습니다",
     "audioResultReady": "오디오 편집 결과가 준비되었습니다",
     "saveToGallery": "저장",
-    "download": "내려받기"
+    "removeVideo": "비디오 제거",
+    "toolOutput": "출력 설정",
+    "generate": "생성"
   },
   "MyPage": {
     "title": "마이페이지",

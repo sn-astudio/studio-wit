@@ -1,25 +1,17 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import Image from "next/image";
-import { Camera, Download, Globe, Lock, Loader2, Save, Sparkles, Play } from "lucide-react";
+import { Camera, Download, Loader2, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/Button";
-import { Textarea } from "@/components/ui/Textarea";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
-import { useCaptureFrame, useSaveEdit } from "@/hooks/queries/useVideoEdit";
+import { useCaptureFrame } from "@/hooks/queries/useVideoEdit";
 import { useCreateGeneration } from "@/hooks/queries/useGeneration";
 import { useAuthStore } from "@/stores/auth";
 
 import { downloadImage, downloadVideo } from "../utils";
-import type { AIEditPanelProps } from "./types";
+import type { AIEditPanelProps, AIEditPanelRef } from "./types";
 
 const AI_VIDEO_MODELS = [
   { id: "veo-3.1", name: "Veo 3.1", durations: [5, 6, 7, 8, 9, 10] },
@@ -29,19 +21,21 @@ const AI_VIDEO_MODELS = [
   { id: "kling", name: "Kling", durations: [5, 10] },
 ];
 
-export function AIEditPanel({
+const ASPECT_OPTIONS = ["16:9", "9:16", "1:1"] as const;
+
+export const AIEditPanel = forwardRef<AIEditPanelRef, AIEditPanelProps>(function AIEditPanel({
   sourceUrl,
   currentTime,
   videoRef,
   onDirty,
-  aiGenerationId,
   onAiGenerationIdChange,
   aiGeneration,
   aiIsGenerating,
   aiIsCompleted,
   aiIsFailed,
   aiElapsed,
-}: AIEditPanelProps) {
+  onStateChange,
+}, ref) {
   const t = useTranslations("VideoEdit");
   const token = useAuthStore((s) => s.token);
 
@@ -50,15 +44,15 @@ export function AIEditPanel({
   const [selectedModel, setSelectedModel] = useState("veo-3.1-fast");
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16" | "1:1">("16:9");
   const [duration, setDuration] = useState(5);
-  const [isPublic, setIsPublic] = useState(false);
 
   const captureMutation = useCaptureFrame();
   const createMutation = useCreateGeneration();
-  const saveEditMutation = useSaveEdit();
+
+  const currentModelConfig = AI_VIDEO_MODELS.find((m) => m.id === selectedModel);
+  const durationOptions = currentModelConfig?.durations ?? [5];
 
   const handleCaptureFrame = useCallback(async () => {
     if (!sourceUrl || aiIsGenerating) return;
-    // 비디오 엘리먼트의 실제 currentTime 사용 (state가 stale할 수 있음)
     const actualTime = videoRef?.current?.currentTime ?? currentTime;
     try {
       const result = await captureMutation.mutateAsync({
@@ -72,31 +66,6 @@ export function AIEditPanel({
     }
   }, [sourceUrl, currentTime, videoRef, captureMutation, t, onDirty, aiIsGenerating]);
 
-  const handleGenerate = useCallback(async () => {
-    if (!capturedImageUrl || !prompt.trim() || !token || aiIsGenerating) return;
-    try {
-      const result = await createMutation.mutateAsync({
-        model_id: selectedModel,
-        prompt: prompt.trim(),
-        params: {
-          input_image_url: capturedImageUrl,
-          aspect_ratio: aspectRatio,
-          duration,
-        },
-        is_public: isPublic,
-      });
-      onAiGenerationIdChange(result.generation.id);
-      setPrompt("");
-      toast.success(t("aiGenerateStarted"));
-    } catch {
-      toast.error(t("aiGenerateError"));
-    }
-  }, [capturedImageUrl, prompt, selectedModel, aspectRatio, duration, token, createMutation, t, onAiGenerationIdChange, aiIsGenerating]);
-
-  const currentModelConfig = AI_VIDEO_MODELS.find((m) => m.id === selectedModel);
-  const durationOptions = currentModelConfig?.durations ?? [5];
-
-  // 모델 변경 시 duration이 지원 범위 밖이면 첫 번째 값으로 조정
   const handleModelChange = useCallback(
     (modelId: string) => {
       setSelectedModel(modelId);
@@ -108,22 +77,53 @@ export function AIEditPanel({
     [duration],
   );
 
-  const ASPECT_OPTIONS = [
-    { value: "16:9", label: "16:9" },
-    { value: "9:16", label: "9:16" },
-    { value: "1:1", label: "1:1" },
-  ];
+  const handleGenerate = useCallback(async () => {
+    if (!capturedImageUrl || !prompt.trim() || !token || aiIsGenerating) return;
+    try {
+      const result = await createMutation.mutateAsync({
+        model_id: selectedModel,
+        prompt: prompt.trim(),
+        params: {
+          input_image_url: capturedImageUrl,
+          aspect_ratio: aspectRatio,
+          duration,
+        },
+      });
+      onAiGenerationIdChange(result.generation.id);
+      setPrompt("");
+      toast.success(t("aiGenerateStarted"));
+    } catch {
+      toast.error(t("aiGenerateError"));
+    }
+  }, [capturedImageUrl, prompt, selectedModel, aspectRatio, duration, token, createMutation, t, onAiGenerationIdChange, aiIsGenerating]);
+
+  const handleReset = useCallback(() => {
+    setPrompt("");
+    setCapturedImageUrl(null);
+    setSelectedModel("veo-3.1-fast");
+    setAspectRatio("16:9");
+    setDuration(5);
+  }, []);
+
+  const canGenerate = !!capturedImageUrl && !!prompt.trim() && !aiIsGenerating && !createMutation.isPending;
+
+  useImperativeHandle(ref, () => ({ reset: handleReset, apply: handleGenerate }), [handleReset, handleGenerate]);
+
+  useEffect(() => {
+    onStateChange?.({ canApply: canGenerate, isPending: aiIsGenerating || createMutation.isPending });
+  }, [canGenerate, aiIsGenerating, createMutation.isPending, onStateChange]);
 
   return (
-    <div className="space-y-3">
-      {/* 캡처 프리뷰 */}
-      <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-5">
+      {/* 프레임 캡처 */}
+      <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("captureFrameLabel")}</p>
+        <p className="text-[12px] text-muted-foreground/60">{t("captureFrameDesc")}</p>
         <div
-          className="group relative aspect-video w-full cursor-pointer overflow-hidden rounded-lg border border-neutral-400 bg-neutral-100 transition-colors hover:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-neutral-500"
+          className="group relative aspect-video w-full cursor-pointer overflow-hidden rounded-xl bg-neutral-50 transition-all hover:opacity-90 active:opacity-80 dark:bg-neutral-800/60"
           onClick={handleCaptureFrame}
           role="button"
           tabIndex={0}
-          title={t("captureFrame")}
         >
           {capturedImageUrl ? (
             <>
@@ -139,7 +139,7 @@ export function AIEditPanel({
                   e.stopPropagation();
                   downloadImage(capturedImageUrl, `frame_${Date.now()}.png`);
                 }}
-                className="absolute top-1.5 right-1.5 z-50 flex size-7 items-center justify-center rounded-full bg-black/60 text-neutral-200 opacity-0 transition-opacity hover:bg-black/80 hover:text-white group-hover:opacity-100"
+                className="absolute top-2 right-2 z-10 flex size-7 items-center justify-center rounded-lg bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
               >
                 <Download className="size-3.5" />
               </button>
@@ -155,163 +155,113 @@ export function AIEditPanel({
               )}
             </>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-1 text-neutral-600 dark:text-neutral-600">
+            <div className="flex h-full flex-col items-center justify-center gap-2">
               {captureMutation.isPending ? (
-                <Loader2 className="size-6 animate-spin" />
+                <Loader2 className="size-6 animate-spin text-muted-foreground/40" />
               ) : (
                 <>
-                  <Camera className="size-6" />
-                  <span className="text-[10px] text-neutral-500">
-                    {t("captureFrame")}
-                  </span>
+                  <Camera className="size-6 text-muted-foreground/40" />
+                  <span className="text-[12px] text-muted-foreground/60">{t("captureFrame")}</span>
                 </>
               )}
             </div>
           )}
         </div>
-
       </div>
 
-      {/* 프롬프트 입력 */}
-      <Textarea
-        value={prompt}
-        onChange={(e) => { setPrompt(e.target.value); onDirty?.(); }}
-        placeholder={t("aiPromptPlaceholder")}
-        className="min-h-[80px] border-neutral-400 bg-neutral-100/60 text-sm dark:border-neutral-700 dark:bg-neutral-900/60"
-        rows={3}
-      />
+      {/* 모델 선택 */}
+      <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("aiModelLabel")}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {AI_VIDEO_MODELS.map((model) => (
+            <button
+              key={model.id}
+              onClick={() => handleModelChange(model.id)}
+              className={`cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
+                selectedModel === model.id
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+              }`}
+            >
+              {model.name}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {/* 하단: 캡처 + 비율 + 모델 + 생성 버튼 */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 gap-1.5 text-xs"
-          onClick={handleCaptureFrame}
-          disabled={!sourceUrl || captureMutation.isPending || aiIsGenerating}
-        >
-          {captureMutation.isPending ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Camera className="size-3.5" />
-          )}
-          {t("captureFrame")}
-        </Button>
-        {capturedImageUrl && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 gap-1.5 text-xs"
-            onClick={() => {
-              downloadImage(capturedImageUrl, `frame_${Date.now()}.png`);
-            }}
-          >
-            <Download className="size-3.5" />
-            {t("download")}
-          </Button>
-        )}
-        {/* 비율 선택 */}
-        <Select
-          value={aspectRatio}
-          onValueChange={(v) =>
-            setAspectRatio(v as "16:9" | "9:16" | "1:1")
-          }
-        >
-          <SelectTrigger className="h-7 w-20 text-xs">
-            {aspectRatio}
-          </SelectTrigger>
-          <SelectContent>
-            {ASPECT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* 비율 선택 */}
+      <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("aspectRatio")}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {ASPECT_OPTIONS.map((r) => (
+            <button
+              key={r}
+              onClick={() => setAspectRatio(r)}
+              className={`cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
+                aspectRatio === r
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        {/* 초 선택 */}
-        <Select
-          value={String(duration)}
-          onValueChange={(v) => setDuration(Number(v))}
-        >
-          <SelectTrigger className="h-7 w-20 text-xs">
-            {duration}s
-          </SelectTrigger>
-          <SelectContent>
-            {durationOptions.map((sec) => (
-              <SelectItem key={sec} value={String(sec)}>
-                {sec}s
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* 길이 선택 */}
+      <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("aiDuration")}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {durationOptions.map((sec) => (
+            <button
+              key={sec}
+              onClick={() => setDuration(sec)}
+              className={`cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
+                duration === sec
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+              }`}
+            >
+              {sec}s
+            </button>
+          ))}
+        </div>
+      </div>
 
-        {/* 모델 선택 */}
-        <Select value={selectedModel} onValueChange={handleModelChange}>
-          <SelectTrigger className="h-7 w-36 text-xs">
-            {AI_VIDEO_MODELS.find((m) => m.id === selectedModel)?.name}
-          </SelectTrigger>
-          <SelectContent>
-            {AI_VIDEO_MODELS.map((model) => (
-              <SelectItem key={model.id} value={model.id}>
-                {model.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* 공개/비공개 토글 */}
-        <button
-          type="button"
-          className="flex h-7 items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2 text-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-          onClick={() => setIsPublic(!isPublic)}
-        >
-          {isPublic ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-neutral-500" />}
-          <span className="text-neutral-700 dark:text-neutral-300">{isPublic ? t("public") : t("private")}</span>
-        </button>
-
-        <Button
-          size="sm"
-          className="h-7 w-full gap-1.5"
-          onClick={handleGenerate}
-          disabled={
-            !capturedImageUrl ||
-            !prompt.trim() ||
-            aiIsGenerating ||
-            createMutation.isPending
-          }
-        >
-          {aiIsGenerating || createMutation.isPending ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Sparkles className="size-3.5" />
-          )}
-          {t("aiGenerate")}
-        </Button>
+      {/* 프롬프트 */}
+      <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("promptLabel")}</p>
+        <textarea
+          value={prompt}
+          onChange={(e) => { setPrompt(e.target.value); onDirty?.(); }}
+          placeholder={t("aiPromptPlaceholder")}
+          rows={3}
+          className="w-full resize-none rounded-lg bg-neutral-50 px-3 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none dark:bg-neutral-800/60"
+        />
       </div>
 
       {/* 생성 진행 상태 */}
       {aiIsGenerating && (
-        <div className="space-y-2 rounded-lg bg-primary/10 px-4 py-3">
+        <div className="space-y-2.5 rounded-xl bg-neutral-50 px-4 py-3 dark:bg-neutral-800/60">
           <div className="flex items-center gap-3">
             <Loader2 className="size-4 animate-spin text-primary" />
-            <span className="flex-1 text-sm text-primary">
+            <span className="flex-1 text-[12px] font-[500] text-primary">
               {t("aiGenerating")}
               {aiGeneration?.progress != null && ` (${aiGeneration.progress}%)`}
             </span>
-            <span className="text-xs tabular-nums text-neutral-400">
+            <span className="text-[11px] tabular-nums text-muted-foreground/60">
               {Math.floor(aiElapsed / 60)}:{String(aiElapsed % 60).padStart(2, "0")}
             </span>
           </div>
-          {/* 프로그레스 바 */}
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-300 dark:bg-neutral-700">
             {aiGeneration?.progress != null ? (
               <div
-                className="h-full rounded-full bg-primary transition-all duration-500"
+                className="h-full rounded-full bg-foreground transition-all duration-500"
                 style={{ width: `${aiGeneration.progress}%` }}
               />
             ) : (
-              <div className="h-full w-1/3 animate-[indeterminate_1.5s_ease-in-out_infinite] rounded-full bg-primary" />
+              <div className="h-full w-1/3 animate-[indeterminate_1.5s_ease-in-out_infinite] rounded-full bg-foreground" />
             )}
           </div>
         </div>
@@ -319,37 +269,15 @@ export function AIEditPanel({
 
       {/* 생성 실패 */}
       {aiIsFailed && aiGeneration && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-300/40 bg-red-50/20 px-4 py-2 dark:border-red-900/40 dark:bg-red-950/20">
-          <span className="text-sm text-red-600 dark:text-red-400">
+        <div className="rounded-xl bg-neutral-50 px-4 py-3 dark:bg-neutral-800/60">
+          <span className="text-[12px] text-red-500">
             {t("aiGenerateError")}
             {aiGeneration.error?.message && `: ${aiGeneration.error.message}`}
           </span>
         </div>
       )}
 
-      {/* 생성 완료: 다운로드 버튼 (자동 저장됨) */}
-      {aiIsCompleted && aiGeneration?.result_url && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
-          <Sparkles className="size-3.5 text-primary" />
-          <span className="flex-1 text-xs font-medium text-primary">
-            {t("aiGenerateComplete")}
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 gap-1.5 text-xs"
-            onClick={() =>
-              downloadVideo(
-                aiGeneration.result_url!,
-                `ai_edit_${Date.now()}.mp4`,
-              )
-            }
-          >
-            <Download className="size-3" />
-            {t("download")}
-          </Button>
-        </div>
-      )}
+
     </div>
   );
-}
+});

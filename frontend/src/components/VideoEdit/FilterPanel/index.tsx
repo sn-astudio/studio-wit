@@ -365,7 +365,7 @@ export const FilterPanel = forwardRef<FilterPanelRef, FilterPanelProps>(function
         disabled={!sourceUrl || isPending}
       >
         {isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
-        {t("applyFilter")}
+        {t("generate")}
       </Button>
     </div>
   );

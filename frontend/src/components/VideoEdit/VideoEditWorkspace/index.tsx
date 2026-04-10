@@ -20,6 +20,7 @@ import { VideoTimeline } from "../VideoTimeline";
 import { HistorySelectModal } from "../HistorySelectModal";
 import { TrimControls } from "../TrimControls";
 import { AIEditPanel } from "../AIEditPanel";
+import type { AIEditPanelRef } from "../AIEditPanel/types";
 import { MergePanel } from "../MergePanel";
 import type { MergePanelRef } from "../MergePanel/types";
 import { EffectsPanel } from "../EffectsPanel";
@@ -28,10 +29,18 @@ import { FilterPanel } from "../FilterPanel";
 import type { FilterPanelRef } from "../FilterPanel/types";
 import type { CreativePresetPanelRef } from "../CreativePresetPanel/types";
 import { SubtitlesPanel } from "../SubtitlesPanel";
+import type { SubtitlesPanelRef } from "../SubtitlesPanel/types";
+import { TextOverlayPanel } from "../TextOverlayPanel";
+import type { TextOverlayPanelRef } from "../TextOverlayPanel/types";
+import { WatermarkPanel } from "../WatermarkPanel";
+import type { WatermarkPanelRef } from "../WatermarkPanel/types";
 import { AudioPanel } from "../AudioPanel";
 import { GifPanel } from "../GifPanel";
+import type { GifPanelRef } from "../GifPanel/types";
 import { SceneSplitPanel } from "../SceneSplitPanel";
+import type { SceneSplitPanelRef } from "../SceneSplitPanel/types";
 import { ThumbnailPanel } from "../ThumbnailPanel";
+import type { ThumbnailPanelRef } from "../ThumbnailPanel/types";
 import { CropPanel } from "../CropPanel";
 import type { CropPanelRef } from "../CropPanel/types";
 import { RatioPanel } from "../RatioPanel";
@@ -49,7 +58,7 @@ import type { VideoSource } from "./types";
 
 type MainTab = "edit" | "filter" | "overlay" | "ai";
 type SubTool = "trim" | "crop" | "ratio" | "merge" | "speed" | "reverse" | "rotate" | "resolution" | "fps" | "filter" | "creative" | "subtitles" | "text" | "watermark" | "audio" | "gif" | "scene" | "thumbnail" | "color" | "cinematic" | "vintage" | "mood" | "fun" | null;
-type EditTab = "trim" | "ai" | "effects" | "filter" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop" | "ratio" | "rotate" | "scene" | "preset" | "creative";
+type EditTab = "trim" | "ai" | "effects" | "filter" | "merge" | "subtitles" | "audio" | "gif" | "thumbnail" | "crop" | "ratio" | "rotate" | "scene" | "preset" | "creative" | "text" | "watermark";
 
 export function VideoEditWorkspace() {
   const t = useTranslations("VideoEdit");
@@ -73,6 +82,20 @@ export function VideoEditWorkspace() {
   const [filterState, setFilterState] = useState({ canApply: false, isPending: false });
   const creativePanelRef = useRef<CreativePresetPanelRef>(null);
   const [creativeState, setCreativeState] = useState({ canApply: false, isPending: false });
+  const subtitlesPanelRef = useRef<SubtitlesPanelRef>(null);
+  const [subtitlesState, setSubtitlesState] = useState({ canApply: false, isPending: false });
+  const textOverlayPanelRef = useRef<TextOverlayPanelRef>(null);
+  const [textOverlayState, setTextOverlayState] = useState({ canApply: false, isPending: false });
+  const watermarkPanelRef = useRef<WatermarkPanelRef>(null);
+  const [watermarkState, setWatermarkState] = useState({ canApply: false, isPending: false });
+  const gifPanelRef = useRef<GifPanelRef>(null);
+  const [gifState, setGifState] = useState({ canApply: false, isPending: false });
+  const sceneSplitPanelRef = useRef<SceneSplitPanelRef>(null);
+  const [sceneSplitState, setSceneSplitState] = useState({ canApply: false, isPending: false });
+  const thumbnailPanelRef = useRef<ThumbnailPanelRef>(null);
+  const [thumbnailState, setThumbnailState] = useState({ canApply: false, isPending: false });
+  const aiEditPanelRef = useRef<AIEditPanelRef>(null);
+  const [aiEditState, setAiEditState] = useState({ canApply: false, isPending: false });
   const searchParams = useSearchParams();
 
   // 탭 (URL ?tab= 파라미터로 초기값 설정)
@@ -86,17 +109,97 @@ export function VideoEditWorkspace() {
   const [mainTab, setMainTab] = useState<MainTab>("edit");
   const [subTool, setSubTool] = useState<SubTool>(null);
 
-  // mainTab 변경 시 subTool 초기화 + activeTab 매핑
-  const handleMainTabChange = useCallback((tab: MainTab) => {
+  // mainTab 변경 — switchTab 경유하여 변경사항 확인
+  const pendingMainTabRef = useRef<MainTab | null>(null);
+  // 패널 초기화 헬퍼
+  const resetNonEditPanels = useCallback(() => {
+    filterPanelRef.current?.reset();
+    creativePanelRef.current?.reset();
+    subtitlesPanelRef.current?.reset();
+    textOverlayPanelRef.current?.reset();
+    watermarkPanelRef.current?.reset();
+    gifPanelRef.current?.reset();
+    sceneSplitPanelRef.current?.reset();
+    thumbnailPanelRef.current?.reset();
+    aiEditPanelRef.current?.reset();
+    setPreviewCssFilter("");
+    setPreviewTextOverlay(null);
+    setPreviewWatermark(null);
+    setPreviewSubtitles([]);
+    setPreviewCreativeOverlay(null);
+    setFilterState({ canApply: false, isPending: false });
+    setCreativeState({ canApply: false, isPending: false });
+    setSubtitlesState({ canApply: false, isPending: false });
+    setTextOverlayState({ canApply: false, isPending: false });
+    setWatermarkState({ canApply: false, isPending: false });
+    setGifState({ canApply: false, isPending: false });
+    setSceneSplitState({ canApply: false, isPending: false });
+    setThumbnailState({ canApply: false, isPending: false });
+    setAiEditState({ canApply: false, isPending: false });
+    setResultUrl(null);
+  }, []);
+
+  const resetAllPanels = useCallback(() => {
+    effectsPanelRef.current?.reset();
+    rotatePanelRef.current?.reset();
+    cropPanelRef.current?.reset();
+    ratioPanelRef.current?.reset();
+    mergePanelRef.current?.reset();
+    setPreviewSpeed(1);
+    setCropState({ isOriginal: true, isPending: false });
+    setRotateState({ hasSelection: false, isPending: false });
+    setRatioState({ canApply: false, isPending: false });
+    setEffectsState({ canApply: false, isPending: false });
+    setMergeState({ canApply: false, isPending: false });
+    resetNonEditPanels();
+  }, [resetNonEditPanels]);
+
+  const handleMainTabChangeRaw = useCallback((tab: MainTab) => {
+    resetAllPanels();
     setMainTab(tab);
     setSubTool(null);
     if (tab === "ai") setActiveTab("ai");
     else if (tab === "filter") setActiveTab("filter");
     else setActiveTab("trim");
-  }, []);
+  }, [resetAllPanels]);
 
-  // subTool 변경 시 activeTab 매핑
   const handleSubToolChange = useCallback((tool: SubTool) => {
+    // 편집 탭 내 소도구 전환은 state 유지, 그 외 탭은 초기화
+    if (mainTab === "filter") {
+      // store 필터값 직접 리셋 (ref가 null일 수 있으므로)
+      const setEffect = useVideoEditStore.getState().setEffect;
+      setEffect("selectedFilter", "none");
+      setEffect("brightness", 0);
+      setEffect("contrast", 1);
+      setEffect("saturation", 1);
+      filterPanelRef.current?.reset();
+      creativePanelRef.current?.reset();
+      setPreviewCssFilter("");
+      setPreviewCreativeOverlay(null);
+      setResultUrl(null);
+      setFilterState({ canApply: false, isPending: false });
+      setCreativeState({ canApply: false, isPending: false });
+    } else if (mainTab === "overlay") {
+      // store 값 직접 리셋 + activeTab 강제 초기화
+      setActiveTab("trim");
+      const setEffect = useVideoEditStore.getState().setEffect;
+      setEffect("overlayText", "");
+      setEffect("textPosition", "bottom");
+      setEffect("fontSize", 36);
+      setEffect("textColor", "white");
+      setEffect("selectedTextPreset", "default");
+      setEffect("wmMode", "text");
+      setEffect("wmText", "");
+      setEffect("wmPosition", "bottom-right");
+      setEffect("wmOpacity", 0.7);
+      setEffect("wmFontSize", 24);
+      setEffect("wmColor", "white");
+      setEffect("wmImageScale", 20);
+      resetNonEditPanels();
+    } else if (mainTab !== "edit") {
+      resetNonEditPanels();
+    }
+
     setSubTool(tool);
     if (tool === null) setActiveTab("trim");
     else if (tool === "trim") setActiveTab("trim");
@@ -104,8 +207,10 @@ export function VideoEditWorkspace() {
     else if (tool === "ratio") setActiveTab("ratio");
     else if (tool === "merge") setActiveTab("merge");
     else if (tool === "rotate") setActiveTab("rotate");
-    else if (tool === "speed" || tool === "reverse" || tool === "resolution" || tool === "fps" || tool === "text" || tool === "watermark") setActiveTab("effects");
-    else if (tool === "filter") setActiveTab("filter");
+    else if (tool === "speed" || tool === "reverse" || tool === "resolution" || tool === "fps") setActiveTab("effects");
+    else if (tool === "text") setActiveTab("text");
+    else if (tool === "watermark") setActiveTab("watermark");
+    else if (tool === "filter" || tool === "color" || tool === "cinematic" || tool === "vintage" || tool === "mood" || tool === "fun") setActiveTab("filter");
     else if (tool === "creative") setActiveTab("creative");
     else if (tool === "subtitles") setActiveTab("subtitles");
     else if (tool === "audio") setActiveTab("audio");
@@ -155,6 +260,7 @@ export function VideoEditWorkspace() {
   }, [searchParams]);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const isHandleDraggingRef = useRef(false);
 
   // 트림 범위
   const [trimStart, setTrimStart] = useState(0);
@@ -162,6 +268,7 @@ export function VideoEditWorkspace() {
 
   // 결과 + Undo/Redo
   const [resultUrl, setResultUrlRaw] = useState<string | null>(null);
+  const resultUrlRef = useRef<string | null>(null);
   const historyRef = useRef<{ url: string | null; snapshot: import("@/stores/videoEditStore").EffectsSnapshot }[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
   const restoreEffects = useVideoEditStore((s) => s.restoreEffects);
@@ -172,8 +279,8 @@ export function VideoEditWorkspace() {
 
   // 편집 결과 저장 (히스토리에 push)
   const setResultUrl = useCallback((url: string | null) => {
+    resultUrlRef.current = url;
     if (url === null) {
-      // 리셋 호출은 히스토리에 넣지 않음
       setResultUrlRaw(null);
       return;
     }
@@ -571,15 +678,34 @@ export function VideoEditWorkspace() {
   const confirmTabSwitch = useCallback(() => {
     if (!pendingTab) return;
     resetAllState();
-    setActiveTab(pendingTab);
+    if (pendingMainTabRef.current) {
+      handleMainTabChangeRaw(pendingMainTabRef.current);
+      pendingMainTabRef.current = null;
+    } else {
+      setActiveTab(pendingTab);
+    }
     setPendingTab(null);
     setIsTabConfirmOpen(false);
-  }, [pendingTab, resetAllState]);
+  }, [pendingTab, resetAllState, handleMainTabChangeRaw]);
 
   const cancelTabSwitch = useCallback(() => {
     setPendingTab(null);
     setIsTabConfirmOpen(false);
   }, []);
+
+  const handleMainTabChange = useCallback((tab: MainTab) => {
+    const targetActiveTab: EditTab = tab === "ai" ? "ai" : tab === "filter" ? "filter" : "trim";
+    const trimChanged = trimStart > 0 || (trimEnd > 0 && Math.abs(trimEnd - duration) > 0.1);
+    const hasChanges = !!resultUrl || trimChanged || mergeClips.length > 0 || !!mergePreviewUrl || !!previewCssFilter || !!previewTextOverlay || !!previewWatermark || previewSpeed !== 1 || isPanelDirty;
+
+    if (hasChanges) {
+      pendingMainTabRef.current = tab;
+      setPendingTab(targetActiveTab);
+      setIsTabConfirmOpen(true);
+      return;
+    }
+    handleMainTabChangeRaw(tab);
+  }, [trimStart, trimEnd, duration, resultUrl, mergeClips, mergePreviewUrl, previewCssFilter, previewTextOverlay, previewWatermark, previewSpeed, isPanelDirty, handleMainTabChangeRaw]);
 
   const trimMutation = useTrimVideo();
 
@@ -773,15 +899,15 @@ export function VideoEditWorkspace() {
     { id: "ratio", icon: RectangleHorizontal, labelKey: "tabRatio" },
     { id: "merge", icon: Merge, labelKey: "tabMerge" },
     { id: "rotate", icon: RotateCw, labelKey: "toolRotate" },
-    { id: "speed", icon: Wand2, labelKey: "tabEffects" },
-    { id: "creative", icon: Sparkles, labelKey: "tabCreative" },
+    { id: "speed", icon: Gauge, labelKey: "toolSpeed" },
+    { id: "resolution", icon: Maximize2, labelKey: "toolOutput" },
+    { id: "audio", icon: Volume2, labelKey: "tabAudio" },
   ];
 
   const OVERLAY_TOOLS: { id: SubTool; icon: typeof Scissors; labelKey: string }[] = [
     { id: "subtitles", icon: MessageCircle, labelKey: "tabSubtitles" },
     { id: "text", icon: Type, labelKey: "toolText" },
     { id: "watermark", icon: Stamp, labelKey: "toolWatermark" },
-    { id: "audio", icon: Volume2, labelKey: "tabAudio" },
     { id: "gif", icon: Film, labelKey: "tabGif" },
     { id: "scene", icon: ScanSearch, labelKey: "tabScene" },
     { id: "thumbnail", icon: ImageIcon, labelKey: "tabThumbnail" },
@@ -793,6 +919,7 @@ export function VideoEditWorkspace() {
     { id: "vintage", icon: Timer, labelKey: "categoryVintage" },
     { id: "mood", icon: Palette, labelKey: "categoryMood" },
     { id: "fun", icon: Smile, labelKey: "categoryFun" },
+    { id: "creative", icon: Sparkles, labelKey: "tabCreative" },
   ];
 
   return (
@@ -802,8 +929,8 @@ export function VideoEditWorkspace() {
           {/* 좌측: 프리뷰 */}
           <div className="flex flex-1 flex-col">
             <div className="relative">
-              {/* 비교 모드 토글 */}
-              {resultUrl && source?.url && resultUrl !== source.url && (
+              {/* 비교 모드 토글 — 숨김 */}
+              {false && resultUrl && source?.url && resultUrl !== source.url && (
                 <div className="absolute top-2 right-2 z-10 flex gap-1">
                   <button
                     onClick={() => setCompareMode((v) => !v)}
@@ -878,12 +1005,12 @@ export function VideoEditWorkspace() {
                 <VideoEditPreview
                   videoUrl={displayUrl}
                   currentTime={currentTime}
-                  onTimeUpdate={setCurrentTime}
+                  onTimeUpdate={(t) => { if (!isHandleDraggingRef.current) setCurrentTime(t); }}
                   onDurationLoaded={handleDurationLoaded}
                   videoRef={videoRef}
                   cssFilter={(activeTab === "effects" || mainTab === "filter") ? previewCssFilter : undefined}
-                  textOverlay={activeTab === "effects" ? previewTextOverlay : undefined}
-                  watermark={activeTab === "effects" ? previewWatermark : undefined}
+                  textOverlay={activeTab === "text" ? previewTextOverlay : undefined}
+                  watermark={activeTab === "watermark" ? previewWatermark : undefined}
                   subtitles={activeTab === "subtitles" ? previewSubtitles : undefined}
                   playbackRate={activeTab === "effects" ? previewSpeed : 1}
                   creativeOverlay={activeTab === "creative" ? previewCreativeOverlay : undefined}
@@ -900,10 +1027,30 @@ export function VideoEditWorkspace() {
                       name: file.name,
                     });
                   }}
+                  onDownload={() => {
+                    if (source?.url) downloadVideo(source.url, `video_${Date.now()}.mp4`);
+                  }}
+                  onRemove={() => {
+                    setSource(null);
+                    setResultUrl(null);
+                    setCurrentTime(0);
+                    setDuration(0);
+                  }}
                 />
               )}
             </div>
 
+
+          {/* 모바일 편집 도구 버튼 */}
+          {source && (
+            <button
+              onClick={() => toast(t("mobileEditSoon"))}
+              className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-foreground py-3 text-[14px] font-[600] text-background transition-colors hover:opacity-90 sm:hidden"
+            >
+              <Scissors className="size-4" />
+              {t("tabEdit")}
+            </button>
+          )}
 
           <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
 
@@ -928,6 +1075,12 @@ export function VideoEditWorkspace() {
                   onTrimStartChange={setTrimStart}
                   onTrimEndChange={setTrimEnd}
                   onSeek={handleSeek}
+                  onHandleDragging={(v) => {
+                    isHandleDraggingRef.current = v;
+                    if (v && videoRef.current && !videoRef.current.paused) {
+                      videoRef.current.pause();
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -1059,7 +1212,7 @@ export function VideoEditWorkspace() {
           {source && <div className="hidden sm:block sm:w-[360px] sm:shrink-0">
             <div className="fixed top-[88px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-104px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
               {/* 4탭 세그먼트 — 상단 고정 */}
-              <div className="shrink-0 px-5 pt-5 pb-0">
+              <div className="shrink-0 px-5 pt-5 pb-4">
                 <div className="relative flex flex-1 rounded-lg bg-neutral-100 p-1.5 dark:bg-neutral-800/60">
                   {MAIN_TABS.map((tab) => {
                     const Icon = tab.icon;
@@ -1086,7 +1239,7 @@ export function VideoEditWorkspace() {
               <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto scrollbar-none px-5 pb-5">
                 {/* 서브 도구 그리드 — 편집/필터/오버레이 탭 */}
                 {(mainTab === "edit" || mainTab === "filter" || mainTab === "overlay") && (
-                  <div className="mt-4 grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {(mainTab === "edit" ? EDIT_TOOLS : mainTab === "filter" ? FILTER_TOOLS : OVERLAY_TOOLS).map((tool) => {
                       const Icon = tool.icon;
                       const isActive = subTool === tool.id;
@@ -1135,8 +1288,8 @@ export function VideoEditWorkspace() {
                 {/* 디바이더 — 서브도구 선택 시 (트리밍, 합치기 제외) */}
                 {subTool && subTool !== "trim" && activeTab !== "merge" && <div className="my-4 border-t border-neutral-200 dark:border-neutral-800" />}
 
-              {/* AI 생성 미니 바 */}
-              {aiIsGenerating && activeTab !== "ai" && (
+              {/* AI 생성 미니 바 — 숨김 */}
+              {false && aiIsGenerating && activeTab !== "ai" && (
                 <div
                   className="mb-3 flex cursor-pointer items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 transition-colors hover:bg-primary/15"
                   onClick={() => handleMainTabChange("ai")}
@@ -1153,7 +1306,7 @@ export function VideoEditWorkspace() {
                   </span>
                 </div>
               )}
-              {aiIsCompleted && aiGeneration?.result_url && activeTab !== "ai" && (
+              {false && aiIsCompleted && aiGeneration?.result_url && activeTab !== "ai" && (
                 <div
                   className="mb-3 flex cursor-pointer items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 transition-colors hover:bg-primary/10"
                   onClick={() => handleMainTabChange("ai")}
@@ -1170,68 +1323,12 @@ export function VideoEditWorkspace() {
                 <div className="flex flex-col gap-3">
 
 
-          {/* 트리밍 — 결과만 패널에 표시 */}
-          {source && subTool === "trim" && duration > 0 && (
-            <div className="space-y-2">
-
-              {resultUrl && (
-                <div className="space-y-2 rounded-xl bg-primary/10 px-4 py-3">
-                  <span className="text-sm font-semibold text-primary">
-                    {t("trimComplete")}
-                  </span>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-                    onClick={() => setIsPublicSave(!isPublicSave)}
-                  >
-                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-neutral-500" />}
-                    <span className="text-neutral-700 dark:text-neutral-300">{isPublicSave ? t("public") : t("private")}</span>
-                  </button>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 gap-1.5"
-                      onClick={() => {
-                        downloadVideo(resultUrl, `trimmed_${Date.now()}.mp4`);
-                        toast.success(t("downloadSuccess"));
-                      }}
-                    >
-                      <Download className="size-3.5" />
-                      {t("download")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 gap-1.5"
-                      disabled={saveEditMutation.isPending}
-                      onClick={async () => {
-                        try {
-                          await saveEditMutation.mutateAsync({
-                            result_url: resultUrl,
-                            edit_type: "trim",
-                            prompt: source?.name || "Trimmed video",
-                            is_public: isPublicSave,
-                          });
-                          toast.success(t("saveSuccess"));
-                        } catch {
-                          toast.error(t("saveError"));
-                        }
-                      }}
-                    >
-                      <Save className="size-3.5" />
-                      {t("saveMerged")}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* AI 편집 탭 */}
           {activeTab === "ai" && (
             <>
               {source && (
                 <AIEditPanel
+                  ref={aiEditPanelRef}
                   sourceUrl={source.url}
                   currentTime={currentTime}
                   videoRef={videoRef}
@@ -1243,60 +1340,51 @@ export function VideoEditWorkspace() {
                   aiIsCompleted={aiIsCompleted}
                   aiIsFailed={aiIsFailed}
                   aiElapsed={aiElapsed}
+                  onStateChange={setAiEditState}
                 />
               )}
               {/* 소스 없어도 생성 상태 표시 */}
               {!source && (aiIsGenerating || aiIsCompleted || aiIsFailed) && (
                 <div className="space-y-3">
                   {aiIsGenerating && (
-                    <div className="space-y-2 rounded-lg bg-primary/10 px-4 py-3">
+                    <div className="space-y-2.5 rounded-xl bg-neutral-50 px-4 py-3 dark:bg-neutral-800/60">
                       <div className="flex items-center gap-3">
                         <Loader2 className="size-4 animate-spin text-primary" />
-                        <span className="flex-1 text-sm text-primary">
+                        <span className="flex-1 text-[12px] font-[500] text-primary">
                           {t("aiGenerating")}
                           {aiGeneration?.progress != null && ` (${aiGeneration.progress}%)`}
                         </span>
-                        <span className="text-xs tabular-nums text-neutral-400">
+                        <span className="text-[11px] tabular-nums text-muted-foreground/60">
                           {Math.floor(aiElapsed / 60)}:{String(aiElapsed % 60).padStart(2, "0")}
                         </span>
                       </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-300 dark:bg-neutral-700">
                         {aiGeneration?.progress != null ? (
-                          <div
-                            className="h-full rounded-full bg-primary transition-all duration-500"
-                            style={{ width: `${aiGeneration.progress}%` }}
-                          />
+                          <div className="h-full rounded-full bg-foreground transition-all duration-500" style={{ width: `${aiGeneration.progress}%` }} />
                         ) : (
-                          <div className="h-full w-1/3 animate-[indeterminate_1.5s_ease-in-out_infinite] rounded-full bg-primary" />
+                          <div className="h-full w-1/3 animate-[indeterminate_1.5s_ease-in-out_infinite] rounded-full bg-foreground" />
                         )}
                       </div>
                     </div>
                   )}
                   {aiIsCompleted && aiGeneration?.result_url && (
-                    <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
-                      <Sparkles className="size-3.5 text-primary" />
-                      <span className="flex-1 text-xs font-medium text-primary">
-                        {t("aiGenerateComplete")}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 gap-1.5 text-xs"
-                        onClick={() =>
-                          downloadVideo(
-                            aiGeneration.result_url!,
-                            `ai_edit_${Date.now()}.mp4`,
-                          )
-                        }
+                    <div className="space-y-2.5 rounded-xl bg-neutral-50 px-4 py-3 dark:bg-neutral-800/60">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="size-3.5 text-primary" />
+                        <span className="flex-1 text-[12px] font-[500] text-primary">{t("aiGenerateComplete")}</span>
+                      </div>
+                      <button
+                        onClick={() => downloadVideo(aiGeneration.result_url!, `ai_edit_${Date.now()}.mp4`)}
+                        className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-neutral-100 py-2.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:hover:text-white"
                       >
-                        <Download className="size-3" />
+                        <Download className="size-3.5" />
                         {t("download")}
-                      </Button>
+                      </button>
                     </div>
                   )}
                   {aiIsFailed && aiGeneration && (
-                    <div className="flex items-center gap-3 rounded-lg border border-red-300/40 bg-red-50/20 px-4 py-2 dark:border-red-900/40 dark:bg-red-950/20">
-                      <span className="text-sm text-red-600 dark:text-red-400">
+                    <div className="rounded-xl bg-neutral-50 px-4 py-3 dark:bg-neutral-800/60">
+                      <span className="text-[12px] text-red-500">
                         {t("aiGenerateError")}
                         {aiGeneration.error?.message && `: ${aiGeneration.error.message}`}
                       </span>
@@ -1308,8 +1396,8 @@ export function VideoEditWorkspace() {
           )}
 
           {/* 효과 탭 */}
-          {source && activeTab === "effects" && (
-            <>
+          {source && (
+            <div className={activeTab === "effects" ? "" : "hidden"}>
               <EffectsPanel
                 ref={effectsPanelRef}
                 sourceUrl={source.url}
@@ -1317,59 +1405,9 @@ export function VideoEditWorkspace() {
                 onPreviewSpeed={setPreviewSpeed}
                 onDirty={() => setIsPanelDirty(true)}
                 onStateChange={setEffectsState}
+                category={subTool === "speed" ? "speed" : "output"}
               />
-
-              {resultUrl && (
-                <div className="space-y-2 rounded-xl bg-primary/10 px-4 py-3">
-                  <span className="text-sm font-semibold text-primary">
-                    {t("effectApplied")}
-                  </span>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs transition-colors hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-                    onClick={() => setIsPublicSave(!isPublicSave)}
-                  >
-                    {isPublicSave ? <Globe className="size-3.5 text-blue-500" /> : <Lock className="size-3.5 text-neutral-500" />}
-                    <span className="text-neutral-700 dark:text-neutral-300">{isPublicSave ? t("public") : t("private")}</span>
-                  </button>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 gap-1.5"
-                      onClick={() => {
-                        downloadVideo(resultUrl, `effect_${Date.now()}.mp4`);
-                        toast.success(t("downloadSuccess"));
-                      }}
-                    >
-                      <Download className="size-3.5" />
-                      {t("download")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 gap-1.5"
-                      disabled={saveEditMutation.isPending}
-                      onClick={async () => {
-                        try {
-                          await saveEditMutation.mutateAsync({
-                            result_url: resultUrl,
-                            edit_type: "effects",
-                            prompt: source?.name || "Effect applied",
-                            is_public: isPublicSave,
-                          });
-                          toast.success(t("saveSuccess"));
-                        } catch {
-                          toast.error(t("saveError"));
-                        }
-                      }}
-                    >
-                      <Save className="size-3.5" />
-                      {t("saveMerged")}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
+            </div>
           )}
 
           {source && mainTab === "filter" && subTool && subTool !== "creative" && (
@@ -1418,33 +1456,27 @@ export function VideoEditWorkspace() {
           {source && activeTab === "subtitles" && (
             <>
               <SubtitlesPanel
+                ref={subtitlesPanelRef}
                 sourceUrl={source.url}
                 duration={duration}
                 onSubtitlesApplied={setResultUrl}
                 onPreviewSubtitles={setPreviewSubtitles}
                 onDirty={() => setIsPanelDirty(true)}
+                onStateChange={setSubtitlesState}
               />
               {resultUrl && (
-                <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
-                  <span className="text-sm font-semibold text-primary">
-                    {t("subtitlesApplied")}
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5"
-                      onClick={() =>
-                        downloadVideo(resultUrl, `subtitles_${Date.now()}.mp4`)
-                      }
+                <div className="space-y-2.5 rounded-xl bg-neutral-50 px-4 py-3 dark:bg-neutral-800/60">
+                  <p className="text-[13px] font-[600] text-foreground">{t("subtitlesApplied")}</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => downloadVideo(resultUrl, `subtitles_${Date.now()}.mp4`)}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-neutral-100 py-2.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:hover:text-white"
                     >
                       <Download className="size-3.5" />
                       {t("download")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5"
+                    </button>
+                    <button
+                      disabled={saveEditMutation.isPending}
                       onClick={async () => {
                         try {
                           await saveEditMutation.mutateAsync({
@@ -1457,17 +1489,19 @@ export function VideoEditWorkspace() {
                           toast.error(t("saveError"));
                         }
                       }}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[12px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
-                      <Save className="size-3.5" />
+                      {saveEditMutation.isPending && <Loader2 className="size-3.5 animate-spin" />}
                       {t("save")}
-                    </Button>
+                    </button>
                   </div>
                 </div>
               )}
             </>
           )}
 
-          {source && activeTab === "audio" && (
+          {source && (
+            <div className={activeTab === "audio" ? "" : "hidden"}>
               <AudioPanel
                 sourceUrl={source.url}
                 onAudioApplied={setResultUrl}
@@ -1481,27 +1515,33 @@ export function VideoEditWorkspace() {
                 }}
                 onDirty={() => setIsPanelDirty(true)}
               />
+            </div>
           )}
 
           {source && activeTab === "gif" && (
               <GifPanel
+                ref={gifPanelRef}
                 sourceUrl={source.url}
                 onDirty={() => setIsPanelDirty(true)}
+                onStateChange={setGifState}
               />
           )}
 
           {source && activeTab === "scene" && (
               <SceneSplitPanel
+                ref={sceneSplitPanelRef}
                 sourceUrl={source.url}
                 duration={source.duration ?? duration}
                 onSceneExtracted={(url) => {
                   setSource({ ...source, url });
                 }}
+                onStateChange={setSceneSplitState}
               />
           )}
 
           {source && activeTab === "thumbnail" && (
               <ThumbnailPanel
+                ref={thumbnailPanelRef}
                 sourceUrl={source.url}
                 onThumbnailsChange={setCapturedThumbnails}
                 onSave={async (url, isPublic) => {
@@ -1512,10 +1552,34 @@ export function VideoEditWorkspace() {
                     is_public: isPublic,
                   });
                 }}
+                onStateChange={setThumbnailState}
               />
           )}
 
-          {source && activeTab === "crop" && (
+          {source && activeTab === "text" && (
+              <TextOverlayPanel
+                ref={textOverlayPanelRef}
+                sourceUrl={source.url}
+                onEffectApplied={setResultUrl}
+                onPreviewTextOverlay={setPreviewTextOverlay}
+                onDirty={() => setIsPanelDirty(true)}
+                onStateChange={setTextOverlayState}
+              />
+          )}
+
+          {source && activeTab === "watermark" && (
+              <WatermarkPanel
+                ref={watermarkPanelRef}
+                sourceUrl={source.url}
+                onEffectApplied={setResultUrl}
+                onPreviewWatermark={setPreviewWatermark}
+                onDirty={() => setIsPanelDirty(true)}
+                onStateChange={setWatermarkState}
+              />
+          )}
+
+          {source && (
+            <div className={activeTab === "crop" ? "" : "hidden"}>
               <CropPanel
                 ref={cropPanelRef}
                 sourceUrl={source.url}
@@ -1533,12 +1597,15 @@ export function VideoEditWorkspace() {
                 }}
                 onDirty={() => setIsPanelDirty(true)}
               />
+            </div>
           )}
 
-          {source && activeTab === "ratio" && (
+          {source && (
+            <div className={activeTab === "ratio" ? "" : "hidden"}>
               <RatioPanel
                 ref={ratioPanelRef}
                 sourceUrl={source.url}
+                sourceAspectRatio={source.aspectRatio}
                 onStateChange={setRatioState}
                 onRatioApplied={setResultUrl}
                 onSave={async (url, isPublic) => {
@@ -1551,9 +1618,11 @@ export function VideoEditWorkspace() {
                 }}
                 onDirty={() => setIsPanelDirty(true)}
               />
+            </div>
           )}
 
-          {source && activeTab === "rotate" && (
+          {source && (
+            <div className={activeTab === "rotate" ? "" : "hidden"}>
               <RotatePanel
                 ref={rotatePanelRef}
                 sourceUrl={source.url}
@@ -1569,6 +1638,7 @@ export function VideoEditWorkspace() {
                 }}
                 onDirty={() => setIsPanelDirty(true)}
               />
+            </div>
           )}
 
           {source && activeTab === "creative" && (
@@ -1593,111 +1663,83 @@ export function VideoEditWorkspace() {
                 </div>
               </div>
 
-              {/* 하단 고정 액션 바 — merge */}
-              {activeTab === "merge" && (
+              {/* 하단 고정 액션 바 — 편집 탭 통합 */}
+              {mainTab === "edit" && subTool && source && (
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => mergePanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      onClick={() => {
+                        effectsPanelRef.current?.reset();
+                        cropPanelRef.current?.reset();
+                        ratioPanelRef.current?.reset();
+                        rotatePanelRef.current?.reset();
+                        mergePanelRef.current?.reset();
+                        setPreviewSpeed(1);
+                        setResultUrl(null);
+                        setCropState({ isOriginal: true, isPending: false });
+                        setRotateState({ hasSelection: false, isPending: false });
+                        setRatioState({ canApply: false, isPending: false });
+                        setEffectsState({ canApply: false, isPending: false });
+                        setMergeState({ canApply: false, isPending: false });
+                        setSubTool(null);
+                        setActiveTab("trim");
+                      }}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
                     <button
-                      onClick={() => mergePanelRef.current?.apply()}
-                      disabled={!mergeState.canApply || mergeState.isPending}
-                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
-                    >
-                      {mergeState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("apply")}
-                    </button>
-                  </div>
-                </div>
-              )}
+                      onClick={async () => {
+                        // 변경사항이 있는 모든 편집 소도구를 순차 실행
+                        if (!cropState.isOriginal) await cropPanelRef.current?.apply();
+                        if (ratioState.canApply) await ratioPanelRef.current?.apply();
+                        if (rotateState.hasSelection) await rotatePanelRef.current?.apply();
+                        if (effectsState.canApply) await effectsPanelRef.current?.apply();
+                        if (mergeState.canApply) await mergePanelRef.current?.apply();
 
-              {/* 하단 고정 액션 바 — effects */}
-              {activeTab === "effects" && source && (
-                <div className="shrink-0 px-5 pt-3 pb-4">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => effectsPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
-                    >
-                      {t("reset")}
-                    </button>
-                    <button
-                      onClick={() => effectsPanelRef.current?.apply()}
-                      disabled={!effectsState.canApply || effectsState.isPending}
-                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
-                    >
-                      {effectsState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("apply")}
-                    </button>
-                  </div>
-                </div>
-              )}
+                        // 최종 결과를 내 비디오에 저장
+                        const finalUrl = resultUrlRef.current;
+                        if (finalUrl) {
+                          try {
+                            await saveEditMutation.mutateAsync({
+                              result_url: finalUrl,
+                              edit_type: "edit",
+                              prompt: source?.name || "Edited video",
+                            });
+                            toast.success(t("saveSuccess"));
+                          } catch (err) {
+                            console.error("Save failed:", err, "finalUrl:", finalUrl);
+                            toast.error(err instanceof Error ? err.message : t("saveError"));
+                          }
+                        } else {
+                          console.warn("No resultUrl to save");
+                        }
 
-              {/* 하단 고정 액션 바 — crop */}
-              {activeTab === "crop" && source && (
-                <div className="shrink-0 px-5 pt-3 pb-4">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => cropPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
-                    >
-                      {t("reset")}
-                    </button>
-                    <button
-                      onClick={() => cropPanelRef.current?.apply()}
-                      disabled={cropState.isOriginal || cropState.isPending}
+                        // 생성 완료 후 초기화
+                        effectsPanelRef.current?.reset();
+                        cropPanelRef.current?.reset();
+                        ratioPanelRef.current?.reset();
+                        rotatePanelRef.current?.reset();
+                        mergePanelRef.current?.reset();
+                        setPreviewSpeed(1);
+                        setResultUrl(null);
+                        setCropState({ isOriginal: true, isPending: false });
+                        setRotateState({ hasSelection: false, isPending: false });
+                        setRatioState({ canApply: false, isPending: false });
+                        setEffectsState({ canApply: false, isPending: false });
+                        setMergeState({ canApply: false, isPending: false });
+                        setSubTool(null);
+                        setActiveTab("trim");
+                      }}
+                      disabled={!(
+                        effectsState.canApply || !cropState.isOriginal || ratioState.canApply || rotateState.hasSelection || mergeState.canApply || !!resultUrl
+                      ) || effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
-                      {cropState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("applyCrop")}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 하단 고정 액션 바 — ratio */}
-              {activeTab === "ratio" && source && (
-                <div className="shrink-0 px-5 pt-3 pb-4">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => ratioPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
-                    >
-                      {t("reset")}
-                    </button>
-                    <button
-                      onClick={() => ratioPanelRef.current?.apply()}
-                      disabled={!ratioState.canApply || ratioState.isPending}
-                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
-                    >
-                      {ratioState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("apply")}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 하단 고정 액션 바 — creative */}
-              {activeTab === "creative" && source && (
-                <div className="shrink-0 px-5 pt-3 pb-4">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => creativePanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
-                    >
-                      {t("reset")}
-                    </button>
-                    <button
-                      onClick={() => creativePanelRef.current?.apply()}
-                      disabled={!creativeState.canApply || creativeState.isPending}
-                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
-                    >
-                      {creativeState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("apply")}
+                      {(effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending) && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("generate")}
+                      {" ✦ "}
+                      {Math.max(1, [effectsState.canApply, !cropState.isOriginal, ratioState.canApply, rotateState.hasSelection, mergeState.canApply, !!resultUrl].filter(Boolean).length)}
                     </button>
                   </div>
                 </div>
@@ -1708,40 +1750,245 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => filterPanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      onClick={() => { filterPanelRef.current?.reset(); setPreviewCssFilter(""); setFilterState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("filter"); }}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
                     <button
-                      onClick={() => filterPanelRef.current?.apply()}
+                      onClick={async () => {
+                        await filterPanelRef.current?.apply();
+                        const finalUrl = resultUrlRef.current;
+                        if (finalUrl) {
+                          try {
+                            await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "filter", prompt: source?.name || "Filter applied" });
+                            toast.success(t("saveSuccess"));
+                          } catch { toast.error(t("saveError")); }
+                        }
+                        filterPanelRef.current?.reset();
+                        setPreviewCssFilter("");
+                        setFilterState({ canApply: false, isPending: false });
+                        setResultUrl(null);
+                      }}
                       disabled={!filterState.canApply || filterState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {filterState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("apply")}
+                      {t("generate")} ✦ 1
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* 하단 고정 액션 바 — rotate */}
-              {activeTab === "rotate" && source && (
+              {/* 하단 고정 액션 바 — creative */}
+              {activeTab === "creative" && source && (
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => rotatePanelRef.current?.reset()}
-                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-200 hover:text-foreground active:opacity-80 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:hover:text-white"
+                      onClick={() => { creativePanelRef.current?.reset(); setPreviewCreativeOverlay(null); setPreviewCssFilter(""); setCreativeState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("filter"); }}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
                     </button>
                     <button
-                      onClick={() => rotatePanelRef.current?.apply()}
-                      disabled={!rotateState.hasSelection || rotateState.isPending}
+                      onClick={async () => {
+                        await creativePanelRef.current?.apply();
+                        const finalUrl = resultUrlRef.current;
+                        if (finalUrl) {
+                          try {
+                            await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "creative_preset", prompt: source?.name || "Creative Preset" });
+                            toast.success(t("saveSuccess"));
+                          } catch { toast.error(t("saveError")); }
+                        }
+                        creativePanelRef.current?.reset();
+                        setPreviewCreativeOverlay(null);
+                        setPreviewCssFilter("");
+                        setCreativeState({ canApply: false, isPending: false });
+                        setResultUrl(null);
+                      }}
+                      disabled={!creativeState.canApply || creativeState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
-                      {rotateState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("applyRotate")}
+                      {creativeState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("generate")} ✦ 1
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — subtitles */}
+              {activeTab === "subtitles" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await subtitlesPanelRef.current?.apply();
+                        const finalUrl = resultUrlRef.current;
+                        if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "subtitles", prompt: source?.name || "Subtitles" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
+                        subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                      }}
+                      disabled={!subtitlesState.canApply || subtitlesState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {subtitlesState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("generate")} ✦ 1
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — text overlay */}
+              {activeTab === "text" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await textOverlayPanelRef.current?.apply();
+                        const finalUrl = resultUrlRef.current;
+                        if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "text_overlay", prompt: source?.name || "Text overlay" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
+                        textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                      }}
+                      disabled={!textOverlayState.canApply || textOverlayState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {textOverlayState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("generate")} ✦ 1
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — watermark */}
+              {activeTab === "watermark" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await watermarkPanelRef.current?.apply();
+                        const finalUrl = resultUrlRef.current;
+                        if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "watermark", prompt: source?.name || "Watermark" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
+                        watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                      }}
+                      disabled={!watermarkState.canApply || watermarkState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {watermarkState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("generate")} ✦ 1
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — gif */}
+              {activeTab === "gif" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await gifPanelRef.current?.apply();
+                        gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                      }}
+                      disabled={!gifState.canApply || gifState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {gifState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("generate")} ✦ 1
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — scene */}
+              {activeTab === "scene" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await sceneSplitPanelRef.current?.apply();
+                        sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                      }}
+                      disabled={!sceneSplitState.canApply || sceneSplitState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {sceneSplitState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("generate")} ✦ 1
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — thumbnail */}
+              {activeTab === "thumbnail" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await thumbnailPanelRef.current?.apply();
+                        thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                      }}
+                      disabled={!thumbnailState.canApply || thumbnailState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {thumbnailState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("generate")} ✦ 1
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 고정 액션 바 — ai */}
+              {mainTab === "ai" && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => aiEditPanelRef.current?.reset()}
+                      className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                    >
+                      {t("reset")}
+                    </button>
+                    <button
+                      onClick={() => aiEditPanelRef.current?.apply()}
+                      disabled={!aiEditState.canApply || aiEditState.isPending}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {aiEditState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("generate")} ✦ 1
                     </button>
                   </div>
                 </div>
@@ -1792,36 +2039,34 @@ export function VideoEditWorkspace() {
 
       {/* 탭 전환 확인 모달 */}
       {isTabConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60">
-          <div className="mx-4 w-full max-w-sm space-y-4 rounded-2xl border border-neutral-300 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-900">
-            <h3 className="text-base font-semibold text-foreground">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 backdrop-blur-sm">
+          <div className="w-[340px] rounded-2xl border border-neutral-200 bg-background p-6 shadow-2xl dark:border-neutral-800">
+            <h3 className="text-[16px] font-semibold text-foreground">
               {t("tabSwitchConfirmTitle")}
             </h3>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
               {t("tabSwitchConfirmMessage")}
             </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1"
+            <div className="mt-5 flex gap-2">
+              <button
                 onClick={cancelTabSwitch}
+                className="flex-1 cursor-pointer rounded-xl bg-neutral-100 py-2.5 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
               >
                 {t("tabSwitchCancel")}
-              </Button>
-              <Button
-                variant="destructive"
-                className="flex-1"
+              </button>
+              <button
                 onClick={confirmTabSwitch}
+                className="flex-1 cursor-pointer rounded-xl bg-red-500 py-2.5 text-[14px] font-[500] text-white transition-colors hover:bg-red-600"
               >
                 {t("tabSwitchConfirm")}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* 비교 크게 보기 모달 */}
-      {compareModal && resultUrl && source?.url && (
+      {false && compareModal && resultUrl && source?.url && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="relative flex h-[90vh] w-[95vw] max-w-7xl flex-col gap-3 rounded-2xl bg-background p-4">
             {/* 닫기 */}

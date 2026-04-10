@@ -1,24 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import {
   FileUp,
-  Loader2,
   MessageCircle,
   Plus,
   Trash2,
-  Type,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { useNotifyOnComplete } from "@/hooks/useNotifyOnComplete";
 import { useSubtitlesVideo } from "@/hooks/queries/useVideoEdit";
 
-import type { SubtitlesPanelProps } from "./types";
+import type { SubtitlesPanelProps, SubtitlesPanelRef } from "./types";
 
 interface SubtitleEntry {
   id: string;
@@ -52,92 +47,42 @@ const STYLE_PRESETS: StylePreset[] = [
   {
     id: "default",
     nameKey: "presetDefault",
-    style: {
-      fontSize: 36,
-      color: "white",
-      borderW: 2,
-      borderColor: "black@0.6",
-      boxColor: null,
-      position: "bottom",
-    },
+    style: { fontSize: 36, color: "white", borderW: 2, borderColor: "black@0.6", boxColor: null, position: "bottom" },
     preview: { bg: "transparent", text: "#ffffff", border: "#000000" },
   },
   {
     id: "youtube",
     nameKey: "presetYoutube",
-    style: {
-      fontSize: 42,
-      color: "yellow",
-      borderW: 3,
-      borderColor: "black@0.8",
-      boxColor: null,
-      position: "bottom",
-    },
+    style: { fontSize: 42, color: "yellow", borderW: 3, borderColor: "black@0.8", boxColor: null, position: "bottom" },
     preview: { bg: "transparent", text: "#eab308", border: "#000000" },
   },
   {
     id: "news",
     nameKey: "presetNews",
-    style: {
-      fontSize: 32,
-      color: "white",
-      borderW: 0,
-      borderColor: "black@0",
-      boxColor: "black@0.7",
-      position: "bottom",
-    },
-    preview: {
-      bg: "transparent",
-      text: "#ffffff",
-      border: "transparent",
-      boxBg: "rgba(0,0,0,0.7)",
-    },
+    style: { fontSize: 32, color: "white", borderW: 0, borderColor: "black@0", boxColor: "black@0.7", position: "bottom" },
+    preview: { bg: "transparent", text: "#ffffff", border: "transparent", boxBg: "rgba(0,0,0,0.7)" },
   },
   {
     id: "neon",
     nameKey: "presetNeon",
-    style: {
-      fontSize: 40,
-      color: "#39ff14",
-      borderW: 2,
-      borderColor: "#ff00ff@0.8",
-      boxColor: null,
-      position: "center",
-    },
+    style: { fontSize: 40, color: "#39ff14", borderW: 2, borderColor: "#ff00ff@0.8", boxColor: null, position: "center" },
     preview: { bg: "transparent", text: "#39ff14", border: "#ff00ff" },
   },
   {
     id: "minimal",
     nameKey: "presetMinimal",
-    style: {
-      fontSize: 24,
-      color: "white",
-      borderW: 0,
-      borderColor: "black@0",
-      boxColor: "black@0.4",
-      position: "bottom",
-    },
-    preview: {
-      bg: "transparent",
-      text: "#ffffff",
-      border: "transparent",
-      boxBg: "rgba(0,0,0,0.4)",
-    },
+    style: { fontSize: 24, color: "white", borderW: 0, borderColor: "black@0", boxColor: "black@0.4", position: "bottom" },
+    preview: { bg: "transparent", text: "#ffffff", border: "transparent", boxBg: "rgba(0,0,0,0.4)" },
   },
   {
     id: "shorts",
     nameKey: "presetShorts",
-    style: {
-      fontSize: 52,
-      color: "white",
-      borderW: 4,
-      borderColor: "#eab308@0.9",
-      boxColor: null,
-      position: "center",
-    },
+    style: { fontSize: 52, color: "white", borderW: 4, borderColor: "#eab308@0.9", boxColor: null, position: "center" },
     preview: { bg: "transparent", text: "#ffffff", border: "#eab308" },
   },
 ];
+
+const COLOR_PRESETS = ["white", "black", "#ef4444", "#eab308", "#39ff14", "#3b82f6"] as const;
 
 let nextId = Date.now();
 
@@ -145,49 +90,27 @@ let nextId = Date.now();
 function parseTimecode(tc: string): number {
   const cleaned = tc.trim().replace(",", ".");
   const parts = cleaned.split(":");
-  if (parts.length === 3) {
-    return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
-  }
-  if (parts.length === 2) {
-    return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
-  }
+  if (parts.length === 3) return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+  if (parts.length === 2) return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
   return parseFloat(cleaned) || 0;
 }
 
 /** SRT/VTT 파일 텍스트를 SubtitleEntry 배열로 파싱 */
 function parseSubtitleFile(content: string): SubtitleEntry[] {
   const entries: SubtitleEntry[] = [];
-  // SRT/VTT 공통: "시간 --> 시간" 패턴으로 분리
   const blocks = content.split(/\n\s*\n/).filter((b) => b.trim());
-
   for (const block of blocks) {
     const lines = block.trim().split("\n");
-    // "WEBVTT" 헤더 스킵
     if (lines[0]?.trim() === "WEBVTT") continue;
-
-    // "-->" 포함하는 줄 찾기
     const timeLine = lines.find((l) => l.includes("-->"));
     if (!timeLine) continue;
-
     const [startStr, endStr] = timeLine.split("-->").map((s) => s.trim());
     const startTime = parseTimecode(startStr);
     const endTime = parseTimecode(endStr);
-
-    // 시간 줄 이후의 텍스트
     const timeIdx = lines.indexOf(timeLine);
-    const text = lines
-      .slice(timeIdx + 1)
-      .join("\n")
-      .replace(/<[^>]+>/g, "") // HTML 태그 제거
-      .trim();
-
+    const text = lines.slice(timeIdx + 1).join("\n").replace(/<[^>]+>/g, "").trim();
     if (text) {
-      entries.push({
-        id: String(nextId++),
-        text,
-        startTime: String(startTime),
-        endTime: String(endTime),
-      });
+      entries.push({ id: String(nextId++), text, startTime: String(startTime), endTime: String(endTime) });
     }
   }
   return entries;
@@ -199,21 +122,20 @@ function formatTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-export function SubtitlesPanel({
+export const SubtitlesPanel = forwardRef<SubtitlesPanelRef, SubtitlesPanelProps>(function SubtitlesPanel({
   sourceUrl,
   duration,
   onSubtitlesApplied,
   onPreviewSubtitles,
   onDirty,
-}: SubtitlesPanelProps) {
+  onStateChange,
+}, ref) {
   const t = useTranslations("VideoEdit");
   const notify = useNotifyOnComplete();
 
   const [subtitles, setSubtitles] = useState<SubtitleEntry[]>([]);
   const [selectedPreset, setSelectedPreset] = useState("default");
-  const [style, setStyle] = useState<SubtitleStyle>(
-    STYLE_PRESETS[0].style,
-  );
+  const [style, setStyle] = useState<SubtitleStyle>(STYLE_PRESETS[0].style);
 
   // 자막/스타일 변경 시 프리뷰 업데이트
   useEffect(() => {
@@ -235,6 +157,19 @@ export function SubtitlesPanel({
   }, [subtitles, style, onPreviewSubtitles]);
 
   const subtitlesMutation = useSubtitlesVideo();
+
+  const canApply = !!sourceUrl && subtitles.length > 0 && subtitles.some((s) => s.text.trim()) && !subtitlesMutation.isPending;
+
+  const handleReset = useCallback(() => {
+    setSubtitles([]);
+    setSelectedPreset("default");
+    setStyle(STYLE_PRESETS[0].style);
+    onPreviewSubtitles?.([]);
+  }, [onPreviewSubtitles]);
+
+  useEffect(() => {
+    onStateChange?.({ canApply, isPending: subtitlesMutation.isPending });
+  }, [canApply, subtitlesMutation.isPending, onStateChange]);
 
   const handlePresetSelect = useCallback(
     (presetId: string) => {
@@ -274,19 +209,11 @@ export function SubtitlesPanel({
     const newId = String(nextId++);
     setSubtitles((prev) => [
       ...prev,
-      {
-        id: newId,
-        text: "",
-        startTime: "0",
-        endTime: String(Math.min(5, duration)),
-      },
+      { id: newId, text: "", startTime: "0", endTime: String(Math.min(5, duration)) },
     ]);
     onDirty?.();
-    // 새 자막의 텍스트 입력으로 포커스
     requestAnimationFrame(() => {
-      const el = document.querySelector<HTMLInputElement>(
-        `[data-subtitle-id="${newId}"]`,
-      );
+      const el = document.querySelector<HTMLInputElement>(`[data-subtitle-id="${newId}"]`);
       el?.focus();
       el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
@@ -302,9 +229,7 @@ export function SubtitlesPanel({
 
   const handleUpdate = useCallback(
     (id: string, field: keyof SubtitleEntry, value: string) => {
-      setSubtitles((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
-      );
+      setSubtitles((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
       onDirty?.();
     },
     [onDirty],
@@ -312,10 +237,8 @@ export function SubtitlesPanel({
 
   const handleApply = useCallback(async () => {
     if (!sourceUrl || subtitles.length === 0) return;
-
     const validSubs = subtitles.filter((s) => s.text.trim());
     if (validSubs.length === 0) return;
-
     try {
       const result = await subtitlesMutation.mutateAsync({
         source_url: sourceUrl,
@@ -339,84 +262,69 @@ export function SubtitlesPanel({
     } catch {
       toast.error(t("subtitlesError"));
     }
-  }, [
-    sourceUrl,
-    subtitles,
-    style,
-    subtitlesMutation,
-    onSubtitlesApplied,
-    t,
-    notify,
-  ]);
+  }, [sourceUrl, subtitles, style, subtitlesMutation, onSubtitlesApplied, onPreviewSubtitles, t, notify]);
+
+  useImperativeHandle(ref, () => ({ reset: handleReset, apply: handleApply }), [handleReset, handleApply]);
 
   return (
-    <div className="space-y-3">
-      {/* 자막 목록 */}
+    <div className="flex flex-1 flex-col gap-5">
+      {/* 자막 추가 */}
+      <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("addSubtitle")}</p>
       {subtitles.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-neutral-300 py-6 dark:border-neutral-700">
-          <MessageCircle className="size-6 text-neutral-400" />
-          <span className="text-xs text-neutral-500">{t("noSubtitles")}</span>
+        <div className="flex flex-col items-center gap-2 rounded-xl bg-neutral-50 py-8 dark:bg-neutral-800/60">
+          <MessageCircle className="size-6 text-muted-foreground/40" />
+          <span className="text-[12px] text-muted-foreground/60">{t("noSubtitles")}</span>
         </div>
       ) : (
-        <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
+        <div className="space-y-2">
           {subtitles.map((sub, idx) => (
             <div
               key={sub.id}
-              className="space-y-1.5 rounded-lg border border-neutral-200 bg-neutral-50 p-2 dark:border-neutral-700 dark:bg-neutral-900/50"
+              className="space-y-1.5 rounded-xl bg-neutral-50 p-3 dark:bg-neutral-800/60"
             >
               <div className="flex items-center gap-1.5">
-                <span className="w-5 text-center text-[10px] font-medium text-neutral-400">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-foreground text-[10px] font-[600] text-background">
                   {idx + 1}
                 </span>
-                <Input
+                <input
                   data-subtitle-id={sub.id}
                   value={sub.text}
-                  onChange={(e) =>
-                    handleUpdate(sub.id, "text", e.target.value)
-                  }
+                  onChange={(e) => handleUpdate(sub.id, "text", e.target.value)}
                   placeholder={t("subtitleText")}
-                  className="h-7 flex-1 text-xs"
                   maxLength={200}
+                  className="h-8 flex-1 rounded-lg bg-white px-2.5 text-[12px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none dark:bg-neutral-900/60"
                 />
                 <button
                   onClick={() => handleRemove(sub.id)}
-                  className="flex size-7 shrink-0 items-center justify-center rounded text-neutral-400 transition-colors hover:text-red-500"
+                  className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground/40 transition-colors hover:text-red-500"
                 >
                   <Trash2 className="size-3.5" />
                 </button>
               </div>
-              <div className="flex items-center gap-1.5 pl-5">
-                <span className="text-[10px] text-neutral-500">
-                  {t("subtitleStartTime")}
-                </span>
-                <Input
+              <div className="flex items-center gap-1.5 pl-6">
+                <span className="text-[11px] text-muted-foreground/60">{t("subtitleStartTime")}</span>
+                <input
                   type="number"
                   value={sub.startTime}
-                  onChange={(e) =>
-                    handleUpdate(sub.id, "startTime", e.target.value)
-                  }
-                  className="h-6 w-16 text-center text-[11px]"
+                  onChange={(e) => handleUpdate(sub.id, "startTime", e.target.value)}
+                  className="h-6 w-14 rounded-md bg-white px-1.5 text-center text-[11px] tabular-nums text-foreground focus:outline-none dark:bg-neutral-900/60"
                   min={0}
                   max={duration}
                   step={0.1}
                 />
-                <span className="text-[10px] text-neutral-500">
-                  {t("subtitleEndTime")}
-                </span>
-                <Input
+                <span className="text-[11px] text-muted-foreground/60">{t("subtitleEndTime")}</span>
+                <input
                   type="number"
                   value={sub.endTime}
-                  onChange={(e) =>
-                    handleUpdate(sub.id, "endTime", e.target.value)
-                  }
-                  className="h-6 w-16 text-center text-[11px]"
+                  onChange={(e) => handleUpdate(sub.id, "endTime", e.target.value)}
+                  className="h-6 w-14 rounded-md bg-white px-1.5 text-center text-[11px] tabular-nums text-foreground focus:outline-none dark:bg-neutral-900/60"
                   min={0}
                   max={duration}
                   step={0.1}
                 />
-                <span className="ml-auto text-[10px] tabular-nums text-neutral-400">
-                  {formatTime(parseFloat(sub.startTime) || 0)} –{" "}
-                  {formatTime(parseFloat(sub.endTime) || 0)}
+                <span className="ml-auto text-[10px] tabular-nums text-muted-foreground/40">
+                  {formatTime(parseFloat(sub.startTime) || 0)} – {formatTime(parseFloat(sub.endTime) || 0)}
                 </span>
               </div>
             </div>
@@ -425,62 +333,44 @@ export function SubtitlesPanel({
       )}
 
       {/* 자막 추가 / 파일 업로드 */}
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1 gap-1.5"
+      <div className="grid grid-cols-2 gap-2">
+        <button
           onClick={handleAdd}
+          className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-neutral-50 py-2.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
         >
-          <Plus className="size-3.5" />
+          <Plus className="size-4" strokeWidth={1.5} />
           {t("addSubtitle")}
-        </Button>
-        <label className="flex-1 cursor-pointer">
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-full gap-1.5"
-            nativeButton={false}
-            render={<span />}
-          >
-            <FileUp className="size-3.5" />
-            {t("uploadSubtitleFile")}
-          </Button>
-          <input
-            type="file"
-            accept=".srt,.vtt,.txt"
-            className="hidden"
-            onChange={handleFileUpload}
-          />
+        </button>
+        <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-neutral-50 py-2.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white">
+          <FileUp className="size-4" strokeWidth={1.5} />
+          {t("uploadSubtitleFile")}
+          <input type="file" accept=".srt,.vtt,.txt" className="hidden" onChange={handleFileUpload} />
         </label>
+      </div>
       </div>
 
       {/* 스타일 프리셋 */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5">
-          <Type className="size-3.5 text-neutral-400" />
-          <span className="text-xs font-medium">{t("subtitleStylePreset")}</span>
-        </div>
-        <div className="grid grid-cols-3 gap-1.5">
+      <div className="space-y-2.5">
+        <p className="text-[13px] font-[600] text-foreground">{t("subtitleStylePreset")}</p>
+        <div className="grid grid-cols-3 gap-2">
           {STYLE_PRESETS.map((preset) => (
             <button
               key={preset.id}
               onClick={() => handlePresetSelect(preset.id)}
-              className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-colors ${
+              className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-lg py-2.5 text-[11px] font-[500] transition-all active:opacity-80 ${
                 selectedPreset === preset.id
-                  ? "border-primary bg-primary/5"
-                  : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-500"
+                  ? "bg-foreground text-background"
+                  : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
               }`}
             >
-              <div className="flex h-7 w-full items-center justify-center rounded bg-neutral-200 dark:bg-neutral-800">
+              <div className="flex h-6 items-center justify-center">
                 <span
                   className="truncate text-[10px] font-bold leading-none"
                   style={{
-                    color: preset.preview.text,
-                    WebkitTextStroke: preset.preview.border !== "transparent"
-                      ? `1px ${preset.preview.border}`
-                      : undefined,
-                    backgroundColor: preset.preview.boxBg,
+                    color: selectedPreset === preset.id ? "inherit" : preset.preview.text,
+                    WebkitTextStroke: preset.preview.border !== "transparent" && selectedPreset !== preset.id
+                      ? `1px ${preset.preview.border}` : undefined,
+                    backgroundColor: preset.preview.boxBg && selectedPreset !== preset.id ? preset.preview.boxBg : undefined,
                     padding: preset.preview.boxBg ? "1px 4px" : undefined,
                     borderRadius: preset.preview.boxBg ? "2px" : undefined,
                   }}
@@ -488,50 +378,39 @@ export function SubtitlesPanel({
                   Aa가나
                 </span>
               </div>
-              <span className="text-[10px] text-neutral-500">
-                {t(preset.nameKey)}
-              </span>
+              {t(preset.nameKey)}
             </button>
           ))}
         </div>
       </div>
 
       {/* 커스텀 설정 */}
-      <div className="space-y-2 rounded-lg border border-neutral-200 p-2 dark:border-neutral-700">
+      <div className="space-y-4">
         {/* 폰트 크기 */}
-        <div className="flex items-center gap-2">
-          <span className="w-16 text-[11px] text-neutral-500">
-            {t("fontSize")}
-          </span>
-          <SliderPrimitive.Root
-            value={style.fontSize}
-            onValueChange={(v) => {
-              setStyle((s) => ({ ...s, fontSize: v as number }));
-              setSelectedPreset("custom");
-            }}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-[600] text-foreground">{t("fontSize")}</span>
+            <span className="text-[12px] font-[500] tabular-nums text-muted-foreground">{style.fontSize}px</span>
+          </div>
+          <input
+            type="range"
             min={10}
             max={100}
             step={2}
-            className="flex-1"
-          >
-            <SliderPrimitive.Control className="relative flex h-4 w-full cursor-pointer items-center">
-              <SliderPrimitive.Track className="h-1 w-full rounded-full bg-neutral-200 dark:bg-neutral-800">
-                <SliderPrimitive.Indicator className="rounded-full bg-primary" />
-              </SliderPrimitive.Track>
-              <SliderPrimitive.Thumb className="block size-3 rounded-full border-2 border-primary bg-background shadow-sm" />
-            </SliderPrimitive.Control>
-          </SliderPrimitive.Root>
-          <span className="w-8 text-right text-[11px] tabular-nums text-neutral-400">
-            {style.fontSize}
-          </span>
+            value={style.fontSize}
+            onChange={(e) => {
+              setStyle((s) => ({ ...s, fontSize: Number(e.target.value) }));
+              setSelectedPreset("custom");
+            }}
+            className="filter-slider h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-300 accent-white dark:bg-neutral-700"
+            style={{ "--slider-pct": `${((style.fontSize - 10) / 90) * 100}%` } as React.CSSProperties}
+          />
         </div>
 
         {/* 위치 */}
-        <div className="flex items-center gap-2">
-          <span className="w-16 text-[11px] text-neutral-500">
-            {t("subtitlePosition")}
-          </span>
-          <div className="flex gap-1">
+        <div className="space-y-2.5">
+          <p className="text-[13px] font-[600] text-foreground">{t("subtitlePosition")}</p>
+          <div className="flex flex-wrap gap-2">
             {(["top", "center", "bottom"] as const).map((pos) => (
               <button
                 key={pos}
@@ -539,10 +418,10 @@ export function SubtitlesPanel({
                   setStyle((s) => ({ ...s, position: pos }));
                   setSelectedPreset("custom");
                 }}
-                className={`rounded px-2 py-0.5 text-[10px] transition-colors ${
+                className={`cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
                   style.position === pos
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                    ? "bg-foreground text-background"
+                    : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                 }`}
               >
                 {t(`position_${pos}`)}
@@ -552,21 +431,19 @@ export function SubtitlesPanel({
         </div>
 
         {/* 색상 */}
-        <div className="flex items-center gap-2">
-          <span className="w-16 text-[11px] text-neutral-500">
-            {t("textColor")}
-          </span>
-          <div className="flex items-center gap-1">
-            {(["white", "black", "#ef4444", "#eab308", "#39ff14", "#3b82f6"] as const).map((c) => (
+        <div className="space-y-2.5">
+          <p className="text-[13px] font-[600] text-foreground">{t("textColor")}</p>
+          <div className="flex items-center gap-2">
+            {COLOR_PRESETS.map((c) => (
               <button
                 key={c}
                 onClick={() => {
                   setStyle((s) => ({ ...s, color: c }));
                   setSelectedPreset("custom");
                 }}
-                className={`size-5 rounded-full border-2 transition-colors ${
+                className={`size-7 cursor-pointer rounded-full border-2 transition-all ${
                   style.color === c
-                    ? "border-primary"
+                    ? "border-foreground scale-110"
                     : "border-neutral-300 hover:border-neutral-500 dark:border-neutral-700 dark:hover:border-neutral-500"
                 }`}
                 style={{ backgroundColor: c }}
@@ -579,32 +456,12 @@ export function SubtitlesPanel({
                 setStyle((s) => ({ ...s, color: e.target.value }));
                 setSelectedPreset("custom");
               }}
-              className="size-5 cursor-pointer rounded-full border-2 border-neutral-300 bg-transparent p-0 dark:border-neutral-700"
+              className="size-7 cursor-pointer rounded-full border-2 border-neutral-300 bg-transparent p-0 dark:border-neutral-700"
             />
           </div>
         </div>
       </div>
 
-      {/* 적용 버튼 */}
-      <Button
-        size="sm"
-        variant="outline"
-        className="w-full gap-1.5"
-        onClick={handleApply}
-        disabled={
-          !sourceUrl ||
-          subtitles.length === 0 ||
-          subtitles.every((s) => !s.text.trim()) ||
-          subtitlesMutation.isPending
-        }
-      >
-        {subtitlesMutation.isPending ? (
-          <Loader2 className="size-3.5 animate-spin" />
-        ) : (
-          <MessageCircle className="size-3.5" />
-        )}
-        {t("applySubtitles")}
-      </Button>
     </div>
   );
-}
+});

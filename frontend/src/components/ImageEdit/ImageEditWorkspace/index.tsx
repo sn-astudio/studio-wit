@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Scissors, SlidersHorizontal, Sparkle } from "lucide-react";
+import { Scissors, SlidersHorizontal, Sparkle, Wand2 } from "lucide-react";
 
 import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
@@ -31,7 +31,7 @@ import { AIEditPanel } from "../AIEditPanel";
 import type { EditTab, ImageSource, ImageEditWorkspaceProps } from "./types";
 
 const TABS: { id: EditTab; labelKey: string; icon: typeof Scissors }[] = [
-  { id: "edit", labelKey: "tabEdit", icon: Scissors },
+  { id: "edit", labelKey: "tabEdit", icon: Wand2 },
   { id: "filter", labelKey: "tabFilter", icon: SlidersHorizontal },
   { id: "ai", labelKey: "tabAI", icon: Sparkle },
 ];
@@ -388,7 +388,7 @@ export function ImageEditWorkspace({
                 onClick={() => toast(t("mobileEditSoon"))}
                 className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-foreground py-3 text-[14px] font-[600] text-background transition-colors hover:opacity-90 sm:hidden"
               >
-                <Scissors className="size-4" />
+                <Wand2 className="size-4" />
                 {t("tabEdit")}
               </button>
             )}

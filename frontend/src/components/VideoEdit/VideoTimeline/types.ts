@@ -7,4 +7,5 @@ export interface VideoTimelineProps {
   onTrimStartChange: (time: number) => void;
   onTrimEndChange: (time: number) => void;
   onSeek: (time: number) => void;
+  onHandleDragging?: (isDragging: boolean) => void;
 }
