@@ -385,7 +385,7 @@ export function ImageEditWorkspace({
             {source && (
               <button
                 onClick={() => toast(t("mobileEditSoon"))}
-                className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-foreground py-3 text-[14px] font-[600] text-background transition-colors hover:opacity-90 sm:hidden"
+                className="mt-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-foreground py-3 text-[14px] font-[600] text-background transition-colors hover:opacity-90 sm:hidden"
               >
                 <Wand2 className="size-4" />
                 {t("tabEdit")}

@@ -429,7 +429,7 @@
 
 /* ── Sonner 토스트 위치 보정 ── */
 [data-sonner-toaster] {
-  --offset: 76px !important;
+  --offset: calc(76px + env(safe-area-inset-top, 0px)) !important;
 }
 
 /* ── Sonner 토스트 hover 시 일시정지 방지 ── */

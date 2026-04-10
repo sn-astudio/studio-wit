@@ -248,9 +248,11 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
             {/* Options bar */}
             <div className="relative">
               <div className="overflow-x-auto scrollbar-none px-3.5 pb-3.5 sm:px-5 sm:pb-[20px]">
-                <OptionsBar mode={mode} />
+                <div className="flex w-max items-center gap-0">
+                  <OptionsBar mode={mode} />
+                  <div className="w-3.5 shrink-0 sm:w-0" />
+                </div>
               </div>
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white dark:from-neutral-950/85 sm:hidden" />
             </div>
             </div>{/* end left */}
 

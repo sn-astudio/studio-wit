@@ -57,8 +57,6 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
       });
       setPendingResult(result.result_url);
       onRotateApplied?.(result.result_url);
-      toast.success(t("rotateApplied"));
-      notify(t("rotateApplied"));
       handleReset();
     } catch {
       toast.error(t("effectError"));

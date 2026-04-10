@@ -390,7 +390,6 @@ export const CreativePresetPanel = forwardRef<CreativePresetPanelRef, CreativePr
         preset: selectedPreset,
         params: fieldValues,
       });
-      toast.success(t("presetApplied"));
       // 적용 성공 시 프리뷰 클리어
       onPreviewOverlay?.(null);
       onPreviewFilter?.("");

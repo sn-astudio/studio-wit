@@ -159,8 +159,8 @@
     "description": "Generate videos with AI."
   },
   "PromptInput": {
-    "placeholder": "Describe your image...",
-    "placeholderVideo": "Describe the video you want to create...",
+    "placeholder": "Describe your image",
+    "placeholderVideo": "Describe your video",
     "submit": "Generate",
     "attachImage": "Attach image",
     "removeImage": "Remove image",
@@ -358,7 +358,10 @@
     "selectToolDesc": "Select a tool to edit",
     "captureFrame": "Capture Frame",
     "captureError": "Failed to capture frame",
-    "aiPromptPlaceholder": "Describe the video to generate from this frame...",
+    "aiPromptPlaceholder": "Describe the video to generate from this frame",
+    "negativePromptLabel": "Negative Prompt",
+    "negativePromptPlaceholder": "Enter elements to exclude",
+    "cfgScaleLabel": "CFG Scale",
     "aiGenerate": "AI Generate",
     "aiGenerateStarted": "AI video generation started",
     "aiGenerateError": "AI generation failed",

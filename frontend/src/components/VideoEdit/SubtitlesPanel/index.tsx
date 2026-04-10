@@ -257,8 +257,6 @@ export const SubtitlesPanel = forwardRef<SubtitlesPanelRef, SubtitlesPanelProps>
       onSubtitlesApplied?.(result.result_url);
       onPreviewSubtitles?.([]);
       setSubtitles([]);
-      toast.success(t("subtitlesApplied"));
-      notify(t("subtitlesApplied"));
     } catch {
       toast.error(t("subtitlesError"));
     }

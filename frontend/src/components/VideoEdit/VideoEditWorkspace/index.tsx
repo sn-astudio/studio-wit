@@ -1045,7 +1045,7 @@ export function VideoEditWorkspace() {
           {source && (
             <button
               onClick={() => toast(t("mobileEditSoon"))}
-              className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-foreground py-3 text-[14px] font-[600] text-background transition-colors hover:opacity-90 sm:hidden"
+              className="mt-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-foreground py-3 text-[14px] font-[600] text-background transition-colors hover:opacity-90 sm:hidden"
             >
               <Scissors className="size-4" />
               {t("tabEdit")}
@@ -1715,7 +1715,8 @@ export function VideoEditWorkspace() {
                           console.warn("No resultUrl to save");
                         }
 
-                        // 생성 완료 후 초기화
+                        // 생성 완료 후: 결과 영상을 새 소스로 교체
+                        const newSourceUrl = resultUrlRef.current;
                         effectsPanelRef.current?.reset();
                         cropPanelRef.current?.reset();
                         ratioPanelRef.current?.reset();
@@ -1730,6 +1731,19 @@ export function VideoEditWorkspace() {
                         setMergeState({ canApply: false, isPending: false });
                         setSubTool(null);
                         setActiveTab("trim");
+                        setPreviewCssFilter("");
+                        setPreviewTextOverlay(null);
+                        setPreviewWatermark(null);
+                        setIsPanelDirty(false);
+                        if (newSourceUrl) {
+                          setSource({
+                            url: newSourceUrl,
+                            duration: source?.duration ?? 0,
+                            width: source?.width ?? 0,
+                            height: source?.height ?? 0,
+                            name: source?.name || "Edited video",
+                          });
+                        }
                       }}
                       disabled={!(
                         effectsState.canApply || !cropState.isOriginal || ratioState.canApply || rotateState.hasSelection || mergeState.canApply || !!resultUrl
@@ -1769,6 +1783,10 @@ export function VideoEditWorkspace() {
                         setPreviewCssFilter("");
                         setFilterState({ canApply: false, isPending: false });
                         setResultUrl(null);
+                        setIsPanelDirty(false);
+                        if (finalUrl) {
+                          setSource({ url: finalUrl, duration: source?.duration ?? 0, width: source?.width ?? 0, height: source?.height ?? 0, name: source?.name || "Filtered video" });
+                        }
                       }}
                       disabled={!filterState.canApply || filterState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
@@ -1805,6 +1823,10 @@ export function VideoEditWorkspace() {
                         setPreviewCssFilter("");
                         setCreativeState({ canApply: false, isPending: false });
                         setResultUrl(null);
+                        setIsPanelDirty(false);
+                        if (finalUrl) {
+                          setSource({ url: finalUrl, duration: source?.duration ?? 0, width: source?.width ?? 0, height: source?.height ?? 0, name: source?.name || "Creative preset" });
+                        }
                       }}
                       disabled={!creativeState.canApply || creativeState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
@@ -1831,7 +1853,8 @@ export function VideoEditWorkspace() {
                         await subtitlesPanelRef.current?.apply();
                         const finalUrl = resultUrlRef.current;
                         if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "subtitles", prompt: source?.name || "Subtitles" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
-                        subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                        subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setIsPanelDirty(false); setSubTool(null); setActiveTab("trim");
+                        if (finalUrl) { setSource({ url: finalUrl, duration: source?.duration ?? 0, width: source?.width ?? 0, height: source?.height ?? 0, name: source?.name || "Subtitles" }); }
                       }}
                       disabled={!subtitlesState.canApply || subtitlesState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
@@ -1858,7 +1881,8 @@ export function VideoEditWorkspace() {
                         await textOverlayPanelRef.current?.apply();
                         const finalUrl = resultUrlRef.current;
                         if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "text_overlay", prompt: source?.name || "Text overlay" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
-                        textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                        textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setIsPanelDirty(false); setSubTool(null); setActiveTab("trim");
+                        if (finalUrl) { setSource({ url: finalUrl, duration: source?.duration ?? 0, width: source?.width ?? 0, height: source?.height ?? 0, name: source?.name || "Text overlay" }); }
                       }}
                       disabled={!textOverlayState.canApply || textOverlayState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
@@ -1885,7 +1909,8 @@ export function VideoEditWorkspace() {
                         await watermarkPanelRef.current?.apply();
                         const finalUrl = resultUrlRef.current;
                         if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "watermark", prompt: source?.name || "Watermark" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
-                        watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                        watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setIsPanelDirty(false); setSubTool(null); setActiveTab("trim");
+                        if (finalUrl) { setSource({ url: finalUrl, duration: source?.duration ?? 0, width: source?.width ?? 0, height: source?.height ?? 0, name: source?.name || "Watermark" }); }
                       }}
                       disabled={!watermarkState.canApply || watermarkState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"

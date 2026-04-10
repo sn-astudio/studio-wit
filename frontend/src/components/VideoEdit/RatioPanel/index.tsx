@@ -73,8 +73,6 @@ export const RatioPanel = forwardRef<RatioPanelRef, RatioPanelProps>(function Ra
         });
         setPendingResult(res.result_url);
         onRatioApplied?.(res.result_url);
-        toast.success(t("shortsSuccess"));
-        notify(t("shortsSuccess"));
       } catch {
         toast.error(t("shortsError"));
       } finally {
@@ -90,8 +88,6 @@ export const RatioPanel = forwardRef<RatioPanelRef, RatioPanelProps>(function Ra
         });
         setPendingResult(result.result_url);
         onRatioApplied?.(result.result_url);
-        toast.success(t("letterboxApplied"));
-        notify(t("letterboxApplied"));
       } catch {
         toast.error(t("cropError"));
       }
