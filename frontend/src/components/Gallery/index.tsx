@@ -1,19 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import NextImage from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
-import { Eye, Heart, ArrowRight } from "lucide-react";
+import { Eye, Heart, ArrowRight, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GALLERY_ITEMS, STYLE_TAG_KEYS } from "./const";
-import type { GalleryProps } from "./types";
+import type { GalleryItem, GalleryProps } from "./types";
 
 export function Gallery({ variant = "landing" }: GalleryProps) {
   const t = useTranslations("Gallery");
   const tCommon = useTranslations("MyPage");
   const isPage = variant === "page";
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const visibleItems = isPage
+    ? GALLERY_ITEMS.filter((item) => !selectedStyle || item.style === selectedStyle)
+    : GALLERY_ITEMS;
+  const lightboxItem: GalleryItem | null =
+    lightboxIndex != null ? visibleItems[lightboxIndex] ?? null : null;
+
+  const closeLightbox = useCallback(() => setLightboxIndex(null), []);
+  const goPrev = useCallback(
+    () => setLightboxIndex((i) => (i == null ? null : (i - 1 + visibleItems.length) % visibleItems.length)),
+    [visibleItems.length],
+  );
+  const goNext = useCallback(
+    () => setLightboxIndex((i) => (i == null ? null : (i + 1) % visibleItems.length)),
+    [visibleItems.length],
+  );
+
+  useEffect(() => {
+    if (lightboxIndex == null) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowRight") goNext();
+    };
+    document.addEventListener("keydown", handleKey);
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [lightboxIndex, closeLightbox, goPrev, goNext]);
 
   return (
     <section id="gallery" className={isPage ? "pb-32 pt-8" : "pb-32"}>
@@ -62,10 +103,11 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
 
         {isPage ? (
           <div className="columns-2 gap-2 lg:columns-4">
-            {GALLERY_ITEMS.filter((item) => !selectedStyle || item.style === selectedStyle).map((item) => (
+            {visibleItems.map((item, idx) => (
               <div
                 key={item.titleKey}
-                className={`group relative mb-2 cursor-pointer overflow-hidden rounded-2xl bg-neutral-900 ${item.className}`}
+                onClick={() => setLightboxIndex(idx)}
+                className="group relative mb-2 cursor-pointer overflow-hidden rounded-2xl bg-neutral-900 break-inside-avoid"
               >
                 {item.video ? (
                   <video
@@ -75,14 +117,14 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
                     loop
                     muted
                     playsInline
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <NextImage
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
                     src={item.image}
                     alt={t(item.titleKey)}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
                   />
                 )}
 
@@ -116,10 +158,11 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
           <>
             <div className="relative max-h-[700px] overflow-hidden sm:max-h-[850px]">
               <div className="columns-2 gap-2 lg:columns-4">
-                {GALLERY_ITEMS.map((item) => (
+                {GALLERY_ITEMS.map((item, idx) => (
                   <div
                     key={item.titleKey}
-                    className={`group relative mb-2 cursor-pointer overflow-hidden rounded-2xl bg-neutral-900 ${item.className}`}
+                    onClick={() => setLightboxIndex(idx)}
+                    className="group relative mb-2 cursor-pointer overflow-hidden rounded-2xl bg-neutral-900 break-inside-avoid"
                   >
                     {item.video ? (
                       <video
@@ -129,14 +172,14 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
                         loop
                         muted
                         playsInline
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      <NextImage
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
                         src={item.image}
                         alt={t(item.titleKey)}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
                       />
                     )}
 
@@ -177,6 +220,85 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
           </>
         )}
       </div>
+
+      {/* Lightbox */}
+      {lightboxItem &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/85 px-4 pt-16 pb-6 backdrop-blur-sm"
+            onClick={closeLightbox}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
+              className="absolute top-4 right-4 z-10 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20"
+              aria-label="Close"
+            >
+              <X className="size-5" />
+            </button>
+            {visibleItems.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); goPrev(); }}
+                  className="absolute left-4 top-1/2 z-10 flex size-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="size-6" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); goNext(); }}
+                  className="absolute right-4 top-1/2 z-10 flex size-12 -translate-y-1/2 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="size-6" />
+                </button>
+              </>
+            )}
+            <div
+              className="relative flex min-h-0 w-full max-w-[600px] flex-1 flex-col items-center justify-center gap-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden">
+                {lightboxItem.video ? (
+                  <video
+                    key={lightboxItem.video}
+                    src={lightboxItem.video}
+                    poster={lightboxItem.image}
+                    autoPlay
+                    loop
+                    controls
+                    playsInline
+                    className="block h-auto w-auto max-h-full max-w-full rounded-2xl"
+                  />
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={lightboxItem.image}
+                    alt={t(lightboxItem.titleKey)}
+                    className="block h-auto w-auto max-h-full max-w-full rounded-2xl"
+                  />
+                )}
+              </div>
+              <div className="w-full max-w-[600px] px-2 text-center">
+                <h3 className="text-[18px] font-[600] leading-snug text-white">
+                  {t(lightboxItem.titleKey)}
+                </h3>
+                <div className="mt-2 flex items-center justify-center gap-4 text-[13px] text-white/60">
+                  <span>@{lightboxItem.author}</span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="size-3.5" />
+                    {lightboxItem.views}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Heart className="size-3.5" />
+                    {lightboxItem.likes}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </section>
   );
 }
