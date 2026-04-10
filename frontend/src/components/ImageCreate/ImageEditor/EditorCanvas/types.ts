@@ -31,4 +31,5 @@ export interface EditorCanvasHandle {
   bakeOverlay: () => void;
   clearOverlay: () => void;
   hasOverlayContent: () => boolean;
+  restoreSnapshot: (index: number) => void;
 }

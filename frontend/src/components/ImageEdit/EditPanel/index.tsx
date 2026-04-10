@@ -257,7 +257,7 @@ export function EditPanel({
         canvasRef.current?.clearOverlay();
       }
       if (activeTool === "mosaic") {
-        canvasRef.current?.undo();
+        canvasRef.current?.restoreSnapshot(mosaicEntryRef.current);
       }
       if (activeTool === "crop") {
         setCropRect(null);
@@ -409,9 +409,8 @@ export function EditPanel({
           onApply={() => { canvasRef.current?.bakeOverlay(); setHasDrawingContent(false); mosaicEntryRef.current = historyIndex + 1; }}
           isMosaic
           onClear={() => {
-            canvasRef.current?.undo();
+            canvasRef.current?.restoreSnapshot(mosaicEntryRef.current);
             setHasDrawingContent(false);
-            mosaicEntryRef.current = historyIndex - 1;
           }}
           isEraser={false}
           hasContent={hasDrawingContent}

@@ -78,6 +78,7 @@ export function ImageEditPreview({
   onScrollToHistory,
   onRemoveImage,
   onFileDrop,
+  onImageSourceDrop,
 }: ImageEditPreviewProps) {
   const t = useTranslations("ImageEdit");
   const [isDragging, setIsDragging] = useState(false);
@@ -99,12 +100,26 @@ export function ImageEditPreview({
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
+
+      // 1) 로컬 파일 드롭
       const file = e.dataTransfer.files?.[0];
       if (file && file.type.startsWith("image/")) {
         onFileDrop?.(file);
+        return;
+      }
+
+      // 2) 앱 내부 이미지 소스 드래그
+      const raw = e.dataTransfer.getData("application/x-image-source");
+      if (raw) {
+        try {
+          const source = JSON.parse(raw) as { url: string; generationId?: string };
+          onImageSourceDrop?.(source);
+        } catch {
+          // ignore malformed data
+        }
       }
     },
-    [onFileDrop],
+    [onFileDrop, onImageSourceDrop],
   );
 
   if (!imageUrl) {
@@ -148,6 +163,9 @@ export function ImageEditPreview({
         backgroundImage: "radial-gradient(circle, var(--canvas-checker) 1px, transparent 1px)",
         backgroundSize: "16px 16px",
       }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       <EditorCanvas
         ref={canvasRef}
@@ -163,6 +181,18 @@ export function ImageEditPreview({
         resizePreviewScale={resizePreviewScale}
         drawEraserMode={drawEraserMode}
       />
+
+      {/* 드래그 앤 드롭 오버레이 */}
+      {isDragging && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-2 rounded-2xl bg-white/90 px-8 py-6 shadow-lg dark:bg-neutral-900/90">
+            <Upload className="size-8 text-neutral-600 dark:text-neutral-300" />
+            <p className="text-[15px] font-[600] text-neutral-700 dark:text-neutral-200">
+              {t("dropImage")}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 하단 중앙: 줌 컨트롤 */}
       <ZoomControls />

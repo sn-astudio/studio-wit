@@ -26,4 +26,5 @@ export interface ImageEditPreviewProps {
   onScrollToHistory?: () => void;
   onRemoveImage?: () => void;
   onFileDrop?: (file: File) => void;
+  onImageSourceDrop?: (source: { url: string; generationId?: string }) => void;
 }
