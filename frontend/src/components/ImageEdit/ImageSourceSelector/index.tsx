@@ -222,6 +222,15 @@ export function ImageSourceSelector({
                 key={gen.id}
                 className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60"
                 style={{ gridRow: `span ${rowSpan}` }}
+                draggable={!!gen.result_url}
+                onDragStart={(e) => {
+                  if (!gen.result_url) return;
+                  e.dataTransfer.setData(
+                    "application/x-image-source",
+                    JSON.stringify({ url: gen.result_url, generationId: gen.id }),
+                  );
+                  e.dataTransfer.effectAllowed = "copy";
+                }}
                 onClick={() => setLightboxGen(gen)}
               >
                 {gen.result_url && (
