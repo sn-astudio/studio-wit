@@ -5,7 +5,6 @@ export interface GalleryItem {
   likes: string;
   image: string;
   video?: string;
-  className: string;
   style: string;
 }
 

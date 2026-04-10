@@ -1,8 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import NextImage from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { Eye, Heart, ArrowRight, ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -120,7 +120,6 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
                     className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={item.image}
                     alt={t(item.titleKey)}
@@ -158,7 +157,7 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
           <>
             <div className="relative max-h-[700px] overflow-hidden sm:max-h-[850px]">
               <div className="columns-2 gap-2 lg:columns-4">
-                {GALLERY_ITEMS.map((item, idx) => (
+                {visibleItems.map((item, idx) => (
                   <div
                     key={item.titleKey}
                     onClick={() => setLightboxIndex(idx)}
@@ -175,7 +174,6 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
                         className="block h-auto w-full transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      /* eslint-disable-next-line @next/next/no-img-element */
                       <img
                         src={item.image}
                         alt={t(item.titleKey)}
@@ -221,7 +219,6 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
         )}
       </div>
 
-      {/* Lightbox */}
       {lightboxItem &&
         typeof document !== "undefined" &&
         createPortal(
@@ -271,7 +268,6 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
                     className="block h-auto w-auto max-h-full max-w-full rounded-2xl"
                   />
                 ) : (
-                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={lightboxItem.image}
                     alt={t(lightboxItem.titleKey)}
