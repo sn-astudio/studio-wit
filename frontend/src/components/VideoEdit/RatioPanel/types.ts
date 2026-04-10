@@ -1,5 +1,6 @@
 export interface RatioPanelProps {
   sourceUrl: string | null;
+  sourceAspectRatio?: string;
   onRatioApplied?: (resultUrl: string) => void;
   onSave?: (resultUrl: string, isPublic: boolean) => Promise<void>;
   onDirty?: () => void;

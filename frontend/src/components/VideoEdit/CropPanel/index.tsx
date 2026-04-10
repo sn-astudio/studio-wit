@@ -87,8 +87,6 @@ export const CropPanel = forwardRef<CropPanelRef, CropPanelProps>(function CropP
       });
       setPendingResult(result.result_url);
       onCropApplied?.(result.result_url);
-      toast.success(t("cropApplied"));
-      notify(t("cropApplied"));
     } catch {
       toast.error(t("cropError"));
     }
@@ -187,7 +185,7 @@ export const CropPanel = forwardRef<CropPanelRef, CropPanelProps>(function CropP
 
       {/* 비율 프리셋 */}
       <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("cropPreset")}</label>
+        <p className="text-[13px] font-[600] text-foreground">{t("cropPreset")}</p>
         <div className="flex flex-wrap gap-1.5">
           {RATIO_PRESETS.map((r) => (
             <button
@@ -207,34 +205,6 @@ export const CropPanel = forwardRef<CropPanelRef, CropPanelProps>(function CropP
       </div>
 
       {/* 결과 저장/다운로드 */}
-      {pendingResult && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 space-y-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-3 duration-200">
-          <div className="flex items-center gap-2">
-            <div className="flex size-5 items-center justify-center rounded-full bg-primary/20">
-              <Check className="size-3 text-primary" />
-            </div>
-            <p className="text-[12px] font-[500] text-primary">{t("cropResultReady")}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsPublicSave(!isPublicSave)}
-              className="flex items-center gap-1 rounded-lg bg-neutral-50 px-2.5 py-1.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
-            >
-              {isPublicSave ? <Globe className="size-3" /> : <Lock className="size-3" />}
-              {isPublicSave ? t("public") : t("private")}
-            </button>
-            <Button size="sm" className="flex-1 gap-1.5" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-              {t("saveToGallery")}
-            </Button>
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={handleDownload}>
-              <Download className="size-3.5" />
-              {t("download")}
-            </Button>
-          </div>
-        </div>
-      )}
 
     </div>
   );

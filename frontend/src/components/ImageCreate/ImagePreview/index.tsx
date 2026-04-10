@@ -153,7 +153,7 @@ export function ImagePreview({
   };
 
   return (
-    <div className="w-full">
+    <div className="flex w-full flex-1 flex-col">
       {/* 로딩 + 히스토리 동시 표시 가능 */}
       {hasHistory || isGenerating ? (
         <div className="grid auto-rows-[32px] grid-cols-2 gap-2 sm:auto-rows-[36px] sm:grid-cols-3" style={{ gridAutoFlow: "dense" }}>
@@ -307,7 +307,7 @@ export function ImagePreview({
         </div>
       ) : (
         /* 완전 빈 상태 */
-        <div className="flex flex-col items-center pt-[20vh]">
+        <div className="flex flex-1 flex-col items-center justify-center">
           <div className="flex size-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
             <ImagePlus className="size-6 text-neutral-400 dark:text-neutral-500" />
           </div>

@@ -33,7 +33,7 @@ function ZoomControls() {
 
   return (
     <div
-      className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1 rounded-full bg-black/50 px-1.5 py-1.5 backdrop-blur-md sm:left-1/2 sm:-translate-x-1/2"
+      className="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/50 px-1.5 py-1.5 backdrop-blur-md"
     >
       <button
         onClick={zoomOut}
@@ -197,8 +197,8 @@ export function ImageEditPreview({
       {/* 하단 중앙: 줌 컨트롤 */}
       <ZoomControls />
 
-      {/* 우하단 액션 버튼 */}
-      <div className="pointer-events-none absolute bottom-2.5 right-2.5 flex items-center gap-1.5">
+      {/* 우상단 액션 버튼 */}
+      <div className="pointer-events-none absolute top-2.5 right-2.5 flex items-center gap-1.5">
         <TooltipProvider delay={0} closeDelay={0}>
         <Tooltip>
           <TooltipTrigger
@@ -211,7 +211,7 @@ export function ImageEditPreview({
               </button>
             }
           />
-          <TooltipContent>{t("generateVideo")}</TooltipContent>
+          <TooltipContent side="bottom">{t("generateVideo")}</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger
@@ -224,7 +224,7 @@ export function ImageEditPreview({
               </button>
             }
           />
-          <TooltipContent>{t("download")}</TooltipContent>
+          <TooltipContent side="bottom">{t("download")}</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger
@@ -237,7 +237,7 @@ export function ImageEditPreview({
               </button>
             }
           />
-          <TooltipContent>{t("removeImage")}</TooltipContent>
+          <TooltipContent side="bottom">{t("removeImage")}</TooltipContent>
         </Tooltip>
         </TooltipProvider>
       </div>

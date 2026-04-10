@@ -245,7 +245,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
             key={id}
             onClick={() => handleModeChange(id)}
             className={cn(
-              "flex cursor-pointer flex-col items-center gap-2 rounded-xl py-3.5 text-[12px] font-[500] transition-all active:opacity-80",
+              "flex cursor-pointer flex-col items-center gap-2 rounded-lg py-3.5 text-[12px] font-[500] transition-all active:opacity-80",
               mode === id
                 ? "bg-foreground text-background"
                 : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white",
