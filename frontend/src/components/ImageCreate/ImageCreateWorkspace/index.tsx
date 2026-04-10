@@ -37,6 +37,15 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(
     null,
   );
+  const [promptInputHeight, setPromptInputHeight] = useState(240);
+  const promptInputWrapRef = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const update = () => setPromptInputHeight(node.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, []);
 
   const createMutation = useCreateGeneration();
 
@@ -166,8 +175,8 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
     <div className="relative bg-background">
       <div ref={contentTopRef} />
       {/* 프리뷰 + 히스토리 영역 (하단 입력창 높이만큼 패딩) */}
-      <div className="mx-auto w-full max-w-7xl px-4 md:px-6">
-        <div className="pt-5 pb-[240px] sm:pt-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col px-4 md:px-6" style={{ minHeight: `calc(100vh - 64px - ${promptInputHeight}px)` }}>
+        <div className="flex flex-1 flex-col pt-5 sm:pt-6">
           <ImagePreview
             imageUrl={imageUrl ?? undefined}
             isGenerating={isGenerating || createMutation.isPending}
@@ -187,7 +196,7 @@ export function ImageCreateWorkspace({ onSwitchToEdit }: ImageCreateWorkspacePro
 
       {/* PromptInput — 하단 플로팅 (createPortal로 body에 렌더링) */}
       {typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-x-0 bottom-0 z-10 overscroll-none pt-6 pb-5 sm:pb-6" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }} onTouchMove={(e) => e.stopPropagation()}>
+        <div ref={promptInputWrapRef} className="fixed inset-x-0 bottom-0 z-10 overscroll-none pt-6 pb-5 sm:pb-6" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }} onTouchMove={(e) => e.stopPropagation()}>
           <div className="mx-auto max-w-7xl px-3 md:px-6">
             <PromptInput
               mode="image"

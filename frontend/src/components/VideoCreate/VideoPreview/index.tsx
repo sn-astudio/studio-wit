@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Video,
+  Clapperboard,
   Loader2,
   Download,
   Scissors,
@@ -131,7 +132,7 @@ export function VideoPreview({
   const hasHistory = generations.length > 0;
 
   return (
-    <div className="w-full">
+    <div className="flex w-full flex-1 flex-col">
       {hasHistory || isGenerating ? (
         <div className="grid grid-cols-2 gap-1.5 sm:columns-3 sm:block sm:gap-2">
           {/* Generating card */}
@@ -293,9 +294,9 @@ export function VideoPreview({
         </div>
       ) : (
         /* Empty state */
-        <div className="flex flex-col items-center pt-[20vh]">
+        <div className="flex flex-1 flex-col items-center justify-center">
           <div className="flex size-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
-            <Video className="size-6 text-neutral-400 dark:text-neutral-500" />
+            <Clapperboard className="size-6 text-neutral-400 dark:text-neutral-500" />
           </div>
           <p className="mt-4 text-[16px] font-[600] text-foreground">
             {t("emptyPreview")}

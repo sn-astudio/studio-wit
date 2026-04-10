@@ -271,7 +271,7 @@
     "toGenerate": "to generate",
     "generating": "Generating video...",
     "generatingDesc": "AI is creating your video. Please wait a moment.",
-    "emptyPreview": "Video Preview",
+    "emptyPreview": "Generate Video",
     "emptyPreviewDesc": "Enter a prompt and click Generate.",
     "recentGenerations": "Recent Generations",
     "viewAll": "View All",
