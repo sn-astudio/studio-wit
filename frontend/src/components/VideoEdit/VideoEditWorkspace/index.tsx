@@ -1260,8 +1260,8 @@ export function VideoEditWorkspace() {
                   </div>
                 )}
 
-                {/* Undo/Redo — 서브도구 선택 시만 */}
-                {subTool && mainTab !== "filter" && mainTab !== "overlay" && (
+                {/* Undo/Redo */}
+                {mainTab !== "filter" && mainTab !== "overlay" && (
                 <div className="mt-4 flex justify-center">
                   <div className="flex items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-1.5 dark:bg-neutral-800/60">
                     <button
@@ -1661,6 +1661,21 @@ export function VideoEditWorkspace() {
 
                 </div>
               </div>
+
+              {/* 하단 내려받기 CTA — 소도구 미선택 + AI 탭 제외 */}
+              {mainTab !== "ai" && !subTool && source && (
+                <div className="shrink-0 px-5 pt-4 pb-4">
+                  <button
+                    onClick={() => {
+                      if (source?.url) downloadVideo(source.url, `video_${Date.now()}.mp4`);
+                    }}
+                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-transparent py-2.5 text-[13px] font-[600] text-foreground transition-all hover:bg-neutral-100 active:opacity-80 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                  >
+                    <Download className="size-4" />
+                    {t("downloadVideo")}
+                  </button>
+                </div>
+              )}
 
               {/* 하단 고정 액션 바 — 편집 탭 통합 */}
               {mainTab === "edit" && subTool && source && (
