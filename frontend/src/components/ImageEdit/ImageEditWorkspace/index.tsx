@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Scissors, SlidersHorizontal, Sparkle, Wand2 } from "lucide-react";
+import { Clapperboard, Download, Scissors, SlidersHorizontal, Sparkle, Wand2 } from "lucide-react";
 
 import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
@@ -13,18 +13,14 @@ import type { EditorCanvasHandle } from "@/components/ImageCreate/ImageEditor/Ed
 import type { CropRect } from "@/components/ImageCreate/ImageEditor/types";
 import type { CropRatio } from "@/components/ImageCreate/ImageEditor/CropOverlay/types";
 import {
-  DEFAULT_DRAWING_SETTINGS,
-  DEFAULT_TEXT_SETTINGS,
-} from "@/components/ImageCreate/ImageEditor/const";
-import {
   exportCanvas,
   applyFilterToCanvas,
   hasFilterChanges,
 } from "@/components/ImageCreate/ImageEditor/utils";
-import { cn } from "@/lib/utils";
+
 
 import { ImageEditPreview } from "../ImageEditPreview";
-import { ImageSourceSelector } from "../ImageSourceSelector";
+import { HistorySelectModal } from "../HistorySelectModal";
 import { EditPanel } from "../EditPanel";
 import { ImageFilterPanel } from "../ImageFilterPanel";
 import { AIEditPanel } from "../AIEditPanel";
@@ -165,7 +161,8 @@ export function ImageEditWorkspace({
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const canvasRef = useRef<EditorCanvasHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const historyRef = useRef<HTMLDivElement>(null);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [filterToolActive, setFilterToolActive] = useState(false);
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
   const [cropRatio, setCropRatio] = useState<CropRatio>("free");
   const [freeRotateDegrees, setFreeRotateDegrees] = useState(0);
@@ -304,8 +301,8 @@ export function ImageEditWorkspace({
     [handleSourceSelected],
   );
 
-  const handleScrollToHistory = useCallback(() => {
-    historyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const handleOpenHistoryModal = useCallback(() => {
+    setHistoryModalOpen(true);
   }, []);
 
   const handleTabChange = useCallback(
@@ -346,10 +343,10 @@ export function ImageEditWorkspace({
   return (
     <div className="relative">
       {/* 메인 콘텐츠 */}
-      <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 sm:pt-6 md:px-6">
-        <div className="flex min-h-0 flex-col gap-4 sm:flex-row sm:gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 pb-5 sm:h-[calc(100dvh-64px)] sm:pt-6 sm:pb-6 md:px-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row sm:gap-6">
           {/* 좌측: 프리뷰 */}
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col min-h-0">
             <ImageEditPreview
               imageUrl={source?.url ?? null}
               canvasRef={canvasRef}
@@ -366,7 +363,7 @@ export function ImageEditWorkspace({
               onExport={handleExport}
               onGenerateVideo={handleGenerateVideo}
               onUpload={handleFileUpload}
-              onScrollToHistory={handleScrollToHistory}
+              onScrollToHistory={handleOpenHistoryModal}
               onRemoveImage={handleRemoveImage}
               onFileDrop={(file) => {
                 const url = URL.createObjectURL(file);
@@ -396,7 +393,7 @@ export function ImageEditWorkspace({
           {/* 우측 패널 — 데스크톱 고정 */}
           {source && (
             <div className="hidden sm:block sm:w-[360px] sm:shrink-0">
-              <div className="fixed top-[88px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-104px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
+              <div className="fixed top-[88px] bottom-6 right-[max(16px,calc((100vw-1280px)/2+24px))] flex w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
                 {/* 탭 세그먼트 — 상단 고정 */}
                 <div className="shrink-0 bg-white px-5 pt-5 pb-4 dark:bg-neutral-950/85">
                   <div
@@ -448,7 +445,7 @@ export function ImageEditWorkspace({
                     />
                   )}
                   {activeTab === "filter" && (
-                    <ImageFilterPanel canvasRef={canvasRef} />
+                    <ImageFilterPanel canvasRef={canvasRef} onToolActiveChange={setFilterToolActive} />
                   )}
                   {activeTab === "ai" && (
                     <AIEditPanel
@@ -457,6 +454,26 @@ export function ImageEditWorkspace({
                     />
                   )}
                 </div>
+
+                {/* 하단 내보내기 CTA — 소도구 미선택 시에만 표시 */}
+                {((activeTab === "edit" && !activeTool) || (activeTab === "filter" && !filterToolActive)) && (
+                  <div className="shrink-0 px-5 pt-4 pb-4 flex gap-2">
+                    <button
+                      onClick={handleExport}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-transparent py-2.5 text-[13px] font-[600] text-foreground transition-all hover:bg-neutral-100 active:opacity-80 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                    >
+                      <Download className="size-4" />
+                      {t("downloadImage")}
+                    </button>
+                    <button
+                      onClick={handleGenerateVideo}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80"
+                    >
+                      <Clapperboard className="size-4" />
+                      {t("generateVideo")}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -496,15 +513,13 @@ export function ImageEditWorkspace({
           document.body,
         )}
 
-        {/* 하단 소스 선택 */}
-        <div ref={historyRef} className={cn("mt-12 pb-10", source && "sm:mr-[384px]")}>
-          <ImageSourceSelector
-            onSourceSelected={handleSourceSelected}
-            selectedUrl={source?.url}
-          />
-        </div>
       </div>
 
+      <HistorySelectModal
+        isOpen={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+        onSelect={(s) => handleSourceSelected(s)}
+      />
     </div>
   );
 }

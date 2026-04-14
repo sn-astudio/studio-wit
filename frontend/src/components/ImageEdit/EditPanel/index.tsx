@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Undo2, Redo2 } from "lucide-react";
+import { Undo2, Redo2, RotateCw, RotateCcw, FlipHorizontal2, FlipVertical2 } from "lucide-react";
 
 import { useImageEditorStore } from "@/stores/imageEditor";
 import { EditorToolbar } from "@/components/ImageCreate/ImageEditor/EditorToolbar";
@@ -61,6 +61,8 @@ export function EditPanel({
   // 도구 진입/해제 시 리셋
   const prevDrawToolRef = useRef(activeTool);
   const mosaicEntryRef = useRef(historyIndex);
+  const transformEntryRef = useRef(historyIndex);
+  const [transformDirty, setTransformDirty] = useState(false);
   useEffect(() => {
     const prev = prevDrawToolRef.current;
     prevDrawToolRef.current = activeTool;
@@ -69,6 +71,10 @@ export function EditPanel({
       if (activeTool !== "draw") setDrawEraserMode(false);
       if (activeTool === "mosaic") {
         mosaicEntryRef.current = historyIndex;
+      }
+      if (activeTool === "transform") {
+        transformEntryRef.current = historyIndex;
+        setTransformDirty(false);
       }
     }
   }, [activeTool, historyIndex]);
@@ -101,6 +107,7 @@ export function EditPanel({
     canvasRef.current?.pushSnapshot();
     const rotated = rotateCanvas90(canvas);
     canvasRef.current?.replaceMainCanvas(rotated);
+    setTransformDirty(true);
   }, [canvasRef]);
 
   const handleFlipH = useCallback(() => {
@@ -109,6 +116,7 @@ export function EditPanel({
     canvasRef.current?.pushSnapshot();
     const flipped = flipCanvasH(canvas);
     canvasRef.current?.replaceMainCanvas(flipped);
+    setTransformDirty(true);
   }, [canvasRef]);
 
   const handleFlipV = useCallback(() => {
@@ -117,6 +125,7 @@ export function EditPanel({
     canvasRef.current?.pushSnapshot();
     const flipped = flipCanvasV(canvas);
     canvasRef.current?.replaceMainCanvas(flipped);
+    setTransformDirty(true);
   }, [canvasRef]);
 
   const handleApplyCrop = useCallback(() => {
@@ -262,7 +271,7 @@ export function EditPanel({
       if (activeTool === "crop") {
         setCropRect(null);
       }
-      if (activeTool === "freeRotate") {
+      if (activeTool === "freeRotate" || activeTool === "transform") {
         onFreeRotateChange?.(0);
       }
       if (activeTool === "resize") {
@@ -294,8 +303,8 @@ export function EditPanel({
         hideFilter
       />
 
-      {/* undo/redo — 도구 선택 시만, 필터 제외 */}
-      {activeTool && activeTool !== "filter" && <TooltipProvider delay={0} closeDelay={0}>
+      {/* undo/redo */}
+      {<TooltipProvider delay={0} closeDelay={0}>
         <div className="mx-auto flex w-fit items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-1.5 dark:bg-neutral-800/60">
           <Tooltip>
             <TooltipTrigger
@@ -342,7 +351,7 @@ export function EditPanel({
               setCropRatio(ratio);
             }}
             onCropChange={setCropRect}
-            onApply={handleApplyCrop}
+            onApply={() => { handleApplyCrop(); setActiveTool(null); }}
             onCancel={handleCancelCrop}
           />
         </>
@@ -354,7 +363,7 @@ export function EditPanel({
         <ResizePanel
           currentWidth={canvasWidth}
           currentHeight={canvasHeight}
-          onApply={handleApplyResize}
+          onApply={(w, h) => { handleApplyResize(w, h); setActiveTool(null); }}
           onCancel={handleCancelResize}
           onChange={onResizeChange}
         />
@@ -367,7 +376,7 @@ export function EditPanel({
         <DrawingPanel
           settings={drawingSettings}
           onChange={setDrawingSettings}
-          onApply={handleApplyDrawing}
+          onApply={() => { handleApplyDrawing(); setActiveTool(null); }}
           onClear={handleClearDrawing}
           isEraser={drawEraserMode}
           onEraserToggle={setDrawEraserMode}
@@ -382,20 +391,72 @@ export function EditPanel({
         <TextPanel
           settings={textSettings}
           onChange={setTextSettings}
-          onApply={() => { handleApplyDrawing(); setTextSettings({ ...textSettings, placedX: null, placedY: null }); }}
+          onApply={() => { handleApplyDrawing(); setTextSettings({ ...textSettings, placedX: null, placedY: null }); setActiveTool(null); }}
           onClear={handleClearText}
         />
         </>
       )}
 
-      {activeTool === "freeRotate" && (
+      {activeTool === "transform" && (
         <>
         <div className="h-px bg-neutral-100 dark:bg-neutral-800" />
+        {/* 변환 버튼 */}
+        <div className="grid grid-cols-4 gap-2">
+          <button
+            onClick={handleRotate}
+            className="flex cursor-pointer flex-col items-center gap-2 rounded-xl bg-neutral-50 py-3.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+          >
+            <RotateCw className="size-5" strokeWidth={1.5} />
+            {t("rotate")}
+          </button>
+          <button
+            onClick={handleFlipH}
+            className="flex cursor-pointer flex-col items-center gap-2 rounded-xl bg-neutral-50 py-3.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+          >
+            <FlipHorizontal2 className="size-5" strokeWidth={1.5} />
+            {t("flipH")}
+          </button>
+          <button
+            onClick={handleFlipV}
+            className="flex cursor-pointer flex-col items-center gap-2 rounded-xl bg-neutral-50 py-3.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+          >
+            <FlipVertical2 className="size-5" strokeWidth={1.5} />
+            {t("flipV")}
+          </button>
+        </div>
+        {/* 자유 회전 */}
         <FreeRotatePanel
-          onApply={handleApplyFreeRotate}
+          onApply={(deg) => { handleApplyFreeRotate(deg); setTransformDirty(true); }}
           onCancel={handleCancelFreeRotate}
           onChange={onFreeRotateChange}
+          hideButtons
         />
+        {/* 초기화 / 적용 */}
+        <div className="sticky bottom-0 z-10 mt-auto -mx-5 flex items-center gap-2 bg-white px-5 pt-4 pb-4 dark:bg-neutral-950">
+          <button
+            onClick={() => {
+              // 진입 시점으로 되돌리기
+              while (useImageEditorStore.getState().historyIndex > transformEntryRef.current) {
+                canvasRef.current?.undo();
+              }
+              onFreeRotateChange?.(0);
+              setTransformDirty(false);
+            }}
+            className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+          >
+            {t("reset")}
+          </button>
+          <button
+            onClick={() => {
+              setTransformDirty(false);
+              setActiveTool(null);
+            }}
+            disabled={!transformDirty}
+            className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+          >
+            {t("apply")}
+          </button>
+        </div>
         </>
       )}
 
@@ -406,7 +467,7 @@ export function EditPanel({
         <DrawingPanel
           settings={drawingSettings}
           onChange={setDrawingSettings}
-          onApply={() => { canvasRef.current?.bakeOverlay(); setHasDrawingContent(false); mosaicEntryRef.current = historyIndex + 1; }}
+          onApply={() => { canvasRef.current?.bakeOverlay(); setHasDrawingContent(false); mosaicEntryRef.current = historyIndex + 1; setActiveTool(null); }}
           isMosaic
           onClear={() => {
             canvasRef.current?.undo();

@@ -49,7 +49,6 @@ import { RotatePanel } from "../RotatePanel";
 import type { RotatePanelRef } from "../RotatePanel/types";
 import { CreativePresetPanel } from "../CreativePresetPanel";
 import { VideoSourceSelectModal } from "../VideoSourceSelectModal";
-import { VideoSourceSelector } from "../VideoSourceSelector";
 import type { MergeClip } from "../MergePanel/types";
 import { downloadVideo } from "../utils";
 import { useVideoEditStore } from "@/stores/videoEditStore";
@@ -924,11 +923,11 @@ export function VideoEditWorkspace() {
 
   return (
     <div className="relative">
-      <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 sm:pt-6 md:px-6">
-        <div className="flex min-h-0 flex-col gap-4 sm:flex-row sm:gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 pb-5 sm:h-[calc(100dvh-64px)] sm:pt-6 sm:pb-6 md:px-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row sm:gap-6">
           {/* 좌측: 프리뷰 */}
-          <div className="flex flex-1 flex-col">
-            <div className="relative">
+          <div className="flex flex-1 flex-col min-h-0">
+            <div className="relative flex-1 min-h-0 flex flex-col">
               {/* 비교 모드 토글 — 숨김 */}
               {false && resultUrl && source?.url && resultUrl !== source.url && (
                 <div className="absolute top-2 right-2 z-10 flex gap-1">
@@ -955,14 +954,14 @@ export function VideoEditWorkspace() {
               )}
 
               {compareMode && resultUrl && source?.url && resultUrl !== source.url ? (
-                <div className="space-y-1.5">
-                  <div className="flex aspect-video max-h-[280px] w-full gap-1 overflow-hidden rounded-2xl border border-neutral-300 bg-neutral-50 dark:border-neutral-800 dark:bg-black">
+                <div className="flex flex-1 min-h-0 flex-col gap-1.5">
+                  <div className="flex flex-1 min-h-0 w-full gap-1 overflow-hidden rounded-2xl border border-neutral-300 bg-neutral-50 dark:border-neutral-800 dark:bg-black">
                     {/* 원본 */}
                     <div className="relative flex flex-1 items-center justify-center overflow-hidden">
                       <video
                         ref={originalVideoRef}
                         src={source.url}
-                        className="max-h-[280px] max-w-full object-contain"
+                        className="max-h-full max-w-full object-contain"
                         muted
                       />
                       <span className="absolute top-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
@@ -974,7 +973,7 @@ export function VideoEditWorkspace() {
                       <video
                         ref={videoRef}
                         src={resultUrl}
-                        className="max-h-[280px] max-w-full object-contain"
+                        className="max-h-full max-w-full object-contain"
                         style={(activeTab === "effects" || activeTab === "filter") && previewCssFilter ? { filter: previewCssFilter } : undefined}
                         muted
                         onTimeUpdate={() => {
@@ -1210,7 +1209,7 @@ export function VideoEditWorkspace() {
 
           {/* 우측 패널 — 데스크톱 고정 (소스 있을 때만) */}
           {source && <div className="hidden sm:block sm:w-[360px] sm:shrink-0">
-            <div className="fixed top-[88px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-104px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
+            <div className="fixed top-[88px] bottom-6 right-[max(16px,calc((100vw-1280px)/2+24px))] flex w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
               {/* 4탭 세그먼트 — 상단 고정 */}
               <div className="shrink-0 px-5 pt-5 pb-4">
                 <div className="relative flex flex-1 rounded-lg bg-neutral-100 p-1.5 dark:bg-neutral-800/60">
@@ -1999,16 +1998,6 @@ export function VideoEditWorkspace() {
         </div>
 
 
-        {/* 하단 비디오 히스토리 */}
-        <div className={`mt-12 pb-10 ${source ? "sm:mr-[384px]" : ""}`}>
-          <VideoSourceSelector
-            onSourceSelected={handleSourceSelected}
-            isLoading={uploadMutation.isPending}
-            onDelete={() => {
-              // TODO: API 삭제 연동
-            }}
-          />
-        </div>
       </div>
 
       {/* 모달 */}

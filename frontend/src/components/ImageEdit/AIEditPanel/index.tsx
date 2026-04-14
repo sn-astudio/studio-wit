@@ -375,7 +375,7 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
               ? mode === "edit"
                 ? t("aiGenerating")
                 : t("composeLoading")
-              : t("apply")}
+              : <>{t("generate")} ✦ 1</>}
           </button>
         </div>
 

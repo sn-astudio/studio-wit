@@ -36,10 +36,7 @@ export function EditorToolbar({
 
   const tools = [
     { id: "crop" as const, icon: Crop, label: t("crop"), onClick: () => onToolChange("crop"), isActive: activeTool === "crop" },
-    { id: "rotate" as const, icon: RotateCw, label: t("rotate"), onClick: onRotate, isActive: false },
-    { id: "freeRotate" as const, icon: RotateCcw, label: t("freeRotate"), onClick: () => onToolChange("freeRotate"), isActive: activeTool === "freeRotate" },
-    { id: "flipH" as const, icon: FlipHorizontal2, label: t("flipH"), onClick: onFlipH, isActive: false },
-    { id: "flipV" as const, icon: FlipVertical2, label: t("flipV"), onClick: onFlipV, isActive: false },
+    { id: "transform" as const, icon: RotateCw, label: t("transform"), onClick: () => onToolChange("transform"), isActive: activeTool === "transform" },
     { id: "resize" as const, icon: Scaling, label: t("resize"), onClick: () => onToolChange("resize"), isActive: activeTool === "resize" },
     { id: "draw" as const, icon: Pencil, label: t("draw"), onClick: () => onToolChange("draw"), isActive: activeTool === "draw" },
     { id: "text" as const, icon: Type, label: t("text"), onClick: () => onToolChange("text"), isActive: activeTool === "text" },
