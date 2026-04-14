@@ -1261,7 +1261,7 @@ export function VideoEditWorkspace() {
                 )}
 
                 {/* Undo/Redo */}
-                {mainTab !== "filter" && mainTab !== "overlay" && (
+                {(
                 <div className="mt-4 flex justify-center">
                   <div className="flex items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-1.5 dark:bg-neutral-800/60">
                     <button
@@ -1704,39 +1704,18 @@ export function VideoEditWorkspace() {
                     </button>
                     <button
                       onClick={async () => {
-                        // 변경사항이 있는 모든 편집 소도구를 순차 실행
                         if (!cropState.isOriginal) await cropPanelRef.current?.apply();
                         if (ratioState.canApply) await ratioPanelRef.current?.apply();
                         if (rotateState.hasSelection) await rotatePanelRef.current?.apply();
                         if (effectsState.canApply) await effectsPanelRef.current?.apply();
                         if (mergeState.canApply) await mergePanelRef.current?.apply();
 
-                        // 최종 결과를 내 비디오에 저장
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) {
-                          try {
-                            await saveEditMutation.mutateAsync({
-                              result_url: finalUrl,
-                              edit_type: "edit",
-                              prompt: source?.name || "Edited video",
-                            });
-                            toast.success(t("saveSuccess"));
-                          } catch (err) {
-                            console.error("Save failed:", err, "finalUrl:", finalUrl);
-                            toast.error(err instanceof Error ? err.message : t("saveError"));
-                          }
-                        } else {
-                          console.warn("No resultUrl to save");
-                        }
-
-                        // 생성 완료 후 초기화
                         effectsPanelRef.current?.reset();
                         cropPanelRef.current?.reset();
                         ratioPanelRef.current?.reset();
                         rotatePanelRef.current?.reset();
                         mergePanelRef.current?.reset();
                         setPreviewSpeed(1);
-                        setResultUrl(null);
                         setCropState({ isOriginal: true, isPending: false });
                         setRotateState({ hasSelection: false, isPending: false });
                         setRatioState({ canApply: false, isPending: false });
@@ -1751,9 +1730,7 @@ export function VideoEditWorkspace() {
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {(effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending) && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")}
-                      {" ✦ "}
-                      {Math.max(1, [effectsState.canApply, !cropState.isOriginal, ratioState.canApply, rotateState.hasSelection, mergeState.canApply, !!resultUrl].filter(Boolean).length)}
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1772,23 +1749,17 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await filterPanelRef.current?.apply();
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) {
-                          try {
-                            await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "filter", prompt: source?.name || "Filter applied" });
-                            toast.success(t("saveSuccess"));
-                          } catch { toast.error(t("saveError")); }
-                        }
                         filterPanelRef.current?.reset();
                         setPreviewCssFilter("");
                         setFilterState({ canApply: false, isPending: false });
-                        setResultUrl(null);
+                        setSubTool(null);
+                        setActiveTab("filter");
                       }}
                       disabled={!filterState.canApply || filterState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {filterState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1807,24 +1778,18 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await creativePanelRef.current?.apply();
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) {
-                          try {
-                            await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "creative_preset", prompt: source?.name || "Creative Preset" });
-                            toast.success(t("saveSuccess"));
-                          } catch { toast.error(t("saveError")); }
-                        }
                         creativePanelRef.current?.reset();
                         setPreviewCreativeOverlay(null);
                         setPreviewCssFilter("");
                         setCreativeState({ canApply: false, isPending: false });
-                        setResultUrl(null);
+                        setSubTool(null);
+                        setActiveTab("filter");
                       }}
                       disabled={!creativeState.canApply || creativeState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {creativeState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1835,7 +1800,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1843,15 +1808,13 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await subtitlesPanelRef.current?.apply();
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "subtitles", prompt: source?.name || "Subtitles" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
-                        subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                        subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setSubTool(null);
                       }}
                       disabled={!subtitlesState.canApply || subtitlesState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {subtitlesState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1862,7 +1825,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1870,15 +1833,13 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await textOverlayPanelRef.current?.apply();
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "text_overlay", prompt: source?.name || "Text overlay" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
-                        textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                        textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setSubTool(null);
                       }}
                       disabled={!textOverlayState.canApply || textOverlayState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {textOverlayState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1889,7 +1850,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1897,15 +1858,13 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await watermarkPanelRef.current?.apply();
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "watermark", prompt: source?.name || "Watermark" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
-                        watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                        watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setSubTool(null);
                       }}
                       disabled={!watermarkState.canApply || watermarkState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {watermarkState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1916,7 +1875,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1924,13 +1883,13 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await gifPanelRef.current?.apply();
-                        gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                        gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setSubTool(null);
                       }}
                       disabled={!gifState.canApply || gifState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {gifState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1941,7 +1900,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1949,13 +1908,13 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await sceneSplitPanelRef.current?.apply();
-                        sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                        sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setSubTool(null);
                       }}
                       disabled={!sceneSplitState.canApply || sceneSplitState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {sceneSplitState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1966,7 +1925,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1974,13 +1933,13 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await thumbnailPanelRef.current?.apply();
-                        thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
+                        thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setSubTool(null);
                       }}
                       disabled={!thumbnailState.canApply || thumbnailState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {thumbnailState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
