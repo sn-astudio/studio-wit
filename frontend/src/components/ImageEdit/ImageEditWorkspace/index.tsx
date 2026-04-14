@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Clapperboard, Download, Scissors, SlidersHorizontal, Sparkle, Wand2 } from "lucide-react";
+import { Clapperboard, Download, Loader2, Scissors, SlidersHorizontal, Sparkle, Wand2 } from "lucide-react";
 
 import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
@@ -24,6 +24,7 @@ import { HistorySelectModal } from "../HistorySelectModal";
 import { EditPanel } from "../EditPanel";
 import { ImageFilterPanel } from "../ImageFilterPanel";
 import { AIEditPanel } from "../AIEditPanel";
+import type { AIEditPanelRef } from "../AIEditPanel/types";
 import type { EditTab, ImageSource, ImageEditWorkspaceProps } from "./types";
 
 const TABS: { id: EditTab; labelKey: string; icon: typeof Scissors }[] = [
@@ -161,7 +162,10 @@ export function ImageEditWorkspace({
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const canvasRef = useRef<EditorCanvasHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const aiEditPanelRef = useRef<AIEditPanelRef>(null);
+  const [aiEditState, setAiEditState] = useState({ canApply: false, isPending: false });
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
   const [filterToolActive, setFilterToolActive] = useState(false);
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
   const [cropRatio, setCropRatio] = useState<CropRatio>("free");
@@ -364,7 +368,7 @@ export function ImageEditWorkspace({
               onGenerateVideo={handleGenerateVideo}
               onUpload={handleFileUpload}
               onScrollToHistory={handleOpenHistoryModal}
-              onRemoveImage={handleRemoveImage}
+              onRemoveImage={() => setRemoveConfirmOpen(true)}
               onFileDrop={(file) => {
                 const url = URL.createObjectURL(file);
                 handleSourceSelected({ url });
@@ -449,8 +453,10 @@ export function ImageEditWorkspace({
                   )}
                   {activeTab === "ai" && (
                     <AIEditPanel
+                      ref={aiEditPanelRef}
                       sourceUrl={source?.url ?? null}
                       onUseAsSource={handleUseAsSource}
+                      onStateChange={setAiEditState}
                     />
                   )}
                 </div>
@@ -472,6 +478,28 @@ export function ImageEditWorkspace({
                       <Clapperboard className="size-4" />
                       {t("generateVideo")}
                     </button>
+                  </div>
+                )}
+
+                {/* 하단 고정 액션 바 — AI 탭 */}
+                {activeTab === "ai" && (
+                  <div className="shrink-0 px-5 pt-3 pb-4">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => aiEditPanelRef.current?.reset()}
+                        className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                      >
+                        {t("reset")}
+                      </button>
+                      <button
+                        onClick={() => aiEditPanelRef.current?.apply()}
+                        disabled={!aiEditState.canApply || aiEditState.isPending}
+                        className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                      >
+                        {aiEditState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                        {t("generate")} ✦ 1
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -520,6 +548,45 @@ export function ImageEditWorkspace({
         onClose={() => setHistoryModalOpen(false)}
         onSelect={(s) => handleSourceSelected(s)}
       />
+
+      {/* 제거 확인 다이얼로그 */}
+      {removeConfirmOpen && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 backdrop-blur-sm"
+          onWheel={(e) => e.preventDefault()}
+          onTouchMove={(e) => e.preventDefault()}
+        >
+          <div
+            className="w-[340px] rounded-2xl border border-neutral-200 bg-background p-6 shadow-2xl dark:border-neutral-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-[16px] font-semibold text-foreground">
+              {t("removeImageTitle")}
+            </h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
+              {t("removeImageDesc")}
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setRemoveConfirmOpen(false)}
+                className="flex-1 cursor-pointer rounded-xl bg-neutral-100 py-2.5 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  handleRemoveImage();
+                  setRemoveConfirmOpen(false);
+                }}
+                className="flex-1 cursor-pointer rounded-xl bg-red-500 py-2.5 text-[14px] font-[500] text-white transition-colors hover:bg-red-600"
+              >
+                {t("removeConfirm")}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

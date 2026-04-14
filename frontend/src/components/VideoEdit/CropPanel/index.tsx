@@ -18,6 +18,7 @@ export const CropPanel = forwardRef<CropPanelRef, CropPanelProps>(function CropP
   videoWidth,
   videoHeight,
   onCropApplied,
+  onPreviewCrop,
   onSave,
   onDirty,
   onStateChange,
@@ -49,6 +50,17 @@ export const CropPanel = forwardRef<CropPanelRef, CropPanelProps>(function CropP
     onStateChange?.({ isOriginal, isPending: cropMutation.isPending });
   }, [isOriginal, cropMutation.isPending, onStateChange]);
 
+  // CSS 프리뷰
+  useEffect(() => {
+    if (isOriginal || !videoWidth || !videoHeight) { onPreviewCrop?.(null); return; }
+    onPreviewCrop?.({
+      top: (cropY / videoHeight) * 100,
+      right: ((videoWidth - cropX - cropW) / videoWidth) * 100,
+      bottom: ((videoHeight - cropY - cropH) / videoHeight) * 100,
+      left: (cropX / videoWidth) * 100,
+    });
+  }, [cropX, cropY, cropW, cropH, videoWidth, videoHeight, isOriginal, onPreviewCrop]);
+
   // 크롭 프리셋
   const applyCropPreset = useCallback(
     (ratio: string) => {
@@ -73,7 +85,8 @@ export const CropPanel = forwardRef<CropPanelRef, CropPanelProps>(function CropP
     setCropW(videoWidth || 1280);
     setCropH(videoHeight || 720);
     setActivePreset(null);
-  }, [videoWidth, videoHeight]);
+    onPreviewCrop?.(null);
+  }, [videoWidth, videoHeight, onPreviewCrop]);
 
   const handleCrop = useCallback(async () => {
     if (!sourceUrl) return;

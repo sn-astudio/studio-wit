@@ -143,11 +143,11 @@ export function VideoEditPreview({
         backgroundSize: "16px 16px",
       }}
     >
-      <div className="relative max-h-full max-w-full">
+      <div className="relative h-full max-h-full max-w-full">
         <video
           ref={videoRef}
           src={videoUrl}
-          className={`transition-[filter] duration-200 ${isPortrait ? "max-h-full max-w-[40vw] object-cover" : "max-h-full max-w-full object-contain"}`}
+          className={`h-full transition-[filter] duration-200 ${isPortrait ? "max-h-full max-w-[40vw] object-cover" : "max-h-full max-w-full object-contain"}`}
           style={{
             ...(cssFilter ? { filter: cssFilter } : {}),
             ...(isPortrait && sourceAspectRatio ? { aspectRatio: sourceAspectRatio.replace(":", "/") } : {}),

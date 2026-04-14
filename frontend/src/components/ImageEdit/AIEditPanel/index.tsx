@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Download, Loader2, Sparkle, Blend } from "lucide-react";
@@ -19,11 +19,11 @@ import type { AspectRatio } from "@/types/api";
 
 import { downloadImage } from "../utils";
 import { ImageSlot } from "../ComposePanel/ImageSlot";
-import type { AIMode, AIEditPanelProps } from "./types";
+import type { AIMode, AIEditPanelProps, AIEditPanelRef } from "./types";
 
 const ASPECT_RATIOS: AspectRatio[] = ["1:1", "16:9", "9:16", "4:3", "3:4"];
 
-export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
+export const AIEditPanel = forwardRef<AIEditPanelRef, AIEditPanelProps>(function AIEditPanel({ sourceUrl, onUseAsSource, onStateChange }, ref) {
   const t = useTranslations("ImageEdit");
   const token = useAuthStore((s) => s.token);
   const queryClient = useQueryClient();
@@ -233,6 +233,28 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
       ? !!(prompt.trim() && selectedModel && !isGenerating && !createMutation.isPending)
       : !!(baseImageUrl && referenceImageUrl && prompt.trim() && !isGenerating && !isSubmitting);
 
+  const isPending = isGenerating || isSubmitting || createMutation.isPending;
+
+  useEffect(() => {
+    onStateChange?.({ canApply: canGenerate, isPending });
+  }, [canGenerate, isPending, onStateChange]);
+
+  const handleReset = useCallback(() => {
+    setPrompt("");
+    setResultUrl(null);
+    setGenId(null);
+    setStartTime(null);
+    if (mode === "compose") {
+      setBaseImageUrl(null);
+      setReferenceImageUrl(null);
+    }
+  }, [mode]);
+
+  useImperativeHandle(ref, () => ({
+    reset: handleReset,
+    apply: handleGenerate,
+  }));
+
   return (
     <div className="flex flex-1 flex-col gap-5">
       {/* 서브 모드 전환 */}
@@ -345,85 +367,50 @@ export function AIEditPanel({ sourceUrl, onUseAsSource }: AIEditPanelProps) {
         />
       </div>
 
-      {/* 초기화 / 생성 — 하단 고정 */}
-      <div className="sticky bottom-0 z-10 mt-auto -mx-5 bg-white px-5 pt-4 pb-4 dark:bg-neutral-950">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              setPrompt("");
-              setResultUrl(null);
-              setGenId(null);
-              setStartTime(null);
-              if (mode === "compose") {
-                setBaseImageUrl(null);
-                setReferenceImageUrl(null);
-              }
-            }}
-            className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
-          >
-            {t("reset")}
-          </button>
-          <button
-            onClick={handleGenerate}
-            disabled={!canGenerate}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
-          >
-            {(isGenerating || isSubmitting) && (
-              <Loader2 className="size-3.5 animate-spin" />
-            )}
-            {isGenerating
-              ? mode === "edit"
-                ? t("aiGenerating")
-                : t("composeLoading")
-              : <>{t("generate")} ✦ 1</>}
-          </button>
+      {/* 프로그레스 */}
+      {isGenerating && (
+        <div className="space-y-3">
+          <div className="h-1.5 overflow-hidden rounded-full bg-neutral-300 dark:bg-neutral-700">
+            <div
+              className="h-full rounded-full bg-foreground transition-all duration-500"
+              style={{ width: `${progress ?? 0}%` }}
+            />
+          </div>
+          <p className="text-center text-[12px] tabular-nums text-muted-foreground/60">
+            {t("elapsed")}: {elapsed}s
+            {progress != null && ` · ${progress}%`}
+          </p>
         </div>
+      )}
 
-        {/* 프로그레스 */}
-        {isGenerating && (
-          <div className="space-y-3">
-            <div className="h-1.5 overflow-hidden rounded-full bg-neutral-300 dark:bg-neutral-700">
-              <div
-                className="h-full rounded-full bg-foreground transition-all duration-500"
-                style={{ width: `${progress ?? 0}%` }}
-              />
-            </div>
-            <p className="text-center text-[12px] tabular-nums text-muted-foreground/60">
-              {t("elapsed")}: {elapsed}s
-              {progress != null && ` · ${progress}%`}
-            </p>
+      {/* 결과 */}
+      {resultUrl && (
+        <div className="space-y-3">
+          <div className="overflow-hidden rounded-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={resultUrl}
+              alt="AI generated"
+              className="w-full object-contain"
+            />
           </div>
-        )}
-
-        {/* 결과 */}
-        {resultUrl && (
-          <div className="space-y-3">
-            <div className="overflow-hidden rounded-lg">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={resultUrl}
-                alt="AI generated"
-                className="w-full object-contain"
-              />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => downloadImage(resultUrl)}
-                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-white py-2.5 text-[13px] font-[500] text-muted-foreground transition-colors hover:text-foreground dark:bg-neutral-800 dark:hover:text-white"
-              >
-                <Download className="size-4" />
-                {t("download")}
-              </button>
-              <button
-                onClick={() => onUseAsSource(resultUrl)}
-                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-foreground py-2.5 text-[13px] font-[600] text-background transition-colors hover:opacity-90"
-              >
-                {t("useAsSource")}
-              </button>
-            </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => downloadImage(resultUrl)}
+              className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-white py-2.5 text-[13px] font-[500] text-muted-foreground transition-colors hover:text-foreground dark:bg-neutral-800 dark:hover:text-white"
+            >
+              <Download className="size-4" />
+              {t("download")}
+            </button>
+            <button
+              onClick={() => onUseAsSource(resultUrl)}
+              className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-foreground py-2.5 text-[13px] font-[600] text-background transition-colors hover:opacity-90"
+            >
+              {t("useAsSource")}
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
-}
+});

@@ -433,6 +433,7 @@ export function VideoEditWorkspace() {
 
   // 히스토리 모달
   const [isHistoryModalOpen, setHistoryModalOpen] = useState(false);
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
 
   // 모달
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -926,8 +927,8 @@ export function VideoEditWorkspace() {
       <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 pb-5 sm:h-[calc(100dvh-64px)] sm:pt-6 sm:pb-6 md:px-6">
         <div className="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row sm:gap-6">
           {/* 좌측: 프리뷰 */}
-          <div className="flex flex-1 flex-col min-h-0">
-            <div className="relative flex-1 min-h-0 flex flex-col">
+          <div className="flex flex-1 flex-col min-h-0 sm:overflow-hidden">
+            <div className="relative sm:h-0 flex-1 min-h-0 flex flex-col overflow-hidden">
               {/* 비교 모드 토글 — 숨김 */}
               {false && resultUrl && source?.url && resultUrl !== source.url && (
                 <div className="absolute top-2 right-2 z-10 flex gap-1">
@@ -1029,12 +1030,7 @@ export function VideoEditWorkspace() {
                   onDownload={() => {
                     if (source?.url) downloadVideo(source.url, `video_${Date.now()}.mp4`);
                   }}
-                  onRemove={() => {
-                    setSource(null);
-                    setResultUrl(null);
-                    setCurrentTime(0);
-                    setDuration(0);
-                  }}
+                  onRemove={() => setRemoveConfirmOpen(true)}
                 />
               )}
             </div>
@@ -1054,7 +1050,7 @@ export function VideoEditWorkspace() {
           <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
 
           {/* 서브 패널: 트림 컨트롤 + 타임라인 (캔버스 아래) */}
-          {subTool === "trim" && source && duration > 0 && !resultUrl && (
+          {subTool === "trim" && source && duration > 0 && (
             <div className="mt-3 overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white px-5 py-4 dark:border-neutral-800/80 dark:bg-neutral-950/85">
               <TrimControls
                 trimStart={trimStart}
@@ -1260,8 +1256,8 @@ export function VideoEditWorkspace() {
                   </div>
                 )}
 
-                {/* Undo/Redo */}
-                {(
+                {/* Undo/Redo — AI 탭 제외 */}
+                {mainTab !== "ai" && (
                 <div className="mt-4 flex justify-center">
                   <div className="flex items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-1.5 dark:bg-neutral-800/60">
                     <button
@@ -1689,6 +1685,8 @@ export function VideoEditWorkspace() {
                         rotatePanelRef.current?.reset();
                         mergePanelRef.current?.reset();
                         setPreviewSpeed(1);
+                        setTrimStart(0);
+                        setTrimEnd(duration);
                         setResultUrl(null);
                         setCropState({ isOriginal: true, isPending: false });
                         setRotateState({ hasSelection: false, isPending: false });
@@ -1704,11 +1702,19 @@ export function VideoEditWorkspace() {
                     </button>
                     <button
                       onClick={async () => {
+                        const trimChanged = trimStart > 0 || (trimEnd > 0 && Math.abs(trimEnd - duration) > 0.1);
+                        if (trimChanged) await handleTrim();
                         if (!cropState.isOriginal) await cropPanelRef.current?.apply();
                         if (ratioState.canApply) await ratioPanelRef.current?.apply();
                         if (rotateState.hasSelection) await rotatePanelRef.current?.apply();
                         if (effectsState.canApply) await effectsPanelRef.current?.apply();
                         if (mergeState.canApply) await mergePanelRef.current?.apply();
+
+                        // 적용 결과를 새 소스로 교체
+                        const finalUrl = resultUrlRef.current;
+                        if (finalUrl && source) {
+                          setSource({ ...source, url: finalUrl });
+                        }
 
                         effectsPanelRef.current?.reset();
                         cropPanelRef.current?.reset();
@@ -1716,6 +1722,9 @@ export function VideoEditWorkspace() {
                         rotatePanelRef.current?.reset();
                         mergePanelRef.current?.reset();
                         setPreviewSpeed(1);
+                        setTrimStart(0);
+                        setTrimEnd(0);
+                        setResultUrl(null);
                         setCropState({ isOriginal: true, isPending: false });
                         setRotateState({ hasSelection: false, isPending: false });
                         setRatioState({ canApply: false, isPending: false });
@@ -1726,10 +1735,11 @@ export function VideoEditWorkspace() {
                       }}
                       disabled={!(
                         effectsState.canApply || !cropState.isOriginal || ratioState.canApply || rotateState.hasSelection || mergeState.canApply || !!resultUrl
-                      ) || effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending}
+                        || (trimStart > 0 || (trimEnd > 0 && Math.abs(trimEnd - duration) > 0.1))
+                      ) || effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending || trimMutation.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
-                      {(effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending) && <Loader2 className="size-3.5 animate-spin" />}
+                      {(effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending || trimMutation.isPending) && <Loader2 className="size-3.5 animate-spin" />}
                       {t("apply")}
                     </button>
                   </div>
@@ -2098,6 +2108,48 @@ export function VideoEditWorkspace() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* 제거 확인 다이얼로그 */}
+      {removeConfirmOpen && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 backdrop-blur-sm"
+          onWheel={(e) => e.preventDefault()}
+          onTouchMove={(e) => e.preventDefault()}
+        >
+          <div
+            className="w-[340px] rounded-2xl border border-neutral-200 bg-background p-6 shadow-2xl dark:border-neutral-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-[16px] font-semibold text-foreground">
+              {t("removeVideoTitle")}
+            </h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
+              {t("removeVideoDesc")}
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setRemoveConfirmOpen(false)}
+                className="flex-1 cursor-pointer rounded-xl bg-neutral-100 py-2.5 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  setSource(null);
+                  setResultUrl(null);
+                  setCurrentTime(0);
+                  setDuration(0);
+                  setRemoveConfirmOpen(false);
+                }}
+                className="flex-1 cursor-pointer rounded-xl bg-red-500 py-2.5 text-[14px] font-[500] text-white transition-colors hover:bg-red-600"
+              >
+                {t("removeConfirm")}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
