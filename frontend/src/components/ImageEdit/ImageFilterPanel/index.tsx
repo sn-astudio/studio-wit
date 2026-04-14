@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Sun, Palette, Sparkles, Undo2, Redo2 } from "lucide-react";
 
@@ -74,20 +74,19 @@ export function ImageFilterPanel({ canvasRef, onToolActiveChange }: ImageFilterP
 
     resetFilterValues();
     setActiveTool(null);
-    onToolActiveChange?.(false);
-  }, [canvasRef, filterValues, resetFilterValues, onToolActiveChange]);
+  }, [canvasRef, filterValues, resetFilterValues]);
 
   const handleReset = useCallback(() => {
     resetFilterValues();
   }, [resetFilterValues]);
 
   const handleToolChange = useCallback((tool: FilterTool) => {
-    setActiveTool((prev) => {
-      const next = prev === tool ? null : tool;
-      onToolActiveChange?.(next !== null);
-      return next;
-    });
-  }, [onToolActiveChange]);
+    setActiveTool((prev) => (prev === tool ? null : tool));
+  }, []);
+
+  useEffect(() => {
+    onToolActiveChange?.(activeTool !== null);
+  }, [activeTool, onToolActiveChange]);
 
   const tools = [
     { id: "lighting" as const, icon: Sun, label: t("lighting") },

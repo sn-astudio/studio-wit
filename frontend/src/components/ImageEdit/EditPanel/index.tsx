@@ -266,7 +266,11 @@ export function EditPanel({
         canvasRef.current?.clearOverlay();
       }
       if (activeTool === "mosaic") {
-        canvasRef.current?.undo();
+        // 모자이크 진입 시점까지 되돌리기
+        while (useImageEditorStore.getState().historyIndex > mosaicEntryRef.current) {
+          canvasRef.current?.undo();
+        }
+        canvasRef.current?.clearOverlay();
       }
       if (activeTool === "crop") {
         setCropRect(null);
@@ -467,12 +471,14 @@ export function EditPanel({
         <DrawingPanel
           settings={drawingSettings}
           onChange={setDrawingSettings}
-          onApply={() => { canvasRef.current?.bakeOverlay(); setHasDrawingContent(false); mosaicEntryRef.current = historyIndex + 1; setActiveTool(null); }}
+          onApply={() => { canvasRef.current?.clearOverlay(); setHasDrawingContent(false); setActiveTool(null); }}
           isMosaic
           onClear={() => {
-            canvasRef.current?.undo();
+            // 모자이크 진입 시점까지 모든 스냅샷 되돌리기
+            while (useImageEditorStore.getState().historyIndex > mosaicEntryRef.current) {
+              canvasRef.current?.undo();
+            }
             setHasDrawingContent(false);
-            mosaicEntryRef.current = historyIndex - 1;
           }}
           isEraser={false}
           hasContent={hasDrawingContent}
