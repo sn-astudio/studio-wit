@@ -22,6 +22,7 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
   const isCompleted = gen.status === "completed" && !!gen.result_url;
 
   const [hovering, setHovering] = useState(false);
+  const [detectedAspect, setDetectedAspect] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleMouseEnter = useCallback(() => {
@@ -40,7 +41,7 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
   }, []);
 
   const timeAgo = formatTimeAgo(gen.created_at);
-  const aspectStyle = getAspectStyle(gen.aspect_ratio);
+  const aspectStyle = detectedAspect ?? getAspectStyle(gen.aspect_ratio);
 
   return (
     <div
@@ -72,6 +73,12 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
           muted
           loop
           playsInline
+          onLoadedMetadata={() => {
+            const v = videoRef.current;
+            if (v && v.videoWidth && v.videoHeight) {
+              setDetectedAspect(`${v.videoWidth}/${v.videoHeight}`);
+            }
+          }}
         />
       )}
 

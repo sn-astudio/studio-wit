@@ -224,6 +224,7 @@ export function VideoEditWorkspace() {
 
   // 소스 상태
   const [source, setSource] = useState<VideoSource | null>(null);
+  const [originalUrl, setOriginalUrl] = useState<string | null>(null);
 
   // 합치기 탭 진입 시 현재 영상을 클립 1에 자동 추가
   const mergeAutoAddedRef = useRef(false);
@@ -248,6 +249,7 @@ export function VideoEditWorkspace() {
     const urlParam = searchParams.get("url");
     if (urlParam) {
       initializedRef.current = true;
+      setOriginalUrl(urlParam);
       setSource({
         url: urlParam,
         duration: 0,
@@ -712,6 +714,7 @@ export function VideoEditWorkspace() {
   const handleSourceSelected = useCallback(
     (src: VideoSource) => {
       setSource(src);
+      setOriginalUrl(src.url);
       setResultUrl(null);
       setTrimStart(0);
       setTrimEnd(0);
@@ -819,6 +822,7 @@ export function VideoEditWorkspace() {
     } else {
       // 다른 탭: 소스를 선택한 동영상으로 교체
       setResultUrl(null);
+      setOriginalUrl(modalVideoUrl);
       setSource({
         url: modalVideoUrl,
         duration: 0,
@@ -1658,17 +1662,38 @@ export function VideoEditWorkspace() {
                 </div>
               </div>
 
-              {/* 하단 내려받기 CTA — 소도구 미선택 + AI 탭 제외 */}
+              {/* 하단 CTA — 소도구 미선택 + AI 탭 제외 */}
               {mainTab !== "ai" && !subTool && source && (
-                <div className="shrink-0 px-5 pt-4 pb-4">
+                <div className="shrink-0 px-5 pt-3 pb-4 flex gap-2">
                   <button
                     onClick={() => {
                       if (source?.url) downloadVideo(source.url, `video_${Date.now()}.mp4`);
                     }}
-                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-transparent py-2.5 text-[13px] font-[600] text-foreground transition-all hover:bg-neutral-100 active:opacity-80 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                    className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-transparent py-2.5 text-[13px] font-[600] text-foreground transition-all hover:bg-neutral-100 active:opacity-80 dark:border-neutral-700 dark:hover:bg-neutral-800"
                   >
                     <Download className="size-4" />
                     {t("downloadVideo")}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!source?.url) return;
+                      try {
+                        await saveEditMutation.mutateAsync({
+                          result_url: source.url,
+                          edit_type: "edit",
+                          prompt: source.name || "Edited video",
+                        });
+                        toast.success(t("saveSuccess"));
+                      } catch {
+                        toast.error(t("saveError"));
+                      }
+                    }}
+                    disabled={saveEditMutation.isPending || source.url === originalUrl}
+                    className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    {saveEditMutation.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                    <Save className="size-4" />
+                    {t("saveToHistory")}
                   </button>
                 </div>
               )}
@@ -1710,7 +1735,7 @@ export function VideoEditWorkspace() {
                         if (effectsState.canApply) await effectsPanelRef.current?.apply();
                         if (mergeState.canApply) await mergePanelRef.current?.apply();
 
-                        // 적용 결과를 새 소스로 교체
+                        // 적용 결과를 새 소스로 교체 + DB 저장
                         const finalUrl = resultUrlRef.current;
                         if (finalUrl && source) {
                           setSource({ ...source, url: finalUrl });
@@ -1759,9 +1784,14 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await filterPanelRef.current?.apply();
+                        const url = resultUrlRef.current;
+                        if (url && source) {
+                          setSource({ ...source, url });
+                        }
                         filterPanelRef.current?.reset();
                         setPreviewCssFilter("");
                         setFilterState({ canApply: false, isPending: false });
+                        setResultUrl(null);
                         setSubTool(null);
                         setActiveTab("filter");
                       }}
@@ -1788,10 +1818,15 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await creativePanelRef.current?.apply();
+                        const url = resultUrlRef.current;
+                        if (url && source) {
+                          setSource({ ...source, url });
+                        }
                         creativePanelRef.current?.reset();
                         setPreviewCreativeOverlay(null);
                         setPreviewCssFilter("");
                         setCreativeState({ canApply: false, isPending: false });
+                        setResultUrl(null);
                         setSubTool(null);
                         setActiveTab("filter");
                       }}
@@ -1818,7 +1853,9 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await subtitlesPanelRef.current?.apply();
-                        subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setSubTool(null);
+                        const subUrl = resultUrlRef.current;
+                        if (subUrl && source) { setSource({ ...source, url: subUrl }); }
+                        subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!subtitlesState.canApply || subtitlesState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
@@ -1843,7 +1880,9 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await textOverlayPanelRef.current?.apply();
-                        textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setSubTool(null);
+                        const txtUrl = resultUrlRef.current;
+                        if (txtUrl && source) { setSource({ ...source, url: txtUrl }); }
+                        textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!textOverlayState.canApply || textOverlayState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
@@ -1868,7 +1907,9 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await watermarkPanelRef.current?.apply();
-                        watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setSubTool(null);
+                        const wmUrl = resultUrlRef.current;
+                        if (wmUrl && source) { setSource({ ...source, url: wmUrl }); }
+                        watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!watermarkState.canApply || watermarkState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
@@ -1893,7 +1934,9 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await gifPanelRef.current?.apply();
-                        gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setSubTool(null);
+                        const gifUrl = resultUrlRef.current;
+                        if (gifUrl && source) { setSource({ ...source, url: gifUrl }); }
+                        gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!gifState.canApply || gifState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
@@ -1918,7 +1961,9 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await sceneSplitPanelRef.current?.apply();
-                        sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setSubTool(null);
+                        const sceneUrl = resultUrlRef.current;
+                        if (sceneUrl && source) { setSource({ ...source, url: sceneUrl }); }
+                        sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!sceneSplitState.canApply || sceneSplitState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
@@ -1943,7 +1988,9 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await thumbnailPanelRef.current?.apply();
-                        thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setSubTool(null);
+                        const thumbUrl = resultUrlRef.current;
+                        if (thumbUrl && source) { setSource({ ...source, url: thumbUrl }); }
+                        thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!thumbnailState.canApply || thumbnailState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"

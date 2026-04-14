@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Clapperboard, Download, Loader2, Scissors, SlidersHorizontal, Sparkle, Wand2 } from "lucide-react";
+import { Download, Loader2, Save, Scissors, SlidersHorizontal, Sparkle, Wand2 } from "lucide-react";
 
 import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
@@ -177,6 +177,7 @@ export function ImageEditWorkspace({
 
   const filterValues = useImageEditorStore((s) => s.filterValues);
   const activeTool = useImageEditorStore((s) => s.activeTool);
+  const historyIndex = useImageEditorStore((s) => s.historyIndex);
   const drawingSettings = useImageEditorStore((s) => s.drawingSettings);
   const textSettings = useImageEditorStore((s) => s.textSettings);
   const setTextSettings = useImageEditorStore((s) => s.setTextSettings);
@@ -245,6 +246,38 @@ export function ImageEditWorkspace({
     a.click();
     document.body.removeChild(a);
     toast.success(t("exportSuccess"));
+  }, [filterValues, t]);
+
+  const [isSavingImage, setIsSavingImage] = useState(false);
+  const handleSaveImage = useCallback(async () => {
+    const canvas = canvasRef.current?.getMainCanvas();
+    if (!canvas) return;
+
+    setIsSavingImage(true);
+    try {
+      const needsBake = hasFilterChanges(filterValues);
+      let exportSource = canvas;
+      if (needsBake) {
+        exportSource = applyFilterToCanvas(canvas, filterValues);
+      }
+
+      const blob = await new Promise<Blob>((resolve) => {
+        exportSource.toBlob((b) => resolve(b!), "image/png");
+      });
+      const file = new File([blob], `edited-${Date.now()}.png`, { type: "image/png" });
+      const { imageApi } = await import("@/services/api");
+      const uploaded = await imageApi.upload(file);
+      await imageApi.saveEdit({
+        result_url: uploaded.url,
+        edit_type: "image_edit",
+        prompt: source?.url?.slice(0, 30) || "Edited image",
+      });
+      toast.success(t("saveImageSuccess"));
+    } catch {
+      toast.error(t("saveImageError"));
+    } finally {
+      setIsSavingImage(false);
+    }
   }, [filterValues, t]);
 
   const handleGenerateVideo = useCallback(() => {
@@ -463,7 +496,7 @@ export function ImageEditWorkspace({
 
                 {/* 하단 내보내기 CTA — 소도구 미선택 시에만 표시 */}
                 {((activeTab === "edit" && !activeTool) || (activeTab === "filter" && !filterToolActive)) && (
-                  <div className="shrink-0 px-5 pt-4 pb-4 flex gap-2">
+                  <div className="shrink-0 px-5 pt-3 pb-4 flex gap-2">
                     <button
                       onClick={handleExport}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-transparent py-2.5 text-[13px] font-[600] text-foreground transition-all hover:bg-neutral-100 active:opacity-80 dark:border-neutral-700 dark:hover:bg-neutral-800"
@@ -472,11 +505,13 @@ export function ImageEditWorkspace({
                       {t("downloadImage")}
                     </button>
                     <button
-                      onClick={handleGenerateVideo}
-                      className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80"
+                      onClick={handleSaveImage}
+                      disabled={isSavingImage || historyIndex <= 0}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
-                      <Clapperboard className="size-4" />
-                      {t("generateVideo")}
+                      {isSavingImage && <Loader2 className="size-3.5 animate-spin" />}
+                      <Save className="size-4" />
+                      {t("saveImage")}
                     </button>
                   </div>
                 )}

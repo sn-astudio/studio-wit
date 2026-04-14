@@ -179,19 +179,32 @@ export function ImageEditPreview({
       {/* 우상단 액션 버튼 */}
       <div className="pointer-events-none absolute top-2.5 right-2.5 flex items-center gap-1.5">
         <TooltipProvider delay={0} closeDelay={0}>
-<Tooltip>
-          <TooltipTrigger
-            render={
-              <button
-                onClick={onRemoveImage}
-                className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
-              >
-                <Minus className="size-4" />
-              </button>
-            }
-          />
-          <TooltipContent side="bottom">{t("removeImage")}</TooltipContent>
-        </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  onClick={onGenerateVideo}
+                  className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                >
+                  <Clapperboard className="size-4" />
+                </button>
+              }
+            />
+            <TooltipContent side="bottom">{t("generateVideo")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  onClick={onRemoveImage}
+                  className="pointer-events-auto flex size-10 cursor-pointer items-center justify-center rounded-lg bg-black/40 text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                >
+                  <Minus className="size-4" />
+                </button>
+              }
+            />
+            <TooltipContent side="bottom">{t("removeImage")}</TooltipContent>
+          </Tooltip>
         </TooltipProvider>
       </div>
     </div>

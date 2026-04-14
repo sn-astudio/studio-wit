@@ -108,7 +108,7 @@ export function HistorySelectModal({
           ) : (
             <div className="columns-3 gap-2">
               {allGenerations
-                .filter((g) => g.result_url)
+                .filter((g) => g.result_url && !g.result_url.match(/\.(png|jpg|jpeg|gif|webp)(\?|$)/i))
                 .map((gen) => (
                   <button
                     key={gen.id}

@@ -390,7 +390,7 @@
     "publicDescription": "Visible in gallery",
     "privateDescription": "Only you",
     "selectVideoAction": "Select Video",
-    "saveToHistory": "Save to DB",
+    "saveToHistory": "Save Video",
     "downloadOnly": "Download Only",
     "addAsClip": "Add as Clip",
     "cancel": "Cancel",
@@ -908,7 +908,10 @@
     "sampleImages": "Sample Images",
     "reset": "Reset",
     "apply": "Apply",
-    "generate": "Generate"
+    "generate": "Generate",
+    "saveImage": "Save Image",
+    "saveImageSuccess": "Image saved",
+    "saveImageError": "Failed to save image"
   },
   "MyPage": {
     "title": "My Page",
