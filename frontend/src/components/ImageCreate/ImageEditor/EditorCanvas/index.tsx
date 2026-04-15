@@ -143,6 +143,21 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       requestAnimationFrame(() => fitCanvas());
     }, [syncHistoryMeta, fitCanvas]);
 
+    const restoreSnapshot = useCallback((targetIndex: number) => {
+      if (targetIndex < 0 || targetIndex >= snapshotsRef.current.length) return;
+      indexRef.current = targetIndex;
+      const canvas = mainRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const snapshot = snapshotsRef.current[targetIndex];
+      canvas.width = snapshot.width;
+      canvas.height = snapshot.height;
+      ctx.putImageData(snapshot, 0, 0);
+      syncHistoryMeta();
+      requestAnimationFrame(() => fitCanvas());
+    }, [syncHistoryMeta, fitCanvas]);
+
     const redo = useCallback(() => {
       if (indexRef.current >= snapshotsRef.current.length - 1) return;
       indexRef.current++;
@@ -255,6 +270,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
           const data = ctx.getImageData(0, 0, overlay.width, overlay.height);
           return data.data.some((v, i) => i % 4 === 3 && v > 0);
         },
+        restoreSnapshot,
       }),
       [
         pushSnapshot,
@@ -264,6 +280,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
         applyCrop,
         bakeOverlay,
         clearOverlay,
+        restoreSnapshot,
       ],
     );
 

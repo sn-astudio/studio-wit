@@ -406,6 +406,7 @@ export function ImageEditWorkspace({
                 const url = URL.createObjectURL(file);
                 handleSourceSelected({ url });
               }}
+              onImageSourceDrop={(source) => handleSourceSelected(source)}
             />
             <input
               ref={fileInputRef}
