@@ -33,7 +33,7 @@ function ZoomControls() {
 
   return (
     <div
-      className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-1 rounded-full bg-black/50 px-1.5 py-1.5 backdrop-blur-md sm:left-1/2 sm:-translate-x-1/2"
+      className="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/50 px-1.5 py-1.5 backdrop-blur-md"
     >
       <button
         onClick={zoomOut}

@@ -8,7 +8,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "2.1K",
     image: "https://images.unsplash.com/photo-1555992336-03a23c7b20ee?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/34487/34487-720.mp4",
-    className: "aspect-[3/4]",
     style: "cinematic",
   },
   {
@@ -17,7 +16,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "8.7K",
     likes: "1.5K",
     image: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=800&auto=format&fit=crop",
-    className: "aspect-square",
+    video: "https://assets.mixkit.co/videos/39764/39764-720.mp4",
     style: "threeDRender",
   },
   {
@@ -27,7 +26,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "3.8K",
     image: "https://images.unsplash.com/photo-1551244072-5d12893278ab?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/4883/4883-720.mp4",
-    className: "aspect-[5/4]",
     style: "cinematic",
   },
   {
@@ -37,7 +35,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "5.2K",
     image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/32809/32809-720.mp4",
-    className: "aspect-[3/2]",
     style: "fantasy",
   },
   {
@@ -47,7 +44,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "1.9K",
     image: "https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/4421/4421-720.mp4",
-    className: "aspect-square",
     style: "photorealistic",
   },
   {
@@ -57,7 +53,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "2.7K",
     image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/3123/3123-720.mp4",
-    className: "aspect-[3/4]",
     style: "photorealistic",
   },
   {
@@ -67,7 +62,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "3.3K",
     image: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/34563/34563-720.mp4",
-    className: "aspect-[3/4]",
     style: "cinematic",
   },
   {
@@ -77,7 +71,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "1.8K",
     image: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/32647/32647-720.mp4",
-    className: "aspect-square",
     style: "cinematic",
   },
   {
@@ -86,7 +79,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "10.5K",
     likes: "2.4K",
     image: "https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&auto=format&fit=crop",
-    className: "aspect-[4/5]",
     style: "watercolor",
   },
   {
@@ -95,7 +87,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "9.1K",
     likes: "2.0K",
     image: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=800&auto=format&fit=crop",
-    className: "aspect-square",
     style: "threeDRender",
   },
   {
@@ -105,7 +96,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "3.5K",
     image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/6191/6191-720.mp4",
-    className: "aspect-[3/4]",
     style: "oilPainting",
   },
   {
@@ -114,7 +104,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "16.7K",
     likes: "4.2K",
     image: "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=800&auto=format&fit=crop",
-    className: "aspect-square",
+    video: "https://assets.mixkit.co/videos/2034/2034-720.mp4",
     style: "photorealistic",
   },
   {
@@ -123,7 +113,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "11.4K",
     likes: "2.9K",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop",
-    className: "aspect-[3/4]",
     style: "photorealistic",
   },
   {
@@ -133,7 +122,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "1.7K",
     image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/3784/3784-720.mp4",
-    className: "aspect-[3/2]",
     style: "watercolor",
   },
   {
@@ -142,7 +130,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "15.8K",
     likes: "3.9K",
     image: "https://images.unsplash.com/photo-1604871000636-074fa5117945?w=800&auto=format&fit=crop",
-    className: "aspect-[3/4]",
     style: "fantasy",
   },
   {
@@ -151,7 +138,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "12.1K",
     likes: "2.8K",
     image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop",
-    className: "aspect-square",
     style: "threeDRender",
   },
   {
@@ -160,7 +146,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "19.4K",
     likes: "4.6K",
     image: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&auto=format&fit=crop",
-    className: "aspect-[4/5]",
     style: "photorealistic",
   },
   {
@@ -169,7 +154,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "7.3K",
     likes: "1.4K",
     image: "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?w=800&auto=format&fit=crop",
-    className: "aspect-[3/4]",
     style: "fantasy",
   },
   {
@@ -177,8 +161,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     author: "leaf_gen",
     views: "14.1K",
     likes: "3.6K",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop",
-    className: "aspect-square",
+    image: "https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=800&auto=format&fit=crop",
     style: "watercolor",
   },
   {
@@ -188,7 +171,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "4.8K",
     image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/22394/22394-720.mp4",
-    className: "aspect-[3/4]",
     style: "threeDRender",
   },
   {
@@ -197,7 +179,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "22.3K",
     likes: "5.9K",
     image: "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=800&auto=format&fit=crop",
-    className: "aspect-[4/5]",
+    video: "https://assets.mixkit.co/videos/2731/2731-720.mp4",
     style: "anime",
   },
   {
@@ -207,7 +189,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "6.1K",
     image: "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/4880/4880-720.mp4",
-    className: "aspect-square",
     style: "fantasy",
   },
   {
@@ -216,7 +197,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "6.8K",
     likes: "1.2K",
     image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&auto=format&fit=crop",
-    className: "aspect-[3/2]",
     style: "sketch",
   },
   {
@@ -226,7 +206,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "4.3K",
     image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/4815/4815-720.mp4",
-    className: "aspect-[3/4]",
     style: "cinematic",
   },
   {
@@ -235,7 +214,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "9.6K",
     likes: "2.3K",
     image: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=800&auto=format&fit=crop",
-    className: "aspect-square",
     style: "pixelArt",
   },
   {
@@ -244,7 +222,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "11.2K",
     likes: "2.6K",
     image: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&auto=format&fit=crop",
-    className: "aspect-[3/2]",
     style: "oilPainting",
   },
   {
@@ -254,7 +231,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "7.2K",
     image: "https://images.unsplash.com/photo-1577493340887-b7bfff550145?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/42337/42337-720.mp4",
-    className: "aspect-[3/4]",
     style: "fantasy",
   },
   {
@@ -263,7 +239,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "13.7K",
     likes: "3.1K",
     image: "https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=800&auto=format&fit=crop",
-    className: "aspect-[4/5]",
     style: "comic",
   },
   {
@@ -273,7 +248,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "4.0K",
     image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/3089/3089-720.mp4",
-    className: "aspect-[3/2]",
     style: "photorealistic",
   },
   {
@@ -282,7 +256,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "31.2K",
     likes: "8.4K",
     image: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop",
-    className: "aspect-[3/4]",
     style: "anime",
   },
   {
@@ -291,7 +264,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "8.9K",
     likes: "1.8K",
     image: "https://images.unsplash.com/photo-1444464666168-49d633b86797?w=800&auto=format&fit=crop",
-    className: "aspect-square",
     style: "watercolor",
   },
   {
@@ -301,7 +273,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "2.5K",
     image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/4000/4000-720.mp4",
-    className: "aspect-[3/4]",
     style: "cinematic",
   },
   {
@@ -310,7 +281,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "12.6K",
     likes: "3.4K",
     image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&auto=format&fit=crop",
-    className: "aspect-[4/5]",
     style: "sketch",
   },
   {
@@ -319,7 +289,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "15.0K",
     likes: "3.7K",
     image: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&auto=format&fit=crop",
-    className: "aspect-square",
     style: "oilPainting",
   },
   {
@@ -328,7 +297,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "7.7K",
     likes: "1.6K",
     image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop",
-    className: "aspect-[3/4]",
     style: "pixelArt",
   },
   {
@@ -338,7 +306,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "5.5K",
     image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/41727/41727-720.mp4",
-    className: "aspect-[3/2]",
     style: "threeDRender",
   },
   {
@@ -347,7 +314,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "10.3K",
     likes: "2.2K",
     image: "https://images.unsplash.com/photo-1596727147705-61a532a659bd?w=800&auto=format&fit=crop",
-    className: "aspect-square",
     style: "comic",
   },
   {
@@ -356,7 +322,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "18.2K",
     likes: "4.7K",
     image: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=800&auto=format&fit=crop",
-    className: "aspect-[3/4]",
     style: "photorealistic",
   },
   {
@@ -365,7 +330,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "14.8K",
     likes: "3.9K",
     image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&auto=format&fit=crop",
-    className: "aspect-[4/5]",
     style: "sketch",
   },
   {
@@ -374,7 +338,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "11.5K",
     likes: "2.8K",
     image: "https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=800&auto=format&fit=crop",
-    className: "aspect-square",
     style: "threeDRender",
   },
   {
@@ -383,7 +346,7 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "20.6K",
     likes: "5.3K",
     image: "https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=800&auto=format&fit=crop",
-    className: "aspect-[3/2]",
+    video: "https://assets.mixkit.co/videos/3192/3192-720.mp4",
     style: "watercolor",
   },
   {
@@ -392,7 +355,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     views: "26.1K",
     likes: "7.8K",
     image: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&auto=format&fit=crop",
-    className: "aspect-[3/4]",
     style: "oilPainting",
   },
   {
@@ -402,7 +364,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "6.0K",
     image: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/4814/4814-720.mp4",
-    className: "aspect-[3/4]",
     style: "cinematic",
   },
   {
@@ -412,7 +373,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "4.1K",
     image: "https://images.unsplash.com/photo-1546026423-cc4642628d2b?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/5765/5765-720.mp4",
-    className: "aspect-square",
     style: "cinematic",
   },
   {
@@ -422,7 +382,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "5.1K",
     image: "https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/4596/4596-720.mp4",
-    className: "aspect-[3/4]",
     style: "fantasy",
   },
   {
@@ -432,7 +391,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "4.4K",
     image: "https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/2432/2432-720.mp4",
-    className: "aspect-[3/2]",
     style: "photorealistic",
   },
   {
@@ -442,7 +400,6 @@ export const GALLERY_ITEMS: GalleryItem[] = [
     likes: "5.7K",
     image: "https://images.unsplash.com/photo-1504704911898-68304a7d2571?w=800&auto=format&fit=crop",
     video: "https://assets.mixkit.co/videos/34286/34286-720.mp4",
-    className: "aspect-[4/5]",
     style: "anime",
   },
 ];

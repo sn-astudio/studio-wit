@@ -174,8 +174,6 @@ export const FilterPanel = forwardRef<FilterPanelRef, FilterPanelProps>(function
         params: { brightness, contrast, saturation },
       });
       onEffectApplied?.(result.result_url);
-      toast.success(t("effectApplied"));
-      notify(t("effectApplied"));
     } catch {
       toast.error(t("effectError"));
     }

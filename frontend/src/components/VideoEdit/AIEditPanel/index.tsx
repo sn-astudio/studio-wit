@@ -13,12 +13,14 @@ import { downloadImage, downloadVideo } from "../utils";
 import type { AIEditPanelProps, AIEditPanelRef } from "./types";
 
 const AI_VIDEO_MODELS = [
-  { id: "veo-3.1", name: "Veo 3.1", durations: [5, 6, 7, 8, 9, 10] },
-  { id: "veo-3.1-fast", name: "Veo 3.1 Fast", durations: [5, 6, 7, 8, 9, 10] },
-  { id: "sora-2", name: "Sora 2", durations: [4, 8, 12] },
-  { id: "sora-2-pro", name: "Sora 2 Pro", durations: [4, 8, 12] },
-  { id: "kling", name: "Kling", durations: [5, 10] },
+  { id: "veo-3.1", name: "Veo 3.1", durations: [5, 6, 7, 8, 9, 10], hasNegativePrompt: false, hasCfgScale: false },
+  { id: "veo-3.1-fast", name: "Veo 3.1 Fast", durations: [5, 6, 7, 8, 9, 10], hasNegativePrompt: false, hasCfgScale: false },
+  { id: "sora-2", name: "Sora 2", durations: [4, 8, 12], hasNegativePrompt: false, hasCfgScale: false },
+  { id: "sora-2-pro", name: "Sora 2 Pro", durations: [4, 8, 12], hasNegativePrompt: false, hasCfgScale: false },
+  { id: "kling", name: "Kling", durations: [5, 10], hasNegativePrompt: true, hasCfgScale: true },
 ];
+
+const CFG_SCALE_PRESETS = [0.1, 0.3, 0.5, 0.7, 1.0];
 
 const ASPECT_OPTIONS = ["16:9", "9:16", "1:1"] as const;
 
@@ -43,6 +45,8 @@ export const AIEditPanel = forwardRef<AIEditPanelRef, AIEditPanelProps>(function
   const [selectedModel, setSelectedModel] = useState("veo-3.1-fast");
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16" | "1:1">("16:9");
   const [duration, setDuration] = useState(5);
+  const [negativePrompt, setNegativePrompt] = useState("");
+  const [cfgScale, setCfgScale] = useState(0.5);
 
   const captureMutation = useCaptureFrame();
   const createMutation = useCreateGeneration();
@@ -94,14 +98,21 @@ export const AIEditPanel = forwardRef<AIEditPanelRef, AIEditPanelProps>(function
   const handleGenerate = useCallback(async () => {
     if (!capturedImageUrl || !prompt.trim() || !token || aiIsGenerating) return;
     try {
+      const params: Record<string, unknown> = {
+        input_image_url: capturedImageUrl,
+        aspect_ratio: aspectRatio,
+        duration,
+      };
+      if (currentModelConfig?.hasNegativePrompt && negativePrompt.trim()) {
+        params.negative_prompt = negativePrompt.trim();
+      }
+      if (currentModelConfig?.hasCfgScale) {
+        params.cfg_scale = cfgScale;
+      }
       const result = await createMutation.mutateAsync({
         model_id: selectedModel,
         prompt: prompt.trim(),
-        params: {
-          input_image_url: capturedImageUrl,
-          aspect_ratio: aspectRatio,
-          duration,
-        },
+        params,
       });
       onAiGenerationIdChange(result.generation.id);
       setPrompt("");
@@ -109,7 +120,7 @@ export const AIEditPanel = forwardRef<AIEditPanelRef, AIEditPanelProps>(function
     } catch {
       toast.error(t("aiGenerateError"));
     }
-  }, [capturedImageUrl, prompt, selectedModel, aspectRatio, duration, token, createMutation, t, onAiGenerationIdChange, aiIsGenerating]);
+  }, [capturedImageUrl, prompt, selectedModel, aspectRatio, duration, negativePrompt, cfgScale, currentModelConfig, token, createMutation, t, onAiGenerationIdChange, aiIsGenerating]);
 
   const handleReset = useCallback(() => {
     setPrompt("");
@@ -117,6 +128,8 @@ export const AIEditPanel = forwardRef<AIEditPanelRef, AIEditPanelProps>(function
     setSelectedModel("veo-3.1-fast");
     setAspectRatio("16:9");
     setDuration(5);
+    setNegativePrompt("");
+    setCfgScale(0.5);
   }, []);
 
   const canGenerate = !!capturedImageUrl && !!prompt.trim() && !aiIsGenerating && !createMutation.isPending;
@@ -256,6 +269,42 @@ export const AIEditPanel = forwardRef<AIEditPanelRef, AIEditPanelProps>(function
           className="w-full resize-none rounded-lg bg-neutral-50 px-3 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none dark:bg-neutral-800/60"
         />
       </div>
+
+      {/* 네거티브 프롬프트 (Kling) */}
+      {currentModelConfig?.hasNegativePrompt && (
+        <div className="space-y-2.5">
+          <p className="text-[13px] font-[600] text-foreground">{t("negativePromptLabel")}</p>
+          <textarea
+            value={negativePrompt}
+            onChange={(e) => { setNegativePrompt(e.target.value); onDirty?.(); }}
+            placeholder={t("negativePromptPlaceholder")}
+            rows={2}
+            className="w-full resize-none rounded-lg bg-neutral-50 px-3 py-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none dark:bg-neutral-800/60"
+          />
+        </div>
+      )}
+
+      {/* CFG 스케일 (Kling) */}
+      {currentModelConfig?.hasCfgScale && (
+        <div className="space-y-2.5">
+          <p className="text-[13px] font-[600] text-foreground">{t("cfgScaleLabel")}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {CFG_SCALE_PRESETS.map((v) => (
+              <button
+                key={v}
+                onClick={() => { setCfgScale(v); onDirty?.(); }}
+                className={`cursor-pointer rounded-lg px-3.5 py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
+                  cfgScale === v
+                    ? "bg-foreground text-background"
+                    : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 생성 진행 상태 */}
       {aiIsGenerating && (

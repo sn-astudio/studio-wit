@@ -96,8 +96,6 @@ export const TextOverlayPanel = forwardRef<TextOverlayPanelRef, TextOverlayPanel
         color: textColor,
       });
       onEffectApplied?.(result.result_url);
-      toast.success(t("effectApplied"));
-      notify(t("effectApplied"));
     } catch {
       toast.error(t("effectError"));
     }

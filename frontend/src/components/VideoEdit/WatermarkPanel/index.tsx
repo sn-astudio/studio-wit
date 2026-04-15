@@ -103,8 +103,6 @@ export const WatermarkPanel = forwardRef<WatermarkPanelRef, WatermarkPanelProps>
         image_scale: wmImageScale,
       });
       onEffectApplied?.(result.result_url);
-      toast.success(t("effectApplied"));
-      notify(t("effectApplied"));
     } catch {
       toast.error(t("effectError"));
     }

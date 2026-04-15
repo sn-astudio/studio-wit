@@ -100,8 +100,6 @@ export const CropPanel = forwardRef<CropPanelRef, CropPanelProps>(function CropP
       });
       setPendingResult(result.result_url);
       onCropApplied?.(result.result_url);
-      toast.success(t("cropApplied"));
-      notify(t("cropApplied"));
     } catch {
       toast.error(t("cropError"));
     }
