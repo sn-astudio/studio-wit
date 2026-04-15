@@ -118,7 +118,7 @@ export function Header() {
             {mobileOpen ? <X className="size-6" /> : <Menu className="size-5" />}
           </button>
           <Link href="/" className="group flex items-center">
-            <img src="/logo_wit.svg" alt="Wit" className="h-4 group-hover:animate-glitch-logo" />
+            <img src="/logo_wit.svg" alt="Wit" className="h-4 glitch-logo" />
           </Link>
         </div>
 

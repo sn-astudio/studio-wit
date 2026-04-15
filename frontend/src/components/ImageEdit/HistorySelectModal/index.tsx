@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { ImagePlus, X } from "lucide-react";
 
@@ -66,9 +67,9 @@ export function HistorySelectModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -137,6 +138,7 @@ export function HistorySelectModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

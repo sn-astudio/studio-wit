@@ -268,7 +268,7 @@
   100% { transform: translateX(0); filter: none; clip-path: none; }
 }
 
-@utility animate-glitch-logo {
+.group:hover .glitch-logo {
   animation: glitch-logo 0.35s steps(12, end);
 }
 

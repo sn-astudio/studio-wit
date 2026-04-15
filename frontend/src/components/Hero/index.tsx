@@ -110,7 +110,7 @@ export function Hero() {
           />
         </h1>
 
-        <p className="mx-auto mb-16 max-w-full text-lg font-semibold md:max-w-[38vw] leading-loose sm:text-xl whitespace-pre-line animate-text-brighten">
+        <p className="mx-auto mb-8 max-w-full text-lg font-semibold md:max-w-[38vw] leading-loose sm:mb-[52px] sm:text-xl whitespace-pre-line animate-text-brighten">
           {t("description")}
         </p>
 
