@@ -6,9 +6,12 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Download, Loader2, Save, Scissors, SlidersHorizontal, Sparkle, Wand2 } from "lucide-react";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
 import { usePromptStore } from "@/stores/promptStore";
+import { queryKeys } from "@/hooks/queries/keys";
 import type { EditorCanvasHandle } from "@/components/ImageCreate/ImageEditor/EditorCanvas/types";
 import type { CropRect } from "@/components/ImageCreate/ImageEditor/types";
 import type { CropRatio } from "@/components/ImageCreate/ImageEditor/CropOverlay/types";
@@ -154,6 +157,7 @@ export function ImageEditWorkspace({
 }: ImageEditWorkspaceProps) {
   const t = useTranslations("ImageEdit");
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [source, setSource] = useState<ImageSource | null>(
     initialImageUrl ? { url: initialImageUrl } : null,
@@ -272,13 +276,16 @@ export function ImageEditWorkspace({
         edit_type: "image_edit",
         prompt: source?.url?.slice(0, 30) || "Edited image",
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.generation.all,
+      });
       toast.success(t("saveImageSuccess"));
     } catch {
       toast.error(t("saveImageError"));
     } finally {
       setIsSavingImage(false);
     }
-  }, [filterValues, t]);
+  }, [filterValues, queryClient, t]);
 
   const handleGenerateVideo = useCallback(() => {
     const canvas = canvasRef.current?.getMainCanvas();
