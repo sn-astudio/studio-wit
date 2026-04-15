@@ -7,13 +7,13 @@ from typing import Optional
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, Response, UploadFile
 from fastapi.exceptions import HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
 from app.config import settings
 from app.core.exceptions import ForbiddenException, NotFoundException
 from app.dependencies import get_current_user, get_db
-from app.models.database import AsyncSession, Generation, User, utc_now
+from app.models.database import AsyncSession, Generation, User, async_session, utc_now
 from app.models.schemas import (
     ErrorResponse,
     GenerateRequest,
@@ -31,6 +31,19 @@ router = APIRouter(prefix="/api", tags=["Generation"])
 
 class ImageUploadResponse(BaseModel):
     url: str
+
+
+class SaveEditRequest(BaseModel):
+    result_url: str = Field(..., description="저장할 편집 결과 URL")
+    edit_type: str = Field(..., description="편집 타입 (mosaic, draw 등)")
+    prompt: str = Field(default="", description="결과 설명/프롬프트")
+    params_json: Optional[str] = Field(None, description="편집 파라미터 JSON")
+    is_public: Optional[bool] = Field(False, description="갤러리 공개 여부")
+
+
+class SaveEditResponse(BaseModel):
+    id: str
+    result_url: str
 
 
 # ── 백그라운드 생성 태스크 ──
@@ -363,3 +376,30 @@ async def proxy_image(url: str = Query(..., description="프록시할 이미지 
         media_type=resp.headers.get("content-type", "image/png"),
         headers={"Cache-Control": "public, max-age=31536000, immutable"},
     )
+
+
+@router.post("/image/save-edit", response_model=SaveEditResponse, summary="이미지 편집 결과 저장")
+async def save_image_edit_endpoint(
+    req: SaveEditRequest,
+    user: User = Depends(get_current_user),
+):
+    """이미지 편집 결과를 히스토리에 저장한다."""
+    now = utc_now()
+    gen = Generation(
+        user_id=user.id,
+        model_id=req.edit_type,
+        type="image",
+        status="completed",
+        prompt=req.prompt or f"Edited with {req.edit_type}",
+        params_json=req.params_json or "{}",
+        result_url=req.result_url,
+        is_public=req.is_public if req.is_public is not None else False,
+        created_at=now,
+        completed_at=now,
+    )
+    async with async_session() as db:
+        db.add(gen)
+        await db.commit()
+        await db.refresh(gen)
+
+    return SaveEditResponse(id=gen.id, result_url=gen.result_url)
