@@ -12,6 +12,7 @@ interface PromptStore {
   mode: PromptMode;
   prompt: string;
   attachedImages: File[];
+  inputImageUrl: string | null;
   selectedModel: string;
   params: Record<string, string | number>;
   isPublic: boolean;
@@ -23,6 +24,7 @@ interface PromptStore {
   setIsPublic: (isPublic: boolean) => void;
   addImage: (file: File) => void;
   removeImage: (index: number) => void;
+  setInputImageUrl: (url: string | null) => void;
   reset: () => void;
   restoreFromGeneration: (gen: Generation) => void;
 }
@@ -31,6 +33,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
   mode: "image",
   prompt: "",
   attachedImages: [],
+  inputImageUrl: null,
   selectedModel: IMAGE_MODELS[0]?.id ?? "",
   params: getDefaultParams(IMAGE_MODELS[0]?.id ?? "", IMAGE_MODELS),
   isPublic: false,
@@ -66,12 +69,19 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
   addImage: (file) =>
     set((state) => ({
       attachedImages: [...state.attachedImages, file],
+      inputImageUrl: null,
     })),
 
   removeImage: (index) =>
     set((state) => ({
       attachedImages: state.attachedImages.filter((_, i) => i !== index),
     })),
+
+  setInputImageUrl: (url) =>
+    set({
+      inputImageUrl: url,
+      attachedImages: [],
+    }),
 
   reset: () => {
     const { mode } = get();
@@ -80,6 +90,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
     set({
       prompt: "",
       attachedImages: [],
+      inputImageUrl: null,
       selectedModel: defaultModel,
       params: getDefaultParams(defaultModel, models),
       isPublic: false,
@@ -106,6 +117,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
       selectedModel: modelId,
       params: restoredParams,
       attachedImages: [],
+      inputImageUrl: null,
     });
   },
 }));

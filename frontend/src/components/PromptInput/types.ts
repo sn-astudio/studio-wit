@@ -45,6 +45,7 @@ export interface ParamConfig {
 export interface PromptInputState {
   prompt: string;
   attachedImages: File[];
+  inputImageUrl: string | null;
   selectedModel: string;
   params: Record<string, string | number>;
   isPublic: boolean;

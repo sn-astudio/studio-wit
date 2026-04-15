@@ -52,8 +52,10 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
   const prompt = usePromptStore((s) => s.prompt);
   const setPrompt = usePromptStore((s) => s.setPrompt);
   const attachedImages = usePromptStore((s) => s.attachedImages);
+  const inputImageUrl = usePromptStore((s) => s.inputImageUrl);
   const addImage = usePromptStore((s) => s.addImage);
   const removeImage = usePromptStore((s) => s.removeImage);
+  const setInputImageUrl = usePromptStore((s) => s.setInputImageUrl);
   const setMode = usePromptStore((s) => s.setMode);
   const numImages = usePromptStore((s) => s.params.numImages);
 
@@ -107,19 +109,11 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
   }, [mode, setMode]);
 
   const handleSelectGeneratedImage = React.useCallback(
-    async (url: string) => {
-      try {
-        const res = await fetch(url);
-        const blob = await res.blob();
-        const ext = blob.type.split("/")[1] || "png";
-        const file = new File([blob], `generated.${ext}`, { type: blob.type });
-        addImage(file);
-      } catch {
-        // ignore
-      }
+    (url: string) => {
+      setInputImageUrl(url);
       setShowDropdown(false);
     },
-    [addImage],
+    [setInputImageUrl],
   );
 
   const handleSubmit = React.useCallback(() => {
@@ -128,6 +122,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
     onSubmit?.({
       prompt: state.prompt,
       attachedImages: state.attachedImages,
+      inputImageUrl: state.inputImageUrl,
       selectedModel: state.selectedModel,
       params: state.params,
       isPublic: state.isPublic,
@@ -174,11 +169,31 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                 ))}
               </div>
             )}
+            {/* URL 기반 이미지 썸네일 (갤러리 선택) */}
+            {inputImageUrl && (
+              <div className="flex gap-2 overflow-x-auto px-3.5 pt-3.5 pb-1 pr-5 sm:px-5 sm:pt-4 sm:pb-1">
+                <div className="group relative shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={inputImageUrl}
+                    alt="Selected"
+                    className="size-14 rounded-lg border border-neutral-200 object-cover dark:border-neutral-800"
+                  />
+                  <button
+                    onClick={() => setInputImageUrl(null)}
+                    className="absolute -top-1.5 -right-1.5 flex size-5 cursor-pointer items-center justify-center rounded-full bg-neutral-900 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 dark:bg-neutral-100 dark:text-neutral-900"
+                    aria-label={t("removeImage")}
+                  >
+                    <X className="size-3" strokeWidth={2.5} />
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="sm:flex">
             {/* Input + options */}
             <div className="min-w-0 flex-1">
             {/* Prompt input */}
-            <div className={`px-3.5 py-3.5 sm:px-5 sm:pb-3 ${attachedImages.length > 0 ? "sm:pt-[10px]" : "sm:pt-[20px]"}`}>
+            <div className={`px-3.5 py-3.5 sm:px-5 sm:pb-3 ${attachedImages.length > 0 || inputImageUrl ? "sm:pt-[10px]" : "sm:pt-[20px]"}`}>
               <div className="flex items-start gap-0">
                 <div className="relative" ref={dropdownRef}>
                   <button
