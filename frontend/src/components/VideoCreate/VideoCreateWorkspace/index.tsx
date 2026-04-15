@@ -119,14 +119,19 @@ export function VideoCreateWorkspace() {
       const params = toGenerateParams(state.params);
       const negative_prompt = extractNegativePrompt(state.params);
 
+      const hasImage = state.attachedImages.length > 0 || !!state.inputImageUrl;
+
       // 비지원 모델에 이미지 첨부 시 차단
-      if (state.attachedImages.length > 0 && !doesModelSupportImageInput(state.selectedModel)) {
+      if (hasImage && !doesModelSupportImageInput(state.selectedModel)) {
         toast.error(t("imageNotSupported"));
         return;
       }
 
-      // 첨부 이미지가 있으면 업로드 → input_image_url 설정
-      if (state.attachedImages.length > 0) {
+      // 갤러리에서 선택한 URL이 있으면 직접 사용
+      if (state.inputImageUrl) {
+        params.input_image_url = state.inputImageUrl;
+      } else if (state.attachedImages.length > 0) {
+        // 첨부 이미지가 있으면 업로드 → input_image_url 설정
         try {
           const { url } = await uploadImageMutation.mutateAsync(state.attachedImages[0]);
           params.input_image_url = url;

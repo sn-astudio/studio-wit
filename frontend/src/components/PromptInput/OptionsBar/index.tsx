@@ -85,6 +85,7 @@ export function OptionsBar({ mode }: OptionsBarProps) {
   const t = useTranslations("PromptInput");
   const selectedModel = usePromptStore((s) => s.selectedModel);
   const attachedImages = usePromptStore((s) => s.attachedImages);
+  const inputImageUrl = usePromptStore((s) => s.inputImageUrl);
   const models = getModelsForMode(mode);
 
   if (models.length === 0) return null;
@@ -93,7 +94,8 @@ export function OptionsBar({ mode }: OptionsBarProps) {
   const supportedParams = currentModel?.supportedParams ?? [];
 
   const isImg2Vid =
-    attachedImages.length > 0 && (currentModel?.supportsImageInput ?? false);
+    (attachedImages.length > 0 || !!inputImageUrl) &&
+    (currentModel?.supportsImageInput ?? false);
 
   // Filter out numImages from regular option buttons — rendered as counter
   // Veo img2vid에서는 duration도 숨김 (Veo API가 img2vid에서 duration 미지원)
