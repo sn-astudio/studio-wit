@@ -42,26 +42,21 @@ export function Header() {
   const nextLocale = locale === "ko" ? "en" : "ko";
   const { theme, setTheme } = useTheme();
 
+  const savedScrollYRef = useRef(0);
   useEffect(() => {
     if (mobileOpen) {
+      savedScrollYRef.current = window.scrollY;
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
-      document.body.style.top = `-${window.scrollY}px`;
+      document.body.style.top = `-${savedScrollYRef.current}px`;
     } else {
-      const scrollY = document.body.style.top;
       document.body.style.overflow = "";
       document.body.style.position = "";
       document.body.style.width = "";
       document.body.style.top = "";
-      window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      window.scrollTo(0, savedScrollYRef.current);
     }
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-    };
   }, [mobileOpen]);
 
   const themeOptions = [
@@ -122,8 +117,8 @@ export function Header() {
           >
             {mobileOpen ? <X className="size-6" /> : <Menu className="size-5" />}
           </button>
-          <Link href="/" className="flex items-center">
-            <img src="/logo_wit.svg" alt="Wit" className="h-4" />
+          <Link href="/" className="group flex items-center">
+            <img src="/logo_wit.svg" alt="Wit" className="h-4 group-hover:animate-glitch-logo" />
           </Link>
         </div>
 
@@ -146,7 +141,7 @@ export function Header() {
 
                 {navDropdown === item.labelKey && (
                   <div className="absolute -left-6 top-full pt-2">
-                  <div className="min-w-[280px] rounded-xl border border-border/50 bg-popover p-2 shadow-lg">
+                  <div className="min-w-[280px] rounded-xl border border-border/50 bg-popover p-2 shadow-lg dark:border-white/[0.06] dark:bg-[oklch(0.18_0_0)]">
                     <div className="flex flex-col gap-1">
                       {item.children.map((child) => (
                         <Link
@@ -217,7 +212,7 @@ export function Header() {
                   {/* 유저 정보 */}
                   <div className="px-3 pt-1 pb-2.5">
                     <p className="text-[14px] font-[500] text-foreground">{session.user?.name}</p>
-                    <p className="mt-0.5 text-[12px] text-muted-foreground/60">
+                    <p className="mt-0.5 text-[13px] text-muted-foreground/60">
                       {session.user?.email}
                     </p>
                   </div>
@@ -283,6 +278,7 @@ export function Header() {
                     <Globe className="size-4 opacity-50" />
                     {tLang(nextLocale)}
                   </button>
+                  <div className="mx-2 my-1.5 h-px bg-neutral-200 dark:bg-neutral-800" />
                   {/* 로그아웃 */}
                   <button
                     onClick={() => {
@@ -340,7 +336,7 @@ export function Header() {
                 <div className="absolute right-0 top-full mt-2 w-60 rounded-xl border border-neutral-200 bg-popover p-2.5 shadow-lg dark:border-neutral-800">
                   <div className="px-3 pt-1 pb-2.5">
                     <p className="text-[14px] font-[500] text-foreground">{session.user?.name}</p>
-                    <p className="mt-0.5 text-[12px] text-muted-foreground/60">
+                    <p className="mt-0.5 text-[13px] text-muted-foreground/60">
                       {session.user?.email}
                     </p>
                   </div>
@@ -403,6 +399,7 @@ export function Header() {
                     <Globe className="size-4 opacity-50" />
                     {tLang(nextLocale)}
                   </button>
+                  <div className="mx-2 my-1.5 h-px bg-neutral-200 dark:bg-neutral-800" />
                   <button
                     onClick={() => {
                       setMobileProfileOpen(false);
@@ -472,7 +469,7 @@ export function Header() {
     </header>
     {mobileOpen && (
       <div
-        className="fixed inset-0 z-[49] bg-black/50 md:hidden"
+        className="fixed inset-0 z-[49] bg-black/50 backdrop-blur-md md:hidden"
         onClick={() => setMobileOpen(false)}
       />
     )}

@@ -22,7 +22,7 @@ export function Footer() {
           <Link href="/" className="flex items-center">
             <img src="/logo_wit.svg" alt="Wit" className="h-4" />
           </Link>
-          <p className="mt-1.5 text-sm leading-relaxed text-white/50 dark:text-muted-foreground">
+          <p className="mt-3 text-sm leading-relaxed text-white/50 dark:text-muted-foreground">
             {t("description")}
           </p>
         </div>
@@ -56,7 +56,7 @@ export function Footer() {
             <Link href="/" className="flex items-center">
               <img src="/logo_wit.svg" alt="Wit" className="h-4" />
             </Link>
-            <p className="mt-3 text-sm leading-relaxed text-white/50 dark:text-muted-foreground">
+            <p className="mt-4 text-sm leading-relaxed text-white/50 dark:text-muted-foreground">
               {t("description")}
             </p>
           </div>
@@ -84,7 +84,7 @@ export function Footer() {
           </div>
         </div>
 
-        <Separator className="my-6 bg-white/10 dark:bg-border/60 md:mt-10 md:mb-6" />
+        <Separator className="my-6 bg-white/5 dark:bg-border/30 md:mt-10 md:mb-6" />
 
         <div className="flex flex-wrap-reverse items-center justify-between gap-3">
           <p className="text-sm text-white/50 dark:text-muted-foreground">

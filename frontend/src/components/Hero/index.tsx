@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/Button";
 import { RotatingText } from "@/components/RotatingText";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
-import {
-  ArrowRight,
-  Bot,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { CountUp } from "@/components/CountUp";
+import { FollowingBot } from "./FollowingBot";
 import { ROTATING_WORDS, STAT_KEYS } from "./const";
 
 export function Hero() {
@@ -40,55 +38,55 @@ export function Hero() {
             {/* 가로 → (굵) */}
             <path
               d="M0,180 C250,110 400,260 600,150 C750,80 950,260 1100,170 C1300,100 1380,240 1400,180"
-              className="stroke-primary/20 [animation:grid-flow-h_9s_ease-in-out_infinite] dark:stroke-white/7"
+              className="stroke-primary/20 [animation:grid-flow-h_13s_ease-in-out_infinite] dark:stroke-white/7"
               strokeDasharray="140 1400" strokeWidth="2.4"
             />
             {/* 가로 ← (얇) */}
             <path
               d="M0,480 C180,550 350,400 550,510 C720,570 900,400 1050,500 C1220,560 1350,410 1400,480"
-              className="stroke-primary/15 [animation:grid-flow-h_12s_ease-in-out_infinite_reverse] dark:stroke-white/10"
+              className="stroke-primary/15 [animation:grid-flow-h_17s_ease-in-out_infinite_reverse] dark:stroke-white/10"
               strokeDasharray="126 1400" strokeWidth="1.2"
             />
             {/* 세로 ↓ (중) */}
             <path
               d="M300,0 C230,170 370,310 250,470 C190,580 360,720 280,900"
-              className="stroke-primary/15 [animation:grid-flow-v_11s_ease-in-out_infinite] dark:stroke-white/12"
+              className="stroke-primary/15 [animation:grid-flow-v_15s_ease-in-out_infinite] dark:stroke-white/12"
               strokeDasharray="105 1000" strokeWidth="1.8"
             />
             {/* 세로 ↑ (굵) */}
             <path
               d="M700,0 C630,170 770,310 650,470 C580,580 760,720 680,900"
-              className="stroke-primary/20 [animation:grid-flow-v_10.5s_ease-in-out_infinite_reverse] dark:stroke-white/7"
+              className="stroke-primary/20 [animation:grid-flow-v_14.5s_ease-in-out_infinite_reverse] dark:stroke-white/7"
               strokeDasharray="126 1000" strokeWidth="2.6"
             />
             {/* 큰 아크 (중) */}
             <path
               d="M0,100 C100,500 500,700 700,450 C900,200 1200,400 1400,800"
-              className="stroke-primary/15 [animation:grid-flow-d_13s_ease-in-out_infinite] dark:stroke-white/10"
+              className="stroke-primary/15 [animation:grid-flow-d_18s_ease-in-out_infinite] dark:stroke-white/10"
               strokeDasharray="140 2200" strokeWidth="1.5"
             />
             {/* S커브 (굵) */}
             <path
               d="M0,450 C200,100 400,800 700,300 C1000,-100 1100,700 1400,450"
-              className="stroke-primary/18 [animation:grid-flow-d_16s_ease-in-out_infinite] dark:stroke-white/12"
+              className="stroke-primary/18 [animation:grid-flow-d_22s_ease-in-out_infinite] dark:stroke-white/12"
               strokeDasharray="133 2400" strokeWidth="2.4"
             />
             {/* S커브 반대 (얇) */}
             <path
               d="M1400,500 C1200,850 1000,100 700,600 C400,1000 300,200 0,500"
-              className="stroke-primary/8 [animation:grid-flow-d_14.5s_ease-in-out_infinite_reverse] dark:stroke-white/7"
+              className="stroke-primary/8 [animation:grid-flow-d_20s_ease-in-out_infinite_reverse] dark:stroke-white/7"
               strokeDasharray="119 2400" strokeWidth="1"
             />
             {/* 루프형 (굵) */}
             <path
               d="M200,0 C-100,300 300,600 700,450 C1100,300 1500,600 1200,900"
-              className="stroke-primary/12 [animation:grid-flow-d_25s_ease-in-out_infinite] dark:stroke-white/8"
+              className="stroke-primary/12 [animation:grid-flow-d_35s_ease-in-out_infinite] dark:stroke-white/8"
               strokeDasharray="140 2400" strokeWidth="2.2"
             />
             {/* 역루프 (얇) */}
             <path
               d="M1200,0 C1500,300 1100,600 700,450 C300,300 -100,600 200,900"
-              className="stroke-primary/8 [animation:grid-flow-d_22s_ease-in-out_infinite_reverse] dark:stroke-white/7"
+              className="stroke-primary/8 [animation:grid-flow-d_30s_ease-in-out_infinite_reverse] dark:stroke-white/7"
               strokeDasharray="126 2400" strokeWidth="1.2"
             />
           </g>
@@ -96,8 +94,8 @@ export function Hero() {
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-7xl -translate-y-8 px-5 text-center md:px-6">
-        <div className="mb-6 inline-flex items-center gap-1.5 rounded-full bg-foreground/[0.06] px-4 py-1.5 text-sm font-medium text-muted-foreground dark:bg-white/[0.08] dark:text-muted-foreground">
-          <Bot className="size-5 text-primary" strokeWidth={2.5} />
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-foreground/[0.06] px-4 py-1.5 text-sm font-medium text-muted-foreground dark:bg-white/[0.08] dark:text-muted-foreground">
+          <FollowingBot className="size-6 -translate-y-px text-primary" size={24} strokeWidth={2.08} />
           <span>{t("poweredByAI")}</span>
         </div>
 

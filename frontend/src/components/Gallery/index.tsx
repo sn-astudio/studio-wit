@@ -64,7 +64,7 @@ export function Gallery({ variant = "landing" }: GalleryProps) {
         )}
         <div className="mb-10 flex items-end justify-between">
           <div>
-            <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mb-4 text-[32px] font-bold tracking-tight">
               {t("title")}
             </h2>
             <p className="max-w-2xl text-lg font-normal text-muted-foreground">

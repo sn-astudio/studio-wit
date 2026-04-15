@@ -53,7 +53,7 @@ export const TOOLS: Tool[] = [
     titleKey: "styleTransferTitle",
     descriptionKey: "styleTransferDesc",
     badgeKey: null,
-    href: null,
+    href: "/image-edit",
     image:
       "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&auto=format&fit=crop",
   },
@@ -62,7 +62,7 @@ export const TOOLS: Tool[] = [
     titleKey: "imageEnhancementTitle",
     descriptionKey: "imageEnhancementDesc",
     badgeKey: null,
-    href: null,
+    href: "/image-edit",
     image:
       "https://plus.unsplash.com/premium_photo-1771195168401-0daa7741e045?w=800&auto=format&fit=crop",
   },

@@ -34,7 +34,7 @@ export function Features() {
       <div className="mx-auto max-w-7xl px-5 md:px-6">
         <div className="mb-10 flex items-end justify-between gap-6">
           <div>
-            <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mb-4 text-[32px] font-bold tracking-tight">
               {t("title")}
             </h2>
             <p className="max-w-2xl text-lg font-normal text-muted-foreground">

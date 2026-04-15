@@ -248,7 +248,7 @@ export function MyPage() {
       <div className="mb-8 h-px bg-neutral-200 dark:bg-neutral-800" />
 
       {/* Filter bar */}
-      <div className="mb-6 flex flex-col gap-4">
+      <div className="mb-6 flex flex-col gap-5">
         <div className="flex items-baseline gap-2.5">
           <h2 className="text-[24px] font-[700] text-foreground">{t("myWorks")}</h2>
           {!isLoading && (
@@ -293,14 +293,14 @@ export function MyPage() {
 
       {/* Loading state */}
       {isLoading && (
-        <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="flex min-h-[calc(100dvh-340px)] items-center justify-center">
           <Loader2 className="size-6 animate-spin text-muted-foreground/40" />
         </div>
       )}
 
       {/* Empty state */}
       {!isLoading && allGenerations.length === 0 && (
-        <div className="flex min-h-[40vh] flex-col items-center justify-center">
+        <div className="flex min-h-[calc(100dvh-340px)] flex-col items-center justify-center">
           <div className="flex size-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
             <Layers className="size-6 text-neutral-400 dark:text-neutral-500" />
           </div>

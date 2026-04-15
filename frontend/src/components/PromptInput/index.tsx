@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { ImageIcon, Plus, Upload, X } from "lucide-react";
@@ -9,8 +8,7 @@ import { ImageIcon, Plus, Upload, X } from "lucide-react";
 import { Textarea } from "@/components/ui/Textarea";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import { usePromptStore } from "@/stores/promptStore";
-import { useGenerationHistory } from "@/hooks/queries/useGeneration";
-import { useAuthStore } from "@/stores/auth";
+import { HistorySelectModal } from "@/components/ImageEdit/HistorySelectModal";
 
 import { OptionsBar } from "./OptionsBar";
 import type { PromptInputProps } from "./types";
@@ -59,7 +57,6 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
 
   const [showDropdown, setShowDropdown] = React.useState(false);
   const [showGalleryModal, setShowGalleryModal] = React.useState(false);
-  const token = useAuthStore((s) => s.token);
 
   // 갤러리 모달 열릴 때 배경 스크롤 잠금
   React.useEffect(() => {
@@ -77,18 +74,6 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
       window.scrollTo(0, scrollY);
     };
   }, [showGalleryModal]);
-
-  const { data: imageHistoryData } = useGenerationHistory(
-    mode === "video" && token
-      ? { type: "image", status: "completed", limit: 20 }
-      : undefined,
-  );
-
-  const generatedImages = React.useMemo(() => {
-    return imageHistoryData?.pages
-      .flatMap((p) => p.generations)
-      .filter((g) => g.result_url) ?? [];
-  }, [imageHistoryData]);
 
   // 드롭다운 외부 클릭 닫기
   React.useEffect(() => {
@@ -278,74 +263,12 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
           </div>
           </div>
       </div>
-      {/* 이미지 갤러리 모달 */}
-      {showGalleryModal && typeof document !== "undefined" && createPortal(
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setShowGalleryModal(false)}
-        >
-          <div
-            className="flex w-full max-w-[880px] max-h-[85vh] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-[#161616]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-4 pt-4 pb-4 sm:px-5 sm:pt-5 sm:pb-5">
-              <h2 className="text-[15px] font-[600] text-foreground sm:text-[16px]">
-                {t("selectFromGallery")}
-              </h2>
-              <button
-                onClick={() => setShowGalleryModal(false)}
-                className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-neutral-100 hover:text-foreground dark:hover:bg-neutral-800"
-              >
-                <X className="size-4.5" />
-              </button>
-            </div>
-            {generatedImages.length > 0 ? (
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 sm:px-5 sm:pb-5">
-              <div className="grid auto-rows-[32px] grid-cols-2 gap-2 sm:auto-rows-[36px] sm:grid-cols-3" style={{ gridAutoFlow: "dense" }}>
-                {generatedImages.map((gen) => {
-                  const ratio = gen.aspect_ratio?.replace(":", "/") ?? "1/1";
-                  const [w, h] = ratio.split("/").map(Number);
-                  const rowSpan = w && h ? Math.max(3, Math.round(7 * (h / w))) : 7;
-                  return (
-                  <button
-                    key={gen.id}
-                    onClick={() => {
-                      handleSelectGeneratedImage(gen.result_url!);
-                      setShowGalleryModal(false);
-                    }}
-                    className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60"
-                    style={{ gridRow: `span ${rowSpan}` }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={gen.result_url!}
-                      alt={gen.prompt}
-                      className="size-full object-cover"
-                    />
-                    {/* 모바일: 항상 표시 / PC: 호버 시 */}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100" />
-                    <div className="pointer-events-none absolute inset-x-0 top-0 px-2 pt-2 pb-4 opacity-100 sm:px-2.5 sm:pt-2.5 sm:pb-6 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
-                      <p className="line-clamp-1 text-left text-[11px] font-[500] leading-snug text-white/90 sm:line-clamp-2 sm:text-[12px]">
-                        {gen.prompt}
-                      </p>
-                    </div>
-                  </button>
-                  );
-                })}
-              </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center px-4 pb-4 py-12 sm:px-5 sm:pb-5 sm:py-16">
-                <div className="flex size-12 items-center justify-center rounded-full bg-neutral-100 sm:size-14 dark:bg-neutral-800">
-                  <ImageIcon className="size-5 text-neutral-400 sm:size-6 dark:text-neutral-500" />
-                </div>
-                <p className="mt-3 text-[13px] font-[500] text-muted-foreground/60 sm:mt-4 sm:text-[14px]">{t("noGeneratedImages")}</p>
-              </div>
-            )}
-          </div>
-        </div>,
-        document.body,
-      )}
+      {/* 내 이미지에서 선택 모달 */}
+      <HistorySelectModal
+        isOpen={showGalleryModal}
+        onClose={() => setShowGalleryModal(false)}
+        onSelect={({ url }) => handleSelectGeneratedImage(url)}
+      />
     </TooltipProvider>
   );
 }
