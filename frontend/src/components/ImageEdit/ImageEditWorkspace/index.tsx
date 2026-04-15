@@ -4,30 +4,30 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Scissors, SlidersHorizontal, Sparkle, Wand2 } from "lucide-react";
+import { Download, Loader2, Save, Scissors, SlidersHorizontal, Sparkle, Wand2 } from "lucide-react";
+
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useRouter } from "@/i18n/routing";
 import { useImageEditorStore } from "@/stores/imageEditor";
 import { usePromptStore } from "@/stores/promptStore";
+import { queryKeys } from "@/hooks/queries/keys";
 import type { EditorCanvasHandle } from "@/components/ImageCreate/ImageEditor/EditorCanvas/types";
 import type { CropRect } from "@/components/ImageCreate/ImageEditor/types";
 import type { CropRatio } from "@/components/ImageCreate/ImageEditor/CropOverlay/types";
-import {
-  DEFAULT_DRAWING_SETTINGS,
-  DEFAULT_TEXT_SETTINGS,
-} from "@/components/ImageCreate/ImageEditor/const";
 import {
   exportCanvas,
   applyFilterToCanvas,
   hasFilterChanges,
 } from "@/components/ImageCreate/ImageEditor/utils";
-import { cn } from "@/lib/utils";
+
 
 import { ImageEditPreview } from "../ImageEditPreview";
-import { ImageSourceSelector } from "../ImageSourceSelector";
+import { HistorySelectModal } from "../HistorySelectModal";
 import { EditPanel } from "../EditPanel";
 import { ImageFilterPanel } from "../ImageFilterPanel";
 import { AIEditPanel } from "../AIEditPanel";
+import type { AIEditPanelRef } from "../AIEditPanel/types";
 import type { EditTab, ImageSource, ImageEditWorkspaceProps } from "./types";
 
 const TABS: { id: EditTab; labelKey: string; icon: typeof Scissors }[] = [
@@ -157,6 +157,7 @@ export function ImageEditWorkspace({
 }: ImageEditWorkspaceProps) {
   const t = useTranslations("ImageEdit");
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [source, setSource] = useState<ImageSource | null>(
     initialImageUrl ? { url: initialImageUrl } : null,
@@ -165,7 +166,11 @@ export function ImageEditWorkspace({
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const canvasRef = useRef<EditorCanvasHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const historyRef = useRef<HTMLDivElement>(null);
+  const aiEditPanelRef = useRef<AIEditPanelRef>(null);
+  const [aiEditState, setAiEditState] = useState({ canApply: false, isPending: false });
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
+  const [filterToolActive, setFilterToolActive] = useState(false);
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
   const [cropRatio, setCropRatio] = useState<CropRatio>("free");
   const [freeRotateDegrees, setFreeRotateDegrees] = useState(0);
@@ -176,6 +181,7 @@ export function ImageEditWorkspace({
 
   const filterValues = useImageEditorStore((s) => s.filterValues);
   const activeTool = useImageEditorStore((s) => s.activeTool);
+  const historyIndex = useImageEditorStore((s) => s.historyIndex);
   const drawingSettings = useImageEditorStore((s) => s.drawingSettings);
   const textSettings = useImageEditorStore((s) => s.textSettings);
   const setTextSettings = useImageEditorStore((s) => s.setTextSettings);
@@ -246,6 +252,41 @@ export function ImageEditWorkspace({
     toast.success(t("exportSuccess"));
   }, [filterValues, t]);
 
+  const [isSavingImage, setIsSavingImage] = useState(false);
+  const handleSaveImage = useCallback(async () => {
+    const canvas = canvasRef.current?.getMainCanvas();
+    if (!canvas) return;
+
+    setIsSavingImage(true);
+    try {
+      const needsBake = hasFilterChanges(filterValues);
+      let exportSource = canvas;
+      if (needsBake) {
+        exportSource = applyFilterToCanvas(canvas, filterValues);
+      }
+
+      const blob = await new Promise<Blob>((resolve) => {
+        exportSource.toBlob((b) => resolve(b!), "image/png");
+      });
+      const file = new File([blob], `edited-${Date.now()}.png`, { type: "image/png" });
+      const { imageApi } = await import("@/services/api");
+      const uploaded = await imageApi.upload(file);
+      await imageApi.saveEdit({
+        result_url: uploaded.url,
+        edit_type: "image_edit",
+        prompt: source?.url?.slice(0, 30) || "Edited image",
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.generation.all,
+      });
+      toast.success(t("saveImageSuccess"));
+    } catch {
+      toast.error(t("saveImageError"));
+    } finally {
+      setIsSavingImage(false);
+    }
+  }, [filterValues, queryClient, t]);
+
   const handleGenerateVideo = useCallback(() => {
     const canvas = canvasRef.current?.getMainCanvas();
     if (!canvas) return;
@@ -304,8 +345,8 @@ export function ImageEditWorkspace({
     [handleSourceSelected],
   );
 
-  const handleScrollToHistory = useCallback(() => {
-    historyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const handleOpenHistoryModal = useCallback(() => {
+    setHistoryModalOpen(true);
   }, []);
 
   const handleTabChange = useCallback(
@@ -346,10 +387,10 @@ export function ImageEditWorkspace({
   return (
     <div className="relative">
       {/* 메인 콘텐츠 */}
-      <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 sm:pt-6 md:px-6">
-        <div className="flex min-h-0 flex-col gap-4 sm:flex-row sm:gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 pb-5 sm:h-[calc(100dvh-64px)] sm:pt-6 sm:pb-6 md:px-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row sm:gap-6">
           {/* 좌측: 프리뷰 */}
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col min-h-0">
             <ImageEditPreview
               imageUrl={source?.url ?? null}
               canvasRef={canvasRef}
@@ -366,8 +407,8 @@ export function ImageEditWorkspace({
               onExport={handleExport}
               onGenerateVideo={handleGenerateVideo}
               onUpload={handleFileUpload}
-              onScrollToHistory={handleScrollToHistory}
-              onRemoveImage={handleRemoveImage}
+              onScrollToHistory={handleOpenHistoryModal}
+              onRemoveImage={() => setRemoveConfirmOpen(true)}
               onFileDrop={(file) => {
                 const url = URL.createObjectURL(file);
                 handleSourceSelected({ url });
@@ -397,7 +438,7 @@ export function ImageEditWorkspace({
           {/* 우측 패널 — 데스크톱 고정 */}
           {source && (
             <div className="hidden sm:block sm:w-[360px] sm:shrink-0">
-              <div className="fixed top-[88px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-104px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
+              <div className="fixed top-[88px] bottom-6 right-[max(16px,calc((100vw-1280px)/2+24px))] flex w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
                 {/* 탭 세그먼트 — 상단 고정 */}
                 <div className="shrink-0 bg-white px-5 pt-5 pb-4 dark:bg-neutral-950/85">
                   <div
@@ -449,15 +490,61 @@ export function ImageEditWorkspace({
                     />
                   )}
                   {activeTab === "filter" && (
-                    <ImageFilterPanel canvasRef={canvasRef} />
+                    <ImageFilterPanel canvasRef={canvasRef} onToolActiveChange={setFilterToolActive} />
                   )}
                   {activeTab === "ai" && (
                     <AIEditPanel
+                      ref={aiEditPanelRef}
                       sourceUrl={source?.url ?? null}
                       onUseAsSource={handleUseAsSource}
+                      onStateChange={setAiEditState}
                     />
                   )}
                 </div>
+
+                {/* 하단 내보내기 CTA — 소도구 미선택 시에만 표시 */}
+                {((activeTab === "edit" && !activeTool) || (activeTab === "filter" && !filterToolActive)) && (
+                  <div className="shrink-0 px-5 pt-3 pb-4 flex gap-2">
+                    <button
+                      onClick={handleExport}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-transparent py-2.5 text-[13px] font-[600] text-foreground transition-all hover:bg-neutral-100 active:opacity-80 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                    >
+                      <Download className="size-4" />
+                      {t("downloadImage")}
+                    </button>
+                    <button
+                      onClick={handleSaveImage}
+                      disabled={isSavingImage || historyIndex <= 0}
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                    >
+                      {isSavingImage && <Loader2 className="size-3.5 animate-spin" />}
+                      <Save className="size-4" />
+                      {t("saveImage")}
+                    </button>
+                  </div>
+                )}
+
+                {/* 하단 고정 액션 바 — AI 탭 */}
+                {activeTab === "ai" && (
+                  <div className="shrink-0 px-5 pt-3 pb-4">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => aiEditPanelRef.current?.reset()}
+                        className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
+                      >
+                        {t("reset")}
+                      </button>
+                      <button
+                        onClick={() => aiEditPanelRef.current?.apply()}
+                        disabled={!aiEditState.canApply || aiEditState.isPending}
+                        className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                      >
+                        {aiEditState.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                        {t("generate")} ✦ 1
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -497,15 +584,52 @@ export function ImageEditWorkspace({
           document.body,
         )}
 
-        {/* 하단 소스 선택 */}
-        <div ref={historyRef} className={cn("mt-12 pb-10", source && "sm:mr-[384px]")}>
-          <ImageSourceSelector
-            onSourceSelected={handleSourceSelected}
-            selectedUrl={source?.url}
-          />
-        </div>
       </div>
 
+      <HistorySelectModal
+        isOpen={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+        onSelect={(s) => handleSourceSelected(s)}
+      />
+
+      {/* 제거 확인 다이얼로그 */}
+      {removeConfirmOpen && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 backdrop-blur-sm"
+          onWheel={(e) => e.preventDefault()}
+          onTouchMove={(e) => e.preventDefault()}
+        >
+          <div
+            className="w-[340px] rounded-2xl border border-neutral-200 bg-background p-6 shadow-2xl dark:border-neutral-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-[16px] font-semibold text-foreground">
+              {t("removeImageTitle")}
+            </h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
+              {t("removeImageDesc")}
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setRemoveConfirmOpen(false)}
+                className="flex-1 cursor-pointer rounded-xl bg-neutral-100 py-2.5 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  handleRemoveImage();
+                  setRemoveConfirmOpen(false);
+                }}
+                className="flex-1 cursor-pointer rounded-xl bg-red-500 py-2.5 text-[14px] font-[500] text-white transition-colors hover:bg-red-600"
+              >
+                {t("removeConfirm")}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

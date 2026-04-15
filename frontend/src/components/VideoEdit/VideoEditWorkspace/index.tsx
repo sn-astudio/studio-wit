@@ -49,7 +49,6 @@ import { RotatePanel } from "../RotatePanel";
 import type { RotatePanelRef } from "../RotatePanel/types";
 import { CreativePresetPanel } from "../CreativePresetPanel";
 import { VideoSourceSelectModal } from "../VideoSourceSelectModal";
-import { VideoSourceSelector } from "../VideoSourceSelector";
 import type { MergeClip } from "../MergePanel/types";
 import { downloadVideo } from "../utils";
 import { useVideoEditStore } from "@/stores/videoEditStore";
@@ -225,6 +224,7 @@ export function VideoEditWorkspace() {
 
   // 소스 상태
   const [source, setSource] = useState<VideoSource | null>(null);
+  const [originalUrl, setOriginalUrl] = useState<string | null>(null);
 
   // 합치기 탭 진입 시 현재 영상을 클립 1에 자동 추가
   const mergeAutoAddedRef = useRef(false);
@@ -249,6 +249,7 @@ export function VideoEditWorkspace() {
     const urlParam = searchParams.get("url");
     if (urlParam) {
       initializedRef.current = true;
+      setOriginalUrl(urlParam);
       setSource({
         url: urlParam,
         duration: 0,
@@ -434,6 +435,7 @@ export function VideoEditWorkspace() {
 
   // 히스토리 모달
   const [isHistoryModalOpen, setHistoryModalOpen] = useState(false);
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
 
   // 모달
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -712,6 +714,7 @@ export function VideoEditWorkspace() {
   const handleSourceSelected = useCallback(
     (src: VideoSource) => {
       setSource(src);
+      setOriginalUrl(src.url);
       setResultUrl(null);
       setTrimStart(0);
       setTrimEnd(0);
@@ -819,6 +822,7 @@ export function VideoEditWorkspace() {
     } else {
       // 다른 탭: 소스를 선택한 동영상으로 교체
       setResultUrl(null);
+      setOriginalUrl(modalVideoUrl);
       setSource({
         url: modalVideoUrl,
         duration: 0,
@@ -924,11 +928,11 @@ export function VideoEditWorkspace() {
 
   return (
     <div className="relative">
-      <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 sm:pt-6 md:px-6">
-        <div className="flex min-h-0 flex-col gap-4 sm:flex-row sm:gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col px-4 pt-5 pb-5 sm:h-[calc(100dvh-64px)] sm:pt-6 sm:pb-6 md:px-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row sm:gap-6">
           {/* 좌측: 프리뷰 */}
-          <div className="flex flex-1 flex-col">
-            <div className="relative">
+          <div className="flex flex-1 flex-col min-h-0 sm:overflow-hidden">
+            <div className="relative sm:h-0 flex-1 min-h-0 flex flex-col overflow-hidden">
               {/* 비교 모드 토글 — 숨김 */}
               {false && resultUrl && source?.url && resultUrl !== source.url && (
                 <div className="absolute top-2 right-2 z-10 flex gap-1">
@@ -955,14 +959,14 @@ export function VideoEditWorkspace() {
               )}
 
               {compareMode && resultUrl && source?.url && resultUrl !== source.url ? (
-                <div className="space-y-1.5">
-                  <div className="flex aspect-video max-h-[280px] w-full gap-1 overflow-hidden rounded-2xl border border-neutral-300 bg-neutral-50 dark:border-neutral-800 dark:bg-black">
+                <div className="flex flex-1 min-h-0 flex-col gap-1.5">
+                  <div className="flex flex-1 min-h-0 w-full gap-1 overflow-hidden rounded-2xl border border-neutral-300 bg-neutral-50 dark:border-neutral-800 dark:bg-black">
                     {/* 원본 */}
                     <div className="relative flex flex-1 items-center justify-center overflow-hidden">
                       <video
                         ref={originalVideoRef}
                         src={source.url}
-                        className="max-h-[280px] max-w-full object-contain"
+                        className="max-h-full max-w-full object-contain"
                         muted
                       />
                       <span className="absolute top-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
@@ -974,7 +978,7 @@ export function VideoEditWorkspace() {
                       <video
                         ref={videoRef}
                         src={resultUrl}
-                        className="max-h-[280px] max-w-full object-contain"
+                        className="max-h-full max-w-full object-contain"
                         style={(activeTab === "effects" || activeTab === "filter") && previewCssFilter ? { filter: previewCssFilter } : undefined}
                         muted
                         onTimeUpdate={() => {
@@ -1030,12 +1034,7 @@ export function VideoEditWorkspace() {
                   onDownload={() => {
                     if (source?.url) downloadVideo(source.url, `video_${Date.now()}.mp4`);
                   }}
-                  onRemove={() => {
-                    setSource(null);
-                    setResultUrl(null);
-                    setCurrentTime(0);
-                    setDuration(0);
-                  }}
+                  onRemove={() => setRemoveConfirmOpen(true)}
                 />
               )}
             </div>
@@ -1045,7 +1044,7 @@ export function VideoEditWorkspace() {
           {source && (
             <button
               onClick={() => toast(t("mobileEditSoon"))}
-              className="mt-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-foreground py-3 text-[14px] font-[600] text-background transition-colors hover:opacity-90 sm:hidden"
+              className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-foreground py-3 text-[14px] font-[600] text-background transition-colors hover:opacity-90 sm:hidden"
             >
               <Scissors className="size-4" />
               {t("tabEdit")}
@@ -1055,7 +1054,7 @@ export function VideoEditWorkspace() {
           <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
 
           {/* 서브 패널: 트림 컨트롤 + 타임라인 (캔버스 아래) */}
-          {subTool === "trim" && source && duration > 0 && !resultUrl && (
+          {subTool === "trim" && source && duration > 0 && (
             <div className="mt-3 overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white px-5 py-4 dark:border-neutral-800/80 dark:bg-neutral-950/85">
               <TrimControls
                 trimStart={trimStart}
@@ -1210,7 +1209,7 @@ export function VideoEditWorkspace() {
 
           {/* 우측 패널 — 데스크톱 고정 (소스 있을 때만) */}
           {source && <div className="hidden sm:block sm:w-[360px] sm:shrink-0">
-            <div className="fixed top-[88px] right-[max(16px,calc((100vw-1280px)/2+24px))] flex h-[calc(100vh-104px)] w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
+            <div className="fixed top-[88px] bottom-6 right-[max(16px,calc((100vw-1280px)/2+24px))] flex w-[360px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/85 dark:backdrop-blur-xl">
               {/* 4탭 세그먼트 — 상단 고정 */}
               <div className="shrink-0 px-5 pt-5 pb-4">
                 <div className="relative flex flex-1 rounded-lg bg-neutral-100 p-1.5 dark:bg-neutral-800/60">
@@ -1261,8 +1260,8 @@ export function VideoEditWorkspace() {
                   </div>
                 )}
 
-                {/* Undo/Redo — 서브도구 선택 시만 */}
-                {subTool && mainTab !== "filter" && mainTab !== "overlay" && (
+                {/* Undo/Redo — AI 탭 제외 */}
+                {mainTab !== "ai" && (
                 <div className="mt-4 flex justify-center">
                   <div className="flex items-center gap-0.5 rounded-full bg-neutral-100 px-1.5 py-1.5 dark:bg-neutral-800/60">
                     <button
@@ -1663,6 +1662,42 @@ export function VideoEditWorkspace() {
                 </div>
               </div>
 
+              {/* 하단 CTA — 소도구 미선택 + AI 탭 제외 */}
+              {mainTab !== "ai" && !subTool && source && (
+                <div className="shrink-0 px-5 pt-3 pb-4 flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (source?.url) downloadVideo(source.url, `video_${Date.now()}.mp4`);
+                    }}
+                    className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-transparent py-2.5 text-[13px] font-[600] text-foreground transition-all hover:bg-neutral-100 active:opacity-80 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                  >
+                    <Download className="size-4" />
+                    {t("downloadVideo")}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!source?.url) return;
+                      try {
+                        await saveEditMutation.mutateAsync({
+                          result_url: source.url,
+                          edit_type: "edit",
+                          prompt: source.name || "Edited video",
+                        });
+                        toast.success(t("saveSuccess"));
+                      } catch {
+                        toast.error(t("saveError"));
+                      }
+                    }}
+                    disabled={saveEditMutation.isPending || source.url === originalUrl}
+                    className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    {saveEditMutation.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                    <Save className="size-4" />
+                    {t("saveToHistory")}
+                  </button>
+                </div>
+              )}
+
               {/* 하단 고정 액션 바 — 편집 탭 통합 */}
               {mainTab === "edit" && subTool && source && (
                 <div className="shrink-0 px-5 pt-3 pb-4">
@@ -1675,6 +1710,8 @@ export function VideoEditWorkspace() {
                         rotatePanelRef.current?.reset();
                         mergePanelRef.current?.reset();
                         setPreviewSpeed(1);
+                        setTrimStart(0);
+                        setTrimEnd(duration);
                         setResultUrl(null);
                         setCropState({ isOriginal: true, isPending: false });
                         setRotateState({ hasSelection: false, isPending: false });
@@ -1690,39 +1727,28 @@ export function VideoEditWorkspace() {
                     </button>
                     <button
                       onClick={async () => {
-                        // 변경사항이 있는 모든 편집 소도구를 순차 실행
+                        const trimChanged = trimStart > 0 || (trimEnd > 0 && Math.abs(trimEnd - duration) > 0.1);
+                        if (trimChanged) await handleTrim();
                         if (!cropState.isOriginal) await cropPanelRef.current?.apply();
                         if (ratioState.canApply) await ratioPanelRef.current?.apply();
                         if (rotateState.hasSelection) await rotatePanelRef.current?.apply();
                         if (effectsState.canApply) await effectsPanelRef.current?.apply();
                         if (mergeState.canApply) await mergePanelRef.current?.apply();
 
-                        // 최종 결과를 내 비디오에 저장
+                        // 적용 결과를 새 소스로 교체 + DB 저장
                         const finalUrl = resultUrlRef.current;
-                        if (finalUrl) {
-                          try {
-                            await saveEditMutation.mutateAsync({
-                              result_url: finalUrl,
-                              edit_type: "edit",
-                              prompt: source?.name || "Edited video",
-                            });
-                            toast.success(t("saveSuccess"));
-                          } catch (err) {
-                            console.error("Save failed:", err, "finalUrl:", finalUrl);
-                            toast.error(err instanceof Error ? err.message : t("saveError"));
-                          }
-                        } else {
-                          console.warn("No resultUrl to save");
+                        if (finalUrl && source) {
+                          setSource({ ...source, url: finalUrl });
                         }
 
-                        // 생성 완료 후: 결과 영상을 새 소스로 교체
-                        const newSourceUrl = resultUrlRef.current;
                         effectsPanelRef.current?.reset();
                         cropPanelRef.current?.reset();
                         ratioPanelRef.current?.reset();
                         rotatePanelRef.current?.reset();
                         mergePanelRef.current?.reset();
                         setPreviewSpeed(1);
+                        setTrimStart(0);
+                        setTrimEnd(0);
                         setResultUrl(null);
                         setCropState({ isOriginal: true, isPending: false });
                         setRotateState({ hasSelection: false, isPending: false });
@@ -1731,29 +1757,15 @@ export function VideoEditWorkspace() {
                         setMergeState({ canApply: false, isPending: false });
                         setSubTool(null);
                         setActiveTab("trim");
-                        setPreviewCssFilter("");
-                        setPreviewTextOverlay(null);
-                        setPreviewWatermark(null);
-                        setIsPanelDirty(false);
-                        if (newSourceUrl) {
-                          setSource({
-                            url: newSourceUrl,
-                            duration: source?.duration ?? 0,
-                            width: source?.width ?? 0,
-                            height: source?.height ?? 0,
-                            name: source?.name || "Edited video",
-                          });
-                        }
                       }}
                       disabled={!(
                         effectsState.canApply || !cropState.isOriginal || ratioState.canApply || rotateState.hasSelection || mergeState.canApply || !!resultUrl
-                      ) || effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending}
+                        || (trimStart > 0 || (trimEnd > 0 && Math.abs(trimEnd - duration) > 0.1))
+                      ) || effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending || trimMutation.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
-                      {(effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending) && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")}
-                      {" ✦ "}
-                      {Math.max(1, [effectsState.canApply, !cropState.isOriginal, ratioState.canApply, rotateState.hasSelection, mergeState.canApply, !!resultUrl].filter(Boolean).length)}
+                      {(effectsState.isPending || cropState.isPending || ratioState.isPending || rotateState.isPending || mergeState.isPending || trimMutation.isPending) && <Loader2 className="size-3.5 animate-spin" />}
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1772,27 +1784,22 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await filterPanelRef.current?.apply();
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) {
-                          try {
-                            await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "filter", prompt: source?.name || "Filter applied" });
-                            toast.success(t("saveSuccess"));
-                          } catch { toast.error(t("saveError")); }
+                        const url = resultUrlRef.current;
+                        if (url && source) {
+                          setSource({ ...source, url });
                         }
                         filterPanelRef.current?.reset();
                         setPreviewCssFilter("");
                         setFilterState({ canApply: false, isPending: false });
                         setResultUrl(null);
-                        setIsPanelDirty(false);
-                        if (finalUrl) {
-                          setSource({ url: finalUrl, duration: source?.duration ?? 0, width: source?.width ?? 0, height: source?.height ?? 0, name: source?.name || "Filtered video" });
-                        }
+                        setSubTool(null);
+                        setActiveTab("filter");
                       }}
                       disabled={!filterState.canApply || filterState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {filterState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1811,28 +1818,23 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await creativePanelRef.current?.apply();
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) {
-                          try {
-                            await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "creative_preset", prompt: source?.name || "Creative Preset" });
-                            toast.success(t("saveSuccess"));
-                          } catch { toast.error(t("saveError")); }
+                        const url = resultUrlRef.current;
+                        if (url && source) {
+                          setSource({ ...source, url });
                         }
                         creativePanelRef.current?.reset();
                         setPreviewCreativeOverlay(null);
                         setPreviewCssFilter("");
                         setCreativeState({ canApply: false, isPending: false });
                         setResultUrl(null);
-                        setIsPanelDirty(false);
-                        if (finalUrl) {
-                          setSource({ url: finalUrl, duration: source?.duration ?? 0, width: source?.width ?? 0, height: source?.height ?? 0, name: source?.name || "Creative preset" });
-                        }
+                        setSubTool(null);
+                        setActiveTab("filter");
                       }}
                       disabled={!creativeState.canApply || creativeState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {creativeState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1843,7 +1845,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1851,16 +1853,15 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await subtitlesPanelRef.current?.apply();
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "subtitles", prompt: source?.name || "Subtitles" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
-                        subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setIsPanelDirty(false); setSubTool(null); setActiveTab("trim");
-                        if (finalUrl) { setSource({ url: finalUrl, duration: source?.duration ?? 0, width: source?.width ?? 0, height: source?.height ?? 0, name: source?.name || "Subtitles" }); }
+                        const subUrl = resultUrlRef.current;
+                        if (subUrl && source) { setSource({ ...source, url: subUrl }); }
+                        subtitlesPanelRef.current?.reset(); setPreviewSubtitles([]); setSubtitlesState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!subtitlesState.canApply || subtitlesState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {subtitlesState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1871,7 +1872,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1879,16 +1880,15 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await textOverlayPanelRef.current?.apply();
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "text_overlay", prompt: source?.name || "Text overlay" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
-                        textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setIsPanelDirty(false); setSubTool(null); setActiveTab("trim");
-                        if (finalUrl) { setSource({ url: finalUrl, duration: source?.duration ?? 0, width: source?.width ?? 0, height: source?.height ?? 0, name: source?.name || "Text overlay" }); }
+                        const txtUrl = resultUrlRef.current;
+                        if (txtUrl && source) { setSource({ ...source, url: txtUrl }); }
+                        textOverlayPanelRef.current?.reset(); setPreviewTextOverlay(null); setTextOverlayState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!textOverlayState.canApply || textOverlayState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {textOverlayState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1899,7 +1899,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1907,16 +1907,15 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await watermarkPanelRef.current?.apply();
-                        const finalUrl = resultUrlRef.current;
-                        if (finalUrl) { try { await saveEditMutation.mutateAsync({ result_url: finalUrl, edit_type: "watermark", prompt: source?.name || "Watermark" }); toast.success(t("saveSuccess")); } catch { toast.error(t("saveError")); } }
-                        watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setIsPanelDirty(false); setSubTool(null); setActiveTab("trim");
-                        if (finalUrl) { setSource({ url: finalUrl, duration: source?.duration ?? 0, width: source?.width ?? 0, height: source?.height ?? 0, name: source?.name || "Watermark" }); }
+                        const wmUrl = resultUrlRef.current;
+                        if (wmUrl && source) { setSource({ ...source, url: wmUrl }); }
+                        watermarkPanelRef.current?.reset(); setPreviewWatermark(null); setWatermarkState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!watermarkState.canApply || watermarkState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {watermarkState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1927,7 +1926,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1935,13 +1934,15 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await gifPanelRef.current?.apply();
+                        const gifUrl = resultUrlRef.current;
+                        if (gifUrl && source) { setSource({ ...source, url: gifUrl }); }
                         gifPanelRef.current?.reset(); setGifState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!gifState.canApply || gifState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {gifState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1952,7 +1953,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1960,13 +1961,15 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await sceneSplitPanelRef.current?.apply();
+                        const sceneUrl = resultUrlRef.current;
+                        if (sceneUrl && source) { setSource({ ...source, url: sceneUrl }); }
                         sceneSplitPanelRef.current?.reset(); setSceneSplitState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!sceneSplitState.canApply || sceneSplitState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {sceneSplitState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -1977,7 +1980,7 @@ export function VideoEditWorkspace() {
                 <div className="shrink-0 px-5 pt-3 pb-4">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => { thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim"); }}
+                      onClick={() => { thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); }}
                       className="flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-neutral-50 py-2.5 text-[13px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
                     >
                       {t("reset")}
@@ -1985,13 +1988,15 @@ export function VideoEditWorkspace() {
                     <button
                       onClick={async () => {
                         await thumbnailPanelRef.current?.apply();
+                        const thumbUrl = resultUrlRef.current;
+                        if (thumbUrl && source) { setSource({ ...source, url: thumbUrl }); }
                         thumbnailPanelRef.current?.reset(); setThumbnailState({ canApply: false, isPending: false }); setResultUrl(null); setSubTool(null); setActiveTab("trim");
                       }}
                       disabled={!thumbnailState.canApply || thumbnailState.isPending}
                       className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-[13px] font-[600] text-white transition-all hover:opacity-90 active:opacity-80 disabled:pointer-events-none disabled:opacity-30"
                     >
                       {thumbnailState.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                      {t("generate")} ✦ 1
+                      {t("apply")}
                     </button>
                   </div>
                 </div>
@@ -2024,16 +2029,6 @@ export function VideoEditWorkspace() {
         </div>
 
 
-        {/* 하단 비디오 히스토리 */}
-        <div className={`mt-12 pb-10 ${source ? "sm:mr-[384px]" : ""}`}>
-          <VideoSourceSelector
-            onSourceSelected={handleSourceSelected}
-            isLoading={uploadMutation.isPending}
-            onDelete={() => {
-              // TODO: API 삭제 연동
-            }}
-          />
-        </div>
       </div>
 
       {/* 모달 */}
@@ -2160,6 +2155,48 @@ export function VideoEditWorkspace() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* 제거 확인 다이얼로그 */}
+      {removeConfirmOpen && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-black/60 backdrop-blur-sm"
+          onWheel={(e) => e.preventDefault()}
+          onTouchMove={(e) => e.preventDefault()}
+        >
+          <div
+            className="w-[340px] rounded-2xl border border-neutral-200 bg-background p-6 shadow-2xl dark:border-neutral-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-[16px] font-semibold text-foreground">
+              {t("removeVideoTitle")}
+            </h3>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
+              {t("removeVideoDesc")}
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setRemoveConfirmOpen(false)}
+                className="flex-1 cursor-pointer rounded-xl bg-neutral-100 py-2.5 text-[14px] font-[500] text-foreground transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  setSource(null);
+                  setResultUrl(null);
+                  setCurrentTime(0);
+                  setDuration(0);
+                  setRemoveConfirmOpen(false);
+                }}
+                className="flex-1 cursor-pointer rounded-xl bg-red-500 py-2.5 text-[14px] font-[500] text-white transition-colors hover:bg-red-600"
+              >
+                {t("removeConfirm")}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

@@ -84,7 +84,7 @@ export function GenerationHistory({
   const allGenerations =
     data?.pages
       .flatMap((page) => page.generations)
-      .filter((g) => g.status !== "failed") ?? [];
+      .filter((g) => g.status !== "failed" && !g.result_url?.match(/\.(png|jpg|jpeg|gif|webp)(\?|$)/i)) ?? [];
 
   const availableModels = [...new Set(allGenerations.map((g) => g.model_id))];
 

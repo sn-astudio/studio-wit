@@ -25,6 +25,7 @@ const FLIP_PRESETS = [
 export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function RotatePanel({
   sourceUrl,
   onRotateApplied,
+  onPreviewTransform,
   onSave,
   onDirty,
   onStateChange,
@@ -44,9 +45,23 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
     onStateChange?.({ hasSelection: !!selected, isPending: rotateMutation.isPending });
   }, [selected, rotateMutation.isPending, onStateChange]);
 
+  // CSS 프리뷰
+  useEffect(() => {
+    if (!selected) { onPreviewTransform?.(null); return; }
+    const map: Record<string, string> = {
+      "90": "rotate(90deg)",
+      "180": "rotate(180deg)",
+      "270": "rotate(270deg)",
+      "flip_h": "scaleX(-1)",
+      "flip_v": "scaleY(-1)",
+    };
+    onPreviewTransform?.(map[selected] ?? null);
+  }, [selected, onPreviewTransform]);
+
   const handleReset = useCallback(() => {
     setSelected(null);
-  }, []);
+    onPreviewTransform?.(null);
+  }, [onPreviewTransform]);
 
   const handleApply = useCallback(async () => {
     if (!sourceUrl || !selected) return;

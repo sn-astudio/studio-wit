@@ -183,7 +183,9 @@ export function VideoCreateWorkspace() {
     historyPages?.pages
       .flatMap((p) => p.generations)
       .filter((g) => g.status === "completed" && g.result_url) ?? [];
-  const completedGenerations = apiGenerations;
+  const completedGenerations = apiGenerations.filter(
+    (g) => !g.result_url?.match(/\.(png|jpg|jpeg|gif|webp)(\?|$)/i),
+  );
 
   return (
     <div className="relative bg-background">

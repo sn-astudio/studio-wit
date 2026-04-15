@@ -1,7 +1,6 @@
 "use client";
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
-import Image from "next/image";
 import { Camera, Download, Loader2, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -51,6 +50,21 @@ export const AIEditPanel = forwardRef<AIEditPanelRef, AIEditPanelProps>(function
 
   const captureMutation = useCaptureFrame();
   const createMutation = useCreateGeneration();
+
+  // 비디오 실제 비율
+  const [videoAspect, setVideoAspect] = useState("16/9");
+  useEffect(() => {
+    const el = videoRef?.current;
+    if (!el) return;
+    const update = () => {
+      if (el.videoWidth && el.videoHeight) {
+        setVideoAspect(`${el.videoWidth}/${el.videoHeight}`);
+      }
+    };
+    update();
+    el.addEventListener("loadedmetadata", update);
+    return () => el.removeEventListener("loadedmetadata", update);
+  }, [videoRef, sourceUrl]);
 
   const currentModelConfig = AI_VIDEO_MODELS.find((m) => m.id === selectedModel);
   const durationOptions = currentModelConfig?.durations ?? [5];
@@ -132,54 +146,56 @@ export const AIEditPanel = forwardRef<AIEditPanelRef, AIEditPanelProps>(function
       <div className="space-y-2.5">
         <p className="text-[13px] font-[600] text-foreground">{t("captureFrameLabel")}</p>
         <p className="text-[12px] text-muted-foreground/60">{t("captureFrameDesc")}</p>
-        <div
-          className="group relative aspect-video w-full cursor-pointer overflow-hidden rounded-xl bg-neutral-50 transition-all hover:opacity-90 active:opacity-80 dark:bg-neutral-800/60"
-          onClick={handleCaptureFrame}
-          role="button"
-          tabIndex={0}
-        >
-          {capturedImageUrl ? (
-            <>
-              <Image
-                src={capturedImageUrl}
-                alt="Captured frame"
-                fill
-                className="object-cover"
-                unoptimized
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  downloadImage(capturedImageUrl, `frame_${Date.now()}.png`);
-                }}
-                className="absolute top-2 right-2 z-10 flex size-7 items-center justify-center rounded-lg bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
-              >
-                <Download className="size-3.5" />
-              </button>
-              {captureMutation.isPending && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <Loader2 className="size-5 animate-spin text-white" />
-                </div>
-              )}
-              {!captureMutation.isPending && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Camera className="size-5 text-white" />
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-2">
-              {captureMutation.isPending ? (
-                <Loader2 className="size-6 animate-spin text-muted-foreground/40" />
-              ) : (
-                <>
-                  <Camera className="size-6 text-muted-foreground/40" />
-                  <span className="text-[12px] text-muted-foreground/60">{t("captureFrame")}</span>
-                </>
-              )}
-            </div>
-          )}
-        </div>
+        {capturedImageUrl ? (
+          <div
+            className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-50 dark:bg-neutral-800/60"
+            onClick={handleCaptureFrame}
+            role="button"
+            tabIndex={0}
+          >
+            <img
+              src={capturedImageUrl}
+              alt="Captured frame"
+              className="w-full rounded-xl object-contain"
+              style={{ aspectRatio: videoAspect }}
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadImage(capturedImageUrl, `frame_${Date.now()}.png`);
+              }}
+              className="absolute top-2 right-2 z-10 flex size-7 items-center justify-center rounded-lg bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
+            >
+              <Download className="size-3.5" />
+            </button>
+            {captureMutation.isPending && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/50">
+                <Loader2 className="size-5 animate-spin text-white" />
+              </div>
+            )}
+            {!captureMutation.isPending && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                <Camera className="size-5 text-white" />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div
+            className="flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl bg-neutral-50 transition-all hover:opacity-90 active:opacity-80 dark:bg-neutral-800/60"
+            onClick={handleCaptureFrame}
+            role="button"
+            tabIndex={0}
+          >
+            {captureMutation.isPending ? (
+              <Loader2 className="size-6 animate-spin text-muted-foreground/40" />
+            ) : (
+              <>
+                <Camera className="size-6 text-muted-foreground/40" />
+                <span className="text-[12px] text-muted-foreground/60">{t("captureFrame")}</span>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 모델 선택 */}

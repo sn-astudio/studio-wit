@@ -55,5 +55,6 @@ export function useGenerationHistory(params?: HistoryParams) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage: GenerationListResponse) =>
       lastPage.has_more ? lastPage.next_cursor ?? undefined : undefined,
+    enabled: !!params,
   });
 }

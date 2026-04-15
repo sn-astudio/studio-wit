@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ImageIcon, Loader2, AlertCircle } from "lucide-react";
 
 import type { HistoryCardProps } from "./types";
@@ -11,9 +12,10 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
   const isFailed = gen.status === "failed";
   const isCompleted = gen.status === "completed" && !!gen.result_url;
 
+  const [detectedAspect, setDetectedAspect] = useState<string | null>(null);
   const timeAgo = formatTimeAgo(gen.created_at);
   const gridSpan = getGridSpan(gen.aspect_ratio);
-  const aspectStyle = getAspectStyle(gen.aspect_ratio);
+  const aspectStyle = detectedAspect ?? getAspectStyle(gen.aspect_ratio);
 
   return (
     <button
@@ -38,6 +40,12 @@ export function HistoryCard({ gen, onSelect }: HistoryCardProps) {
           src={gen.result_url}
           alt={gen.prompt}
           className="absolute inset-0 size-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (img.naturalWidth && img.naturalHeight) {
+              setDetectedAspect(`${img.naturalWidth}/${img.naturalHeight}`);
+            }
+          }}
         />
       )}
 

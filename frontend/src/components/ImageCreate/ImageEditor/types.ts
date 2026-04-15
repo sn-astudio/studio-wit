@@ -7,6 +7,7 @@ export type EditorTool =
   | "eraser"
   | "text"
   | "freeRotate"
+  | "transform"
   | "zoom"
   | "effects"
   | "mosaic";

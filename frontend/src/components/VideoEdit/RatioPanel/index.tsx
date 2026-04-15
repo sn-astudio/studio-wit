@@ -25,6 +25,7 @@ export const RatioPanel = forwardRef<RatioPanelRef, RatioPanelProps>(function Ra
   sourceUrl,
   sourceAspectRatio,
   onRatioApplied,
+  onPreviewRatio,
   onSave,
   onDirty,
   onStateChange,
@@ -53,12 +54,19 @@ export const RatioPanel = forwardRef<RatioPanelRef, RatioPanelProps>(function Ra
     onStateChange?.({ canApply, isPending });
   }, [canApply, isPending, onStateChange]);
 
+  // CSS 프리뷰
+  useEffect(() => {
+    if (!targetRatio || targetRatio === matchingRatio) { onPreviewRatio?.(null); return; }
+    onPreviewRatio?.(targetRatio.replace(":", "/"));
+  }, [targetRatio, matchingRatio, onPreviewRatio]);
+
   const handleReset = useCallback(() => {
     setTargetRatio(null);
     setMode("letterbox");
     setPadColor("black");
     setShortsCropX("center");
-  }, []);
+    onPreviewRatio?.(null);
+  }, [onPreviewRatio]);
 
   const handleApply = useCallback(async () => {
     if (!sourceUrl || !targetRatio) return;
