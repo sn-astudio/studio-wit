@@ -2,4 +2,5 @@ import type { EditorCanvasHandle } from "@/components/ImageCreate/ImageEditor/Ed
 
 export interface ImageFilterPanelProps {
   canvasRef: React.RefObject<EditorCanvasHandle | null>;
+  onToolActiveChange?: (active: boolean) => void;
 }

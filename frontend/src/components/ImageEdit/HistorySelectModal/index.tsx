@@ -2,36 +2,35 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Film, X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 
 import { useGenerationHistory } from "@/hooks/queries/useGeneration";
 import { formatTimeAgo } from "@/components/MyPage/GenerationCard/utils";
-import type { HistorySelectModalProps } from "./types";
+import type { ImageHistorySelectModalProps } from "./types";
 
 export function HistorySelectModal({
   isOpen,
   onClose,
   onSelect,
-}: HistorySelectModalProps) {
-  const t = useTranslations("VideoEdit");
+}: ImageHistorySelectModalProps) {
+  const t = useTranslations("ImageEdit");
 
   const {
-    data: historyData,
+    data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useGenerationHistory({
-    type: "video",
+    type: "image",
     status: "completed",
     limit: 20,
   });
 
   const apiGenerations =
-    historyData?.pages.flatMap((p) => p.generations) ?? [];
+    data?.pages.flatMap((p) => p.generations) ?? [];
 
   const allGenerations = apiGenerations;
 
-  // 무한 스크롤
   const observerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = observerRef.current;
@@ -47,7 +46,6 @@ export function HistorySelectModal({
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, isOpen]);
 
-  // ESC 닫기
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -59,14 +57,8 @@ export function HistorySelectModal({
 
   const handleSelect = useCallback(
     (gen: (typeof allGenerations)[number]) => {
-      onSelect?.({
-        url: gen.result_url!,
-        duration: 0,
-        width: 0,
-        height: 0,
-        name: gen.prompt?.slice(0, 30) || gen.model_id,
-        aspectRatio: gen.aspect_ratio ?? undefined,
-      });
+      if (!gen.result_url) return;
+      onSelect?.({ url: gen.result_url });
       onClose();
     },
     [onSelect, onClose],
@@ -86,7 +78,7 @@ export function HistorySelectModal({
         {/* 헤더 */}
         <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 px-5 py-4 dark:border-neutral-800/60">
           <h3 className="text-[15px] font-[600] text-foreground">
-            {t("selectVideosForMerge")}
+            {t("myImages")}
           </h3>
           <button
             onClick={onClose}
@@ -96,40 +88,30 @@ export function HistorySelectModal({
           </button>
         </div>
 
-        {/* 비디오 그리드 — 3열 masonry */}
+        {/* 이미지 그리드 */}
         <div className="flex-1 overflow-y-auto scrollbar-none p-5">
           {allGenerations.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2">
-              <Film className="size-10 text-muted-foreground/30" />
+              <ImagePlus className="size-10 text-muted-foreground/30" />
               <p className="text-[14px] text-muted-foreground/50">
-                {t("noVideos")}
+                {t("noHistory")}
               </p>
             </div>
           ) : (
             <div className="columns-3 gap-2">
               {allGenerations
-                .filter((g) => g.result_url && !g.result_url.match(/\.(png|jpg|jpeg|gif|webp)(\?|$)/i))
+                .filter((g) => g.result_url)
                 .map((gen) => (
                   <button
                     key={gen.id}
                     onClick={() => handleSelect(gen)}
                     className="group relative mb-2 block w-full cursor-pointer overflow-hidden rounded-xl bg-neutral-100 break-inside-avoid transition-all active:scale-[0.97] dark:bg-neutral-800/60"
                   >
-                    <video
+                    <img
                       src={gen.result_url!}
+                      alt={gen.prompt ?? ""}
                       className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      muted
-                      preload="metadata"
-                      onMouseEnter={(e) =>
-                        (e.target as HTMLVideoElement)
-                          .play()
-                          .catch(() => {})
-                      }
-                      onMouseLeave={(e) => {
-                        const v = e.target as HTMLVideoElement;
-                        v.pause();
-                        v.currentTime = 0;
-                      }}
+                      loading="lazy"
                     />
                     {/* 호버 오버레이 */}
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />

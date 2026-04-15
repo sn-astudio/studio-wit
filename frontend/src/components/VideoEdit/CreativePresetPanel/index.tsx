@@ -4,22 +4,21 @@ import { forwardRef, useEffect, useImperativeHandle, useState, useCallback } fro
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
-  Camera,
+  BarChart3,
   Cctv,
+  CircleHelp,
   Download,
   Globe,
   Lock,
   Newspaper,
   Tv,
-  Navigation,
+  Drone,
   Timer,
   Film,
   Video,
   Loader2,
-  MessageSquare,
   Plus,
   Save,
-  Vote,
   X,
 } from "lucide-react";
 
@@ -132,17 +131,17 @@ const PRESETS: PresetDefinition[] = [
   },
 ];
 
-const ICON_MAP: Record<string, typeof Camera> = {
-  camera: Camera,
+const ICON_MAP: Record<string, typeof Video> = {
+  camera: Video,
   video: Video,
   cctv: Cctv,
   newspaper: Newspaper,
   tv: Tv,
-  navigation: Navigation,
+  navigation: Drone,
   timer: Timer,
   film: Film,
-  vote: Vote,
-  message: MessageSquare,
+  vote: BarChart3,
+  message: CircleHelp,
 };
 
 // ── 프리뷰 오버레이 렌더러 ──
@@ -517,13 +516,13 @@ export const CreativePresetPanel = forwardRef<CreativePresetPanelRef, CreativePr
         <p className="mb-3 text-[13px] font-[600] text-foreground">{t("tabCreative")}</p>
         <div className="grid grid-cols-4 gap-2">
           {PRESETS.map((p) => {
-            const Icon = ICON_MAP[p.icon] ?? Camera;
+            const Icon = ICON_MAP[p.icon] ?? Video;
             const isActive = selectedPreset === p.id;
             return (
               <button
                 key={p.id}
                 onClick={() => handleSelect(p.id)}
-                className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl py-3.5 text-[12px] font-[500] transition-all active:opacity-80 ${
+                className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg py-3.5 text-[12px] font-[500] transition-all active:opacity-80 ${
                   isActive
                     ? "bg-foreground text-background"
                     : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"

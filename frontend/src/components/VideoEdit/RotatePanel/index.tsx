@@ -25,6 +25,7 @@ const FLIP_PRESETS = [
 export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function RotatePanel({
   sourceUrl,
   onRotateApplied,
+  onPreviewTransform,
   onSave,
   onDirty,
   onStateChange,
@@ -44,9 +45,23 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
     onStateChange?.({ hasSelection: !!selected, isPending: rotateMutation.isPending });
   }, [selected, rotateMutation.isPending, onStateChange]);
 
+  // CSS 프리뷰
+  useEffect(() => {
+    if (!selected) { onPreviewTransform?.(null); return; }
+    const map: Record<string, string> = {
+      "90": "rotate(90deg)",
+      "180": "rotate(180deg)",
+      "270": "rotate(270deg)",
+      "flip_h": "scaleX(-1)",
+      "flip_v": "scaleY(-1)",
+    };
+    onPreviewTransform?.(map[selected] ?? null);
+  }, [selected, onPreviewTransform]);
+
   const handleReset = useCallback(() => {
     setSelected(null);
-  }, []);
+    onPreviewTransform?.(null);
+  }, [onPreviewTransform]);
 
   const handleApply = useCallback(async () => {
     if (!sourceUrl || !selected) return;
@@ -106,7 +121,7 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
     <div className="flex flex-col gap-5">
       {/* 회전 */}
       <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("effectRotate")}</label>
+        <p className="text-[13px] font-[600] text-foreground">{t("effectRotate")}</p>
         <div className="flex gap-1.5">
           {ROTATE_PRESETS.map((preset) => {
             const Icon = preset.icon;
@@ -114,7 +129,7 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
               <button
                 key={preset.id}
                 onClick={() => { setSelected(selected === preset.id ? null : preset.id); onDirty?.(); }}
-                className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2.5 text-[12px] font-[500] transition-all active:opacity-80 ${
+                className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
                   selected === preset.id
                     ? "bg-foreground text-background"
                     : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
@@ -130,7 +145,7 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
 
       {/* 뒤집기 */}
       <div className="space-y-2.5">
-        <label className="text-[12px] font-[500] text-muted-foreground">{t("flipLabel")}</label>
+        <p className="text-[13px] font-[600] text-foreground">{t("flipLabel")}</p>
         <div className="flex gap-1.5">
           {FLIP_PRESETS.map((preset) => {
             const Icon = preset.icon;
@@ -138,7 +153,7 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
               <button
                 key={preset.id}
                 onClick={() => { setSelected(selected === preset.id ? null : preset.id); onDirty?.(); }}
-                className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2.5 text-[12px] font-[500] transition-all active:opacity-80 ${
+                className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-[500] transition-all active:opacity-80 ${
                   selected === preset.id
                     ? "bg-foreground text-background"
                     : "bg-neutral-50 text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
@@ -153,34 +168,6 @@ export const RotatePanel = forwardRef<RotatePanelRef, RotatePanelProps>(function
       </div>
 
       {/* 결과 저장/다운로드 */}
-      {pendingResult && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 space-y-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-3 duration-200">
-          <div className="flex items-center gap-2">
-            <div className="flex size-5 items-center justify-center rounded-full bg-primary/20">
-              <Check className="size-3 text-primary" />
-            </div>
-            <p className="text-[12px] font-[500] text-primary">{t("rotateApplied")}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsPublicSave(!isPublicSave)}
-              className="flex items-center gap-1 rounded-lg bg-neutral-50 px-2.5 py-1.5 text-[12px] font-[500] text-muted-foreground transition-all hover:bg-neutral-100 hover:text-foreground active:opacity-80 dark:bg-neutral-800/60 dark:hover:bg-neutral-800 dark:hover:text-white"
-            >
-              {isPublicSave ? <Globe className="size-3" /> : <Lock className="size-3" />}
-              {isPublicSave ? t("public") : t("private")}
-            </button>
-            <Button size="sm" className="flex-1 gap-1.5" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-              {t("saveToGallery")}
-            </Button>
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={handleDownload}>
-              <Download className="size-3.5" />
-              {t("download")}
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 });

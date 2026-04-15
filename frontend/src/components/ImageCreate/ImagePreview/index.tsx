@@ -51,6 +51,7 @@ export function ImagePreview({
   const [lightboxGen, setLightboxGen] = useState<Generation | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Generation | null>(null);
   const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
+  const [detectedAspects, setDetectedAspects] = useState<Map<string, string>>(new Map());
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const isPanning = useRef(false);
@@ -156,14 +157,14 @@ export function ImagePreview({
     <div className="w-full">
       {/* 로딩 + 히스토리 동시 표시 가능 */}
       {hasHistory || isGenerating ? (
-        <div className="grid auto-rows-[32px] grid-cols-2 gap-2 sm:auto-rows-[36px] sm:grid-cols-3" style={{ gridAutoFlow: "dense" }}>
+        <div className="columns-2 gap-2 sm:columns-3">
           {/* 생성 중 카드 */}
           {isGenerating &&
             Array.from({ length: generatingCount }).map((_, i) => (
               <div
                 key={`loading-${i}`}
-                className="relative flex flex-col items-center justify-center overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60"
-                style={{ gridRow: `span ${getRowSpan(generatingRatio?.replace(":", "/") ?? "1/1")}` }}
+                className="relative mb-2 flex flex-col items-center justify-center overflow-hidden rounded-xl break-inside-avoid bg-neutral-100 dark:bg-neutral-800/60"
+                style={{ aspectRatio: generatingRatio?.replace(":", "/") ?? "1/1" }}
               >
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative flex items-center justify-center">
@@ -192,13 +193,13 @@ export function ImagePreview({
 
           {/* 생성된 이미지 카드 */}
           {generations.map((gen) => {
-            const ratio = gen.aspect_ratio?.replace(":", "/") ?? "1/1";
+            const ratio = detectedAspects.get(gen.id) ?? gen.aspect_ratio?.replace(":", "/") ?? "1/1";
             const isFailed = gen.result_url ? failedUrls.has(gen.result_url) : false;
             return (
             <div
               key={gen.id}
-              className="group relative cursor-pointer overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800/60"
-              style={{ gridRow: `span ${getRowSpan(ratio)}` }}
+              className="group relative mb-2 cursor-pointer overflow-hidden rounded-xl break-inside-avoid bg-neutral-100 dark:bg-neutral-800/60"
+              style={{ aspectRatio: ratio }}
               onClick={() => setLightboxGen(gen)}
             >
               {gen.result_url && !isFailed && (
@@ -208,6 +209,16 @@ export function ImagePreview({
                     src={gen.result_url}
                     alt={gen.prompt}
                     className="size-full object-cover sm:transition-transform sm:duration-300 sm:group-hover:scale-105"
+                    onLoad={(e) => {
+                      const img = e.currentTarget;
+                      if (img.naturalWidth && img.naturalHeight) {
+                        setDetectedAspects((prev) => {
+                          const next = new Map(prev);
+                          next.set(gen.id, `${img.naturalWidth}/${img.naturalHeight}`);
+                          return next;
+                        });
+                      }
+                    }}
                     onError={() => handleImageError(gen.result_url!)}
                   />
                   {/* 오버레이 — 모바일 항상 표시, PC 호버 시 */}

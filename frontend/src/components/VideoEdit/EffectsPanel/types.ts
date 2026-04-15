@@ -9,6 +9,7 @@ export interface EffectsPanelProps {
   onPreviewSpeed?: (speed: number) => void;
   onDirty?: () => void;
   onStateChange?: (state: { canApply: boolean; isPending: boolean }) => void;
+  category?: "speed" | "output";
 }
 
 export interface EffectsPanelRef {

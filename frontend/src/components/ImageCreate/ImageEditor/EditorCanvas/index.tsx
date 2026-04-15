@@ -435,6 +435,12 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
       origRect?: CropRect;
     } | null>(null);
 
+    // 도구 전환 시 드래그/모자이크 상태 리셋
+    useEffect(() => {
+      dragRef.current = null;
+      canvasMosaicRef.current = false;
+    }, [activeTool]);
+
     const pixelRatioRef = useRef(1);
 
     const getEdge = useCallback(() => {
@@ -956,7 +962,7 @@ export const EditorCanvas = forwardRef<EditorCanvasHandle, EditorCanvasProps>(
                   isEraser
                     ? "rgba(255,255,255,0.8)"
                     : isMosaic
-                      ? "rgba(255,255,0,0.6)"
+                      ? "rgba(255,255,255,0.8)"
                       : drawingSettings.color
                 }`,
                 background: isEraser

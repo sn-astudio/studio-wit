@@ -40,5 +40,7 @@ export interface VideoEditPreviewProps {
   onClickEmpty?: () => void;
   onUpload?: () => void;
   onFileDrop?: (file: File) => void;
+  onDownload?: () => void;
+  onRemove?: () => void;
   sourceAspectRatio?: string;
 }

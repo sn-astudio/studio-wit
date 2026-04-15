@@ -371,6 +371,14 @@ export const imageApi = {
 
     return res.json() as Promise<ImageUploadResponse>;
   },
+
+  /** 이미지 편집 결과 저장 (히스토리에 저장) — 백엔드에 /api/image/save-edit 엔드포인트 필요 */
+  saveEdit(body: SaveEditRequest) {
+    return request<SaveEditResponse>("/api/image/save-edit", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
 };
 
 // ── Video Edit API ──

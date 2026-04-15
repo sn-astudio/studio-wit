@@ -262,7 +262,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
                 disabled={!prompt.trim() || disabled}
               >
                 {t("submit")}
-                {mode === "image" && <> ✦ {numImages ?? 1}</>}
+                {mode === "image" ? <> ✦ {numImages ?? 1}</> : <> ✦ 1</>}
               </button>
             </div>
             <button
@@ -271,7 +271,7 @@ export function PromptInput({ mode, disabled, onSubmit }: PromptInputProps) {
               disabled={!prompt.trim() || disabled}
             >
               {t("submit")}
-              {mode === "image" && <> ✦ {numImages ?? 1}</>}
+              {mode === "image" ? <> ✦ {numImages ?? 1}</> : <> ✦ 1</>}
             </button>
           </div>
           </div>

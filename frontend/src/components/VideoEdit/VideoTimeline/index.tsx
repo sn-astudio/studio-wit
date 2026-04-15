@@ -17,9 +17,11 @@ export function VideoTimeline({
   onTrimStartChange,
   onTrimEndChange,
   onSeek,
+  onHandleDragging,
 }: VideoTimelineProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<DragTarget>(null);
+  const [frozenTime, setFrozenTime] = useState<number | null>(null);
 
   const toPercent = (time: number) =>
     duration > 0 ? (time / duration) * 100 : 0;
@@ -28,9 +30,13 @@ export function VideoTimeline({
     (target: DragTarget) => (e: React.PointerEvent) => {
       e.preventDefault();
       setDragging(target);
+      if (target === "start" || target === "end") {
+        setFrozenTime(currentTime);
+        onHandleDragging?.(true);
+      }
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [],
+    [currentTime, onHandleDragging],
   );
 
   const handlePointerMove = useCallback(
@@ -54,18 +60,16 @@ export function VideoTimeline({
   );
 
   const handlePointerUp = useCallback(() => {
+    if (dragging === "start" || dragging === "end") {
+      onHandleDragging?.(false);
+    }
     setDragging(null);
-  }, []);
+    setFrozenTime(null);
+  }, [dragging, onHandleDragging]);
 
   const handleTrackClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (!trackRef.current || dragging) return;
-      const time = positionToTime(
-        e.clientX,
-        trackRef.current.getBoundingClientRect(),
-        duration,
-      );
-      onSeek(time);
+    (_e: React.MouseEvent) => {
+      // 트랙 클릭으로는 플레이헤드 이동하지 않음 — 플레이헤드 직접 드래그만 허용
     },
     [duration, dragging, onSeek],
   );
@@ -74,7 +78,9 @@ export function VideoTimeline({
 
   const startPct = toPercent(trimStart);
   const endPct = toPercent(trimEnd);
-  const playheadPct = toPercent(currentTime);
+  const isHandleDrag = dragging === "start" || dragging === "end";
+  const displayTime = isHandleDrag && frozenTime !== null ? frozenTime : currentTime;
+  const playheadPct = toPercent(displayTime);
 
   return (
     <div className="space-y-2 touch-none">
@@ -169,7 +175,7 @@ export function VideoTimeline({
               dragging === "playhead" ? "opacity-100" : "opacity-0"
             }`}
           >
-            {formatTime(currentTime)}
+            {formatTime(displayTime)}
           </div>
         </div>
 

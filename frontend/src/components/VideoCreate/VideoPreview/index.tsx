@@ -42,6 +42,7 @@ export function VideoPreview({
   const [lightboxGen, setLightboxGen] = useState<Generation | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Generation | null>(null);
   const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
+  const [detectedAspects, setDetectedAspects] = useState<Map<string, string>>(new Map());
 
   // Hover-autoplay refs map
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
@@ -167,7 +168,7 @@ export function VideoPreview({
 
           {/* Completed video cards */}
           {generations.map((gen) => {
-            const ratio = gen.aspect_ratio?.replace(":", "/") ?? "16/9";
+            const ratio = detectedAspects.get(gen.id) ?? gen.aspect_ratio?.replace(":", "/") ?? "16/9";
             const isFailed = gen.result_url
               ? failedUrls.has(gen.result_url)
               : false;
@@ -195,6 +196,16 @@ export function VideoPreview({
                       loop
                       playsInline
                       onError={() => handleVideoError(gen.result_url!)}
+                      onLoadedMetadata={(e) => {
+                        const v = e.currentTarget;
+                        if (v.videoWidth && v.videoHeight) {
+                          setDetectedAspects((prev) => {
+                            const next = new Map(prev);
+                            next.set(gen.id, `${v.videoWidth}/${v.videoHeight}`);
+                            return next;
+                          });
+                        }
+                      }}
                     />
                     {/* Overlay -- mobile always, PC on hover */}
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/50 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100" />
@@ -413,7 +424,7 @@ export function VideoPreview({
               className="relative overflow-hidden rounded-2xl"
               onClick={(e) => e.stopPropagation()}
               style={{
-                aspectRatio: lightboxGen.aspect_ratio?.replace(":", "/") ?? "16/9",
+                aspectRatio: detectedAspects.get(lightboxGen.id) ?? lightboxGen.aspect_ratio?.replace(":", "/") ?? "16/9",
                 maxHeight: "78vh",
                 maxWidth: "75vw",
               }}
