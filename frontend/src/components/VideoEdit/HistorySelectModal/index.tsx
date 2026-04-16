@@ -76,11 +76,11 @@ export function HistorySelectModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="mx-4 flex h-[80vh] w-full max-w-[800px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/95"
+        className="mx-4 flex h-[80vh] w-full max-w-[800px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
@@ -99,8 +99,8 @@ export function HistorySelectModal({
         {/* 비디오 그리드 — 3열 masonry */}
         <div className="flex-1 overflow-y-auto scrollbar-none p-5">
           {allGenerations.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center gap-2">
-              <Film className="size-10 text-muted-foreground/30" />
+            <div className="flex h-full flex-col items-center justify-center gap-3">
+              <Film className="size-10 text-neutral-300 dark:text-neutral-700" strokeWidth={1.5} />
               <p className="text-[14px] text-muted-foreground/50">
                 {t("noVideos")}
               </p>

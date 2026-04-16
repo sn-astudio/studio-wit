@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { ImagePlus, X } from "lucide-react";
 
@@ -66,19 +67,19 @@ export function HistorySelectModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="mx-4 flex h-[80vh] w-full max-w-[800px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950/95"
+        className="mx-4 flex h-[80vh] w-full max-w-[800px] flex-col overflow-hidden rounded-2xl border-2 border-neutral-200 bg-white shadow-lg dark:border-neutral-800/80 dark:bg-neutral-950"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
         <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 px-5 py-4 dark:border-neutral-800/60">
           <h3 className="text-[15px] font-[600] text-foreground">
-            {t("myImages")}
+            {t("selectFromMyImages")}
           </h3>
           <button
             onClick={onClose}
@@ -91,8 +92,8 @@ export function HistorySelectModal({
         {/* 이미지 그리드 */}
         <div className="flex-1 overflow-y-auto scrollbar-none p-5">
           {allGenerations.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center gap-2">
-              <ImagePlus className="size-10 text-muted-foreground/30" />
+            <div className="flex h-full flex-col items-center justify-center gap-3">
+              <ImagePlus className="size-10 text-neutral-300 dark:text-neutral-700" strokeWidth={1.5} />
               <p className="text-[14px] text-muted-foreground/50">
                 {t("noHistory")}
               </p>
@@ -137,6 +138,7 @@ export function HistorySelectModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

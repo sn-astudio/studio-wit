@@ -125,7 +125,7 @@ export function ImageEditPreview({
   if (!imageUrl) {
     return (
       <div
-        className={`flex size-full min-h-[55vh] flex-col items-center justify-center rounded-2xl border border-dashed sm:min-h-0 sm:flex-1 transition-colors ${
+        className={`flex size-full min-h-[calc(100dvh-160px)] flex-col items-center justify-center rounded-2xl border border-dashed sm:min-h-0 sm:flex-1 transition-colors ${
           isDragging
             ? "border-neutral-400 bg-neutral-100 dark:border-neutral-500 dark:bg-white/5"
             : "border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900/50"
